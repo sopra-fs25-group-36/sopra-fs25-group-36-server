@@ -13,7 +13,6 @@ COPY src /app/src
 RUN ./gradlew clean build --no-daemon
 
 #make image smaller by using multi stage build
-#trying
 FROM openjdk:17-slim
 # Set the env to "production"
 ENV SPRING_PROFILES_ACTIVE=production

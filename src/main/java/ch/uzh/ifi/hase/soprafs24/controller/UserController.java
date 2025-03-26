@@ -1,13 +1,9 @@
 package ch.uzh.ifi.hase.soprafs24.controller;
 
 import ch.uzh.ifi.hase.soprafs24.entity.User;
-import ch.uzh.ifi.hase.soprafs24.entity.Lobby;
-import ch.uzh.ifi.hase.soprafs24.rest.dto.LobbyGetDTO;
-import ch.uzh.ifi.hase.soprafs24.rest.dto.LobbyPostDTO;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.UserGetDTO;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.UserPostDTO;
 import ch.uzh.ifi.hase.soprafs24.rest.mapper.DTOMapper;
-import ch.uzh.ifi.hase.soprafs24.service.LobbyService;
 import ch.uzh.ifi.hase.soprafs24.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -26,11 +22,9 @@ import java.util.List;
 public class UserController {
 
   private final UserService userService;
-  private final LobbyService lobbyService;
 
-  UserController(UserService userService, LobbyService lobbyService) {
+  UserController(UserService userService) {
     this.userService = userService;
-    this.lobbyService = lobbyService;
   }
 
   @GetMapping("/users")
@@ -59,15 +53,5 @@ public class UserController {
     User createdUser = userService.createUser(userInput);
     // convert internal representation of user back to API
     return DTOMapper.INSTANCE.convertEntityToUserGetDTO(createdUser);
-  }
-
-  @PostMapping("/{userId}/lobby")
-  @ResponseStatus(HttpStatus.CREATED)
-  public LobbyGetDTO createLobby(@PathVariable Long userId, @RequestBody LobbyPostDTO lobbyPostDTO) {
-      Lobby lobbyInput = DTOMapper.INSTANCE.convertLobbyPostDTOtoEntity(lobbyPostDTO);
-
-      Lobby createdLobby = lobbyService.createLobby(userId, lobbyInput);
-
-      return DTOMapper.INSTANCE.convertEntityToLobbyGetDTO(createdLobby);
   }
 }

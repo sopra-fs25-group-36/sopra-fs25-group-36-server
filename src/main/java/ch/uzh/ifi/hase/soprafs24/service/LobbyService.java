@@ -5,6 +5,12 @@ import ch.uzh.ifi.hase.soprafs24.repository.LobbyRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.web.server.ResponseStatusException;
 @Service
 @Transactional
 public class LobbyService {
@@ -33,6 +39,22 @@ public class LobbyService {
         return lobbyRepository.save(lobbyInput);
     }
     
-    // Additional methods (e.g., joinLobby, updatePlayerStatus) can be added here as needed.
+    public Lobby getLobbyById(Long lobbyId) {
+        return lobbyRepository.findById(lobbyId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Lobby not found"));
+    }
+    
+    @Scheduled(fixedRate = 1000)
+    public void deactivateExpiredLobbies() {
+        List<Lobby> activeLobbies = lobbyRepository.findByActiveTrue();
+        LocalDateTime now = LocalDateTime.now();
+        for (Lobby lobby : activeLobbies) {
+            // If the current time is after the lobby's expiration time, mark it as inactive.
+            if (lobby.getCreatedAt().plusSeconds(lobby.getTimeLimitSeconds()).isBefore(now)) {
+                lobby.setActive(false);
+                lobbyRepository.save(lobby);
+            }
+        }
+    }
 }
 

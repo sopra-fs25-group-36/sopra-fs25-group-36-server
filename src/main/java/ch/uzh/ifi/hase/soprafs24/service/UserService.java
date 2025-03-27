@@ -30,9 +30,19 @@ public class UserService {
 
   private final UserRepository userRepository;
 
+
   @Autowired
   public UserService(@Qualifier("userRepository") UserRepository userRepository) {
     this.userRepository = userRepository;
+  }
+
+  //
+  public void checkAuthentication(String token) {
+    if (token != null && !token.isEmpty() && userRepository.findByToken(token) != null) {
+      return;
+    }
+
+    throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authorization header is missing or incorrect");
   }
 
   public List<User> getUsers() {
@@ -75,5 +85,30 @@ public class UserService {
     } else if (userByName != null) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, String.format(baseErrorMessage, "name", "is"));
     }
+  }
+
+  public User loginUser(String username, String password) {
+    User user = userRepository.findByUsername(username);
+    if (user == null) {
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Username or password is incorrect");
+    }
+    if (user.getPassword().equals(password)) {
+      user.setStatus(UserStatus.ONLINE);
+      User savedUser = userRepository.save(user);
+      userRepository.flush();
+      return savedUser;
+    } else {
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Username or password is incorrect");
+    }
+  }
+
+  public void logoutUser(String token) {
+    User user = userRepository.findByToken(token);
+    if (user == null) {
+      new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
+    }
+    user.setStatus(UserStatus.OFFLINE);
+    userRepository.save(user);
+    userRepository.flush();
   }
 }

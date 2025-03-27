@@ -4,6 +4,8 @@ import ch.uzh.ifi.hase.soprafs24.constant.UserStatus;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.time.LocalDate;
+import java.util.UUID;
 
 /**
  * Internal User Representation
@@ -23,7 +25,7 @@ public class User implements Serializable {
 
   @Id
   @GeneratedValue
-  private Long id;
+  private Long UserID;
 
   @Column(nullable = false)
   private String name;
@@ -31,18 +33,32 @@ public class User implements Serializable {
   @Column(nullable = false, unique = true)
   private String username;
 
+  @Column(nullable =false)
+  private String password;
+
   @Column(nullable = false, unique = true)
   private String token;
 
   @Column(nullable = false)
   private UserStatus status;
 
+  public User() {
+  }
+
+  public User(String username, String password) {
+      this.username = username;
+      this.password = password;
+      this.status = UserStatus.ONLINE;
+      this.token = UUID.randomUUID().toString();
+    
+  }
+
   public Long getId() {
-    return id;
+    return UserID;
   }
 
   public void setId(Long id) {
-    this.id = id;
+    this.UserID = id;
   }
 
   public String getName() {
@@ -61,6 +77,14 @@ public class User implements Serializable {
     this.username = username;
   }
 
+  public String getPassword() {
+    return password;
+  }
+
+  public void setPassword(String password) {
+    this.password = password;
+  }
+
   public String getToken() {
     return token;
   }
@@ -76,4 +100,5 @@ public class User implements Serializable {
   public void setStatus(UserStatus status) {
     this.status = status;
   }
+  
 }

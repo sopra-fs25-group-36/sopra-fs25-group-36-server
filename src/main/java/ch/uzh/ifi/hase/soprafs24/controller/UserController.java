@@ -54,4 +54,48 @@ public class UserController {
     // convert internal representation of user back to API
     return DTOMapper.INSTANCE.convertEntityToUserGetDTO(createdUser);
   }
+
+  @PostMapping("/users/login")
+  @ResponseStatus(HttpStatus.ok)
+  @ResponseBody
+  public UserGetDTO loginUser(@RequestBody UserPostDTO userPostDTO){
+    //convert APU user to internal representation
+    User userInput =DTOMapper.INSTANCE.convertUserPostDTOEntity(userPostDTO);
+
+    //login user
+    User loginUser = userService.loginUser(userInput);
+    //covert internal representataion back to API
+    return DTOMapper.INSTANCE.convertEntityToUserGetDTO(loginUser);
+  }
+
+  @GetMapping("/users/{userID}")
+  @ResponseStatus(HttpStatus.OK)
+  @ResponseBody
+  @CrossOrigin
+  public UserGetDTO getUserById(@PathVariable("userID") Long userID, @RequestHeader("token") String token) {
+      //returns a user for a provided userID
+      this.userService.checkToken(token);
+      User userById = userService.getUserByUserID(userID);
+
+      return DTOMapper.INSTANCE.convertEntityToUserGetDTO(userById);
+  }
+
+  @PostMapping("/users/{userID}/logout")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  @ResponseBody
+  @CrossOrigin
+  public void logoutUser(@PathVariable("userID") Long userID, @RequestHeader("token") String token) {
+      this.userService.checkToken(token);
+      this.userService.logoutUser(userID);
+  }
+
+  @PostMapping("/{userId}/lobby")
+  @ResponseStatus(HttpStatus.CREATED)
+  public LobbyGetDTO createLobby(@PathVariable Long userID, @RequestBody LobbyPostDTO lobbyPostDTO) {
+      Lobby lobbyInput = DTOMapper.INSTANCE.convertLobbyPostDTOtoEntity(lobbyPostDTO);
+
+      Lobby createdLobby = lobbyService.createLobby(userID, lobbyInput);
+
+      return DTOMapper.INSTANCE.convertEntityToLobbyGetDTO(createdLobby);
+  }
 }

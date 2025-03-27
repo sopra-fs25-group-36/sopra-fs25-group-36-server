@@ -56,5 +56,12 @@ public class LobbyService {
             }
         }
     }
+
+    public Lobby addUserToLobby(Long lobbyId, Long userId) {
+        Lobby lobby = lobbyRepository.findById(lobbyId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Lobby not found"));
+        // Add the new user with a default ready status (false)
+        lobby.getPlayerReadyStatuses().put(userId, false);
+        return lobbyRepository.save(lobby);
+    }
 }
 

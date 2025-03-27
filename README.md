@@ -20,7 +20,7 @@ The following extensions can help you get started more easily:
 -   `vmware.vscode-spring-boot`
 -   `vscjava.vscode-spring-initializr`
 -   `vscjava.vscode-spring-boot-dashboard`
--   `vscjava.vscode-java-pack`
+-   `vscjava.vscode-java-pack``
 
 **Note:** You'll need to build the project first with Gradle, just click on the `build` command in the _Gradle Tasks_ extension. Then check the _Spring Boot Dashboard_ extension if it already shows `soprafs24` and hit the play button to start the server. If it doesn't show up, restart VS Code and check again.
 

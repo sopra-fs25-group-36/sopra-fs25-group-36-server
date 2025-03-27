@@ -50,5 +50,7 @@ public class LobbyController {
         Lobby lobby = lobbyService.getLobbyById(lobbyId);
         return DTOMapper.INSTANCE.convertEntityToLobbyGetDTO(lobby);
     }
+    
+    
 }
 

@@ -12,8 +12,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.Comparator;
 
 /**
  * User Service
@@ -48,6 +50,17 @@ public class UserService {
   public List<User> getUsers() {
     return this.userRepository.findAll();
   }
+
+  public User getUserByUserID(Long userID) {
+    User userByID = this.userRepository.findByUserID(userID);
+
+    if (userByID != null)
+        return userByID;
+    else {
+        String errorMessage = "User with userId " + userID + " was not found";
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, errorMessage);
+    }
+}
 
   public User createUser(User newUser) {
     newUser.setToken(UUID.randomUUID().toString());
@@ -111,4 +124,9 @@ public class UserService {
     userRepository.save(user);
     userRepository.flush();
   }
+//leader board
+      public List<User> leaderboard() {
+   
+
+    }
 }

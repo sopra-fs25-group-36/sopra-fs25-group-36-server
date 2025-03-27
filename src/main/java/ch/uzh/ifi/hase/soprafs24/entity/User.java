@@ -52,7 +52,7 @@ public class User implements Serializable {
       this.token = UUID.randomUUID().toString();
     
   }
-
+//sj: why are there name and also username?
   public Long getId() {
     return UserID;
   }
@@ -100,5 +100,7 @@ public class User implements Serializable {
   public void setStatus(UserStatus status) {
     this.status = status;
   }
-  
+
+
+
 }

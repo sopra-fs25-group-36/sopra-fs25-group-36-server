@@ -5,7 +5,23 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
-@Repository
+
+
+
+
+
+
+
+
+
+
+////
+//@Repository
+@Repository("gameRepository")
 public interface GameRepository extends JpaRepository<Game, Long> {
-    Optional<Game> findByLobbyId(Long lobbyId);
+   // Optional<Game> findByLobbyId(Long lobbyId);  
+   Game findByGameID(Long gameID);
 }
+
+
+

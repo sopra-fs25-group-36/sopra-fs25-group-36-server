@@ -25,66 +25,48 @@ public class GameController{
     }
 }
 
-@PostMapping("/games/create")
-@ResponseStatus(HttpStatus.CREATED)
-@ResponseBody
-public GameGetDTO createGame(@RequestBody GamePostDTO gamePostDTO, @RequestHeader("token") String token) {
-    // convert API user to internal representation
-    this.userService.checkAuthentication(token);
-\
-    // convert internal representation of user back to API
-    return DTOMapper.INSTANCE.convertGameDataToGameGetDTO(game.status());
-}
+// @PostMapping("/games/create")
+// @ResponseStatus(HttpStatus.CREATED)
+// @ResponseBody
+// public GameGetDTO createGame(@RequestBody GamePostDTO gamePostDTO, @RequestHeader("token") String token) {
+//     // convert API user to internal representation
+//     this.userService.checkAuthentication(token);
+
+//     // convert internal representation of user back to API
+//     return DTOMapper.INSTANCE.convertGameDataToGameGetDTO(game.status());
+// }
 
 
-    @GetMapping("/games/{gameID}")
-    @ResponseStatus(HttpStatus.OK)
-    @ResponseBody
-    public GameGetDTO getGameByID(@PathVariable("gameID") Long gameID, @RequestHeader("token") String token) {
-        this.userService.checkAuthentication(token);
+    // @GetMapping("/games/{gameID}")
+    // @ResponseStatus(HttpStatus.OK)
+    // @ResponseBody
+    // public GameGetDTO getGameByID(@PathVariable("gameID") Long gameID, @RequestHeader("token") String token) {
+    //     this.userService.checkAuthentication(token);
 
-        Game game = this.gameService.getGameByGameID(gameID);
+    //     Game game = this.gameService.getGameByGameID(gameID);
 
-        return DTOMapper.INSTANCE.convertGameDataToGameGetDTO(gameData);
-    }
+    //     return DTOMapper.INSTANCE.convertGameDataToGameGetDTO(gameData);
+    //}
 
-    @GetMapping("/games/{gameID}/status")
-    @ResponseStatus(HttpStatus.OK)
-    @ResponseBody
-    @CrossOrigin
-    public GameGetDTO getStatus(@PathVariable("gameID") Long gameID, @RequestHeader("token") String token) {
-        this.userService.checkAuthentication(token);
+    // @GetMapping("/games/{gameID}/status")
+    // @ResponseStatus(HttpStatus.OK)
+    // @ResponseBody
+    // @CrossOrigin
+    // public GameGetDTO getStatus(@PathVariable("gameID") Long gameID, @RequestHeader("token") String token) {
+    //     this.userService.checkAuthentication(token);
 
-        Game game = this.gameService.getGameByGameID(gameID);
+    //     Game game = this.gameService.getGameByGameID(gameID);
 
-        GameData gameData = game.status();
+    //     GameData gameData = game.status();
 
-        return DTOMapper.INSTANCE.convertGameDataToGameGetDTO(gameData);
-    }
+    //     return DTOMapper.INSTANCE.convertGameDataToGameGetDTO(gameData);
+    // }
 
-    @PostMapping("/games/{gameID}/start")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    @CrossOrigin
-    public void start(@PathVariable("gameID") Long gameID, @RequestHeader("token") String token)  {
-        this.userService.checkAuthentication(token);
+    // @PostMapping("/games/{gameID}/start")
+    // @ResponseStatus(HttpStatus.NO_CONTENT)
+    // @CrossOrigin
+    // public void start(@PathVariable("gameID") Long gameID, @RequestHeader("token") String token)  {
+    //     this.userService.checkAuthentication(token);
 
-        this.gameService.start(gameID, token);
-    }
-
-///////
-@RequestMapping("/games")
-public class GameController {
-
-    private final GameService gameService;
-
-    @Autowired
-    public GameController(GameService gameService) {
-        this.gameService = gameService;
-    }
-//Can we change the name to gameid?
-    @PostMapping("/start/{lobbyId}")
-    public ResponseEntity<Game> startGame(@PathVariable Long lobbyId) {
-        Game game = gameService.tryStartGame(lobbyId);
-        return new ResponseEntity<>(game, HttpStatus.CREATED);
-    }
-}
+    //     this.gameService.start(gameID, token);
+   // }

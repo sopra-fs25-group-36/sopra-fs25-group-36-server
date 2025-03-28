@@ -25,7 +25,7 @@ public class User implements Serializable {
 
   @Id
   @GeneratedValue
-  private Long UserID;
+  private Long id;
 
   @Column(nullable = false)
   private String name;
@@ -54,11 +54,11 @@ public class User implements Serializable {
   }
 //sj: why are there name and also username?
   public Long getId() {
-    return UserID;
+    return id;
   }
 
   public void setId(Long id) {
-    this.UserID = id;
+    this.id = id;
   }
 
   public String getName() {

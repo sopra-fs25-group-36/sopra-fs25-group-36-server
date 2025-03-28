@@ -27,11 +27,13 @@ public class UserController {
 
   private final UserService userService;
   private final LobbyService lobbyService;
+  
   UserController(UserService userService, LobbyService lobbyService) {
-    this.userService = userService;
-    this.lobbyService = lobbyService;
+  this.userService = userService;
+  this.lobbyService = lobbyService;
   }
-  }
+  
+  
 
   @GetMapping("/users")
   @ResponseStatus(HttpStatus.OK)
@@ -83,7 +85,7 @@ public class UserController {
   public UserGetDTO getUserById(@PathVariable("userID") Long userID, @RequestHeader("token") String token) {
       //returns a user for a provided userID
       this.userService.checkAuthentication(token);
-      User userById = userService.getUserByUserID(userID);
+      User userById = userService.getUserById(userID);
 
       return DTOMapper.INSTANCE.convertEntityToUserGetDTO(userById);
   }
@@ -107,22 +109,4 @@ public class UserController {
 
       return DTOMapper.INSTANCE.convertEntityToLobbyGetDTO(createdLobby);
   }
-
-      @GetMapping("/users/leaderboard")
-    @ResponseStatus(HttpStatus.OK)
-    @ResponseBody
-    @CrossOrigin
-    public List<UserGetDTO> leaderboard(@RequestHeader("token") String token) {
-        this.userService.checkAuthentication(token);
-
-        List<User> users = userService.leaderboard();
-        List<UserGetDTO> userGetDTOs = new ArrayList<>();
-
-        // convert each user to the API representation
-        for (User user : users) {
-            userGetDTOs.add(DTOMapper.INSTANCE.convertEntityToUserGetDTO(user));
-        }
-        return userGetDTOs;
-    }
-}
 }

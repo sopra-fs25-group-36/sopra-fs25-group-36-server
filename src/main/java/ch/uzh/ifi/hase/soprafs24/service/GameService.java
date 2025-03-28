@@ -71,18 +71,6 @@ public class GameService {
 
         return game;
     }
-
-    public Game getGameByGameID(Long gameID) {
-        //find the game by gameID in DBS
-        Game gameByID = this.gameRepository.findByGameID(gameID);
-// if game exist, return it
-        if (gameByID != null)
-            return gameByID;
-        else {
-            String errorMessage = "Game with gameId " + gameID + " was not found";
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, errorMessage);
-        }
-    }
 }
 
 

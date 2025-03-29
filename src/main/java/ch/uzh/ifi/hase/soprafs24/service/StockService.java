@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 public class StockService {
 
     private static final String BASE_URL = "https://www.alphavantage.co/query";
-    private static final String API_KEY = System.getenv("ALPHAVANTAGE_API_KEY");
+    private static final String API_KEY = System.getenv("API_KEY"); // Ensure you set your API key in the environment variables
 
 
     public String fetchStockData(String stockSymbol) throws IOException {

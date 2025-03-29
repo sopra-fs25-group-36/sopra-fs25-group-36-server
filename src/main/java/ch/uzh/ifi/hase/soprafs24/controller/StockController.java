@@ -21,6 +21,16 @@ public class StockController {
         this.stockService = stockService;
     }
 
+    @GetMapping("/{symbol}/return")
+    public ResponseEntity<String> getStockReturn(@PathVariable String symbol) {
+        try {
+            Double stockReturn = stockService.fetchStockReturn(symbol);
+            return ResponseEntity.ok("Stock return: " + (stockReturn * 100) + "%");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error: " + e.getMessage());
+        }
+    }
+
     @GetMapping("/{symbol}")
     public ResponseEntity<String> getStockData(@PathVariable String symbol) {
         try {

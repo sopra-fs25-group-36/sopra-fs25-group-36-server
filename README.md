@@ -116,3 +116,21 @@ First, pull (download) the image with the following command, replacing your user
 Then, run the image in a container with the following command, again replacing _<dockerhub_username>_ and _<dockerhub_repo_name>_ accordingly.
 
 ```docker run -p 3000:3000 <dockerhub_username>/<dockerhub_repo_name>```
+
+
+# Env Variable for API KEY 
+
+Windows (PowerShell):
+```shell
+$env:ALPHAVANTAGE_API_KEY="YOUR_SECRET_API_KEY"
+```
+
+Linux/macOS (Terminal):
+```
+export ALPHAVANTAGE_API_KEY=YOUR_SECRET_API_KEY
+```
+
+Windows (Command Prompt):
+```shell
+set ALPHAVANTAGE_API_KEY=YOUR_SECRET_API_KEY
+```

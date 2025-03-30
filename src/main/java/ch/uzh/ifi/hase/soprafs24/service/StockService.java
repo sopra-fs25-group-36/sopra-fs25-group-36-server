@@ -18,6 +18,9 @@ import java.util.Map;
 import org.json.JSONObject;
 import org.springframework.stereotype.Service;
 
+import ch.uzh.ifi.hase.soprafs24.game.GameManager;
+import ch.uzh.ifi.hase.soprafs24.game.InMemoryGameRegistry;
+
 @Service
 public class StockService {
 
@@ -124,5 +127,15 @@ public class StockService {
         }
 
         return filename;
+    }
+
+    public List<Map<String, Double>> getStockPrice(Long gameId, String symbol) {
+        GameManager game = InMemoryGameRegistry.getGame(gameId);
+
+        if (game == null) {
+            throw new IllegalArgumentException("Game with ID " + gameId + " not found.");
+        }
+
+        return game.getStockTimeline();
     }
 }

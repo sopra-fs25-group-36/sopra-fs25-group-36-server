@@ -98,7 +98,9 @@ public class GameManager {
         }, 5, 5, TimeUnit.MINUTES); // wait 5 min before first round, then every 5 min
     }
 
-
+    public List<Map<String, Double>> getStockTimeline() {
+        return stockTimeline;
+    }
 
 
 }

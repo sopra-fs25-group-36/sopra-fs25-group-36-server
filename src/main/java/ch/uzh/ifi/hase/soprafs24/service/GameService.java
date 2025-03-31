@@ -1,13 +1,10 @@
-// File: GameService.java
 package ch.uzh.ifi.hase.soprafs24.service;
-
 import ch.uzh.ifi.hase.soprafs24.entity.Game;
 import ch.uzh.ifi.hase.soprafs24.entity.Lobby;
 import ch.uzh.ifi.hase.soprafs24.game.GameManager;
 import ch.uzh.ifi.hase.soprafs24.game.InMemoryGameRegistry;
 import ch.uzh.ifi.hase.soprafs24.repository.GameRepository;
 import ch.uzh.ifi.hase.soprafs24.repository.LobbyRepository;
-//import ch.uzh.ifi.hase.soprafs24.service.StockService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -70,6 +67,20 @@ public class GameService {
         lobbyRepository.save(lobby);
 
         return game;
+    }
+
+    //Retrieve the GameManager for a specific gameId.
+    public GameManager getGame(Long gameId) {
+        GameManager game = InMemoryGameRegistry.getGame(gameId);
+        if (game == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Game not found for id: " + gameId);
+        }
+        return game;
+    }
+
+    //Check whether a game is currently active in memory.
+    public boolean isGameActive(Long gameId) {
+        return InMemoryGameRegistry.isGameActive(gameId);
     }
 }
 

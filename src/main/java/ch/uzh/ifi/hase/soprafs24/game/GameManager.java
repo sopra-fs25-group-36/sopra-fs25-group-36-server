@@ -6,18 +6,20 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import ch.uzh.ifi.hase.soprafs24.rest.dto.TransactionRequestDTO;
+
 public class GameManager {
 
     private final Long gameId;
     private final Map<Long, PlayerState> playerStates;
     private final List<Map<String, Double>> stockTimeline;
+    private List<LeaderBoardEntry> leaderBoard = new ArrayList<>();
     private int currentRound;
     private boolean active;
     private final LocalDateTime startedAt;
 
-    //for timing each round, 2mins
+    // for timing each round, 2mins
     private final ScheduledExecutorService roundScheduler = Executors.newSingleThreadScheduledExecutor();
-
 
     public GameManager(Long gameId, List<Map<String, Double>> stockTimeline) {
         this.gameId = gameId;
@@ -32,28 +34,43 @@ public class GameManager {
         playerStates.put(userId, new PlayerState(userId));
     }
 
-    public void submitTransaction(Long userId, TransactionRequest tx) {
+    public void submitTransaction(Long userId, TransactionRequestDTO tx) {
         PlayerState state = playerStates.get(userId);
         if (state != null && isActive()) {
             state.applyTransaction(tx, getCurrentStockPrices());
         }
     }
 
-//    public Map<String, Double> getCurrentStockPrices() {
-//        return stockTimeline.get(currentRound - 1);
-//    }
     public Map<String, Double> getCurrentStockPrices() {
         // Return a mutable copy to avoid accidental immutability
         return new HashMap<>(stockTimeline.get(currentRound - 1));
-}
+    }
 
-//
+    public List<LeaderBoardEntry> getLeaderBoard() {
+        return leaderBoard;
+    }
+
     public void nextRound() {
+        recalculateLeaderboard();
         if (currentRound < 10) {
             currentRound++;
         } else {
             endGame();
         }
+    }
+
+    // update the leaderboard
+    private void recalculateLeaderboard() {
+        List<LeaderBoardEntry> updatedBoard = new ArrayList<>();
+        for (Map.Entry<Long, PlayerState> entry : playerStates.entrySet()) {
+            Long userId = entry.getKey();
+            PlayerState player = entry.getValue();
+            double total = player.calculateTotalAssets(getCurrentStockPrices());
+            updatedBoard.add(new LeaderBoardEntry(userId, total));
+        }
+
+        updatedBoard.sort((a, b) -> Double.compare(b.getTotalAssets(), a.getTotalAssets()));
+        this.leaderBoard = updatedBoard;
     }
 
     public void endGame() {
@@ -80,6 +97,7 @@ public class GameManager {
     public LocalDateTime getStartedAt() {
         return startedAt;
     }
+
     public void scheduleRounds() {
         roundScheduler.scheduleAtFixedRate(() -> {
             if (!active) {
@@ -101,6 +119,5 @@ public class GameManager {
     public List<Map<String, Double>> getStockTimeline() {
         return stockTimeline;
     }
-
 
 }

@@ -47,6 +47,13 @@ public class StockController {
         }
     }
 
+    @PostMapping("/fetch/popular-static")
+    public ResponseEntity<String> fetchStaticPopularSymbols() {
+        stockService.fetchKnownPopularStocks();
+        return ResponseEntity.ok("Fetched and saved data for known popular stocks.");
+    }
+    
+
     @PostMapping("/{symbol}/save")
     public ResponseEntity<String> saveStockData(@PathVariable String symbol) {
         try {
@@ -75,4 +82,5 @@ public class StockController {
                 })
                 .toList();
     }
+
 }

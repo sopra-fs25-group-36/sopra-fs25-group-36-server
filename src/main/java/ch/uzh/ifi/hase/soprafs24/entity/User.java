@@ -18,13 +18,13 @@ import java.util.UUID;
  * the primary key
  */
 @Entity
-@Table(name = "USER")
+@Table(name = "USERS")
 public class User implements Serializable {
 
   private static final long serialVersionUID = 1L;
 
   @Id
-  @GeneratedValue
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
   @Column(nullable = false)
@@ -33,7 +33,7 @@ public class User implements Serializable {
   @Column(nullable = false, unique = true)
   private String username;
 
-  @Column(nullable =false)
+  @Column(nullable = false)
   private String password;
 
   @Column(nullable = false, unique = true)
@@ -46,13 +46,13 @@ public class User implements Serializable {
   }
 
   public User(String username, String password) {
-      this.username = username;
-      this.password = password;
-      this.status = UserStatus.ONLINE;
-      this.token = UUID.randomUUID().toString();
-    
+    this.username = username;
+    this.password = password;
+    this.status = UserStatus.ONLINE;
+    this.token = UUID.randomUUID().toString();
+
   }
-//sj: why are there name and also username?
+
   public Long getId() {
     return id;
   }
@@ -100,7 +100,5 @@ public class User implements Serializable {
   public void setStatus(UserStatus status) {
     this.status = status;
   }
-
-
 
 }

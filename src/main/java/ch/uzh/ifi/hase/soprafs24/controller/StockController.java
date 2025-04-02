@@ -27,25 +27,25 @@ public class StockController {
         this.stockService = stockService;
     }
 
-    @GetMapping("/{symbol}/return")
-    public ResponseEntity<String> getStockReturn(@PathVariable String symbol) {
-        try {
-            Double stockReturn = stockService.fetchStockReturn(symbol);
-            return ResponseEntity.ok("Stock return: " + (stockReturn * 100) + "%");
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body("Error: " + e.getMessage());
-        }
-    }
+    // @GetMapping("/{symbol}/return")
+    // public ResponseEntity<String> getStockReturn(@PathVariable String symbol) {
+    //     try {
+    //         Double stockReturn = stockService.fetchStockReturn(symbol);
+    //         return ResponseEntity.ok("Stock return: " + (stockReturn * 100) + "%");
+    //     } catch (Exception e) {
+    //         return ResponseEntity.status(500).body("Error: " + e.getMessage());
+    //     }
+    // }
 
-    @GetMapping("/{symbol}")
-    public ResponseEntity<String> getStockData(@PathVariable String symbol) {
-        try {
-            String stockData = stockService.fetchStockData(symbol);
-            return ResponseEntity.ok(stockData);
-        } catch (IOException e) {
-            return ResponseEntity.status(500).body("Error fetching stock data: " + e.getMessage());
-        }
-    }
+    // @GetMapping("/{symbol}")
+    // public ResponseEntity<String> getStockData(@PathVariable String symbol) {
+    //     try {
+    //         String stockData = stockService.fetchStockData(symbol);
+    //         return ResponseEntity.ok(stockData);
+    //     } catch (IOException e) {
+    //         return ResponseEntity.status(500).body("Error fetching stock data: " + e.getMessage());
+    //     }
+    // }
 
     @PostMapping("/fetch/popular-static")
     public ResponseEntity<String> fetchStaticPopularSymbols() {
@@ -54,16 +54,16 @@ public class StockController {
     }
     
 
-    @PostMapping("/{symbol}/save")
-    public ResponseEntity<String> saveStockData(@PathVariable String symbol) {
-        try {
-            String stockData = stockService.fetchStockData(symbol);
-            String filename = stockService.saveStockData(symbol, stockData);
-            return ResponseEntity.ok("Stock data saved to file: " + filename);
-        } catch (IOException e) {
-            return ResponseEntity.status(500).body("Error saving stock data: " + e.getMessage());
-        }
-    }
+    // @PostMapping("/{symbol}/save")
+    // public ResponseEntity<String> saveStockData(@PathVariable String symbol) {
+    //     try {
+    //         String stockData = stockService.fetchStockData(symbol);
+    //         String filename = stockService.saveStockData(symbol, stockData);
+    //         return ResponseEntity.ok("Stock data saved to file: " + filename);
+    //     } catch (IOException e) {
+    //         return ResponseEntity.status(500).body("Error saving stock data: " + e.getMessage());
+    //     }
+    // }
 
     // Get price of a specific stock at a specific round
     @GetMapping("/{gameID}/stocks")

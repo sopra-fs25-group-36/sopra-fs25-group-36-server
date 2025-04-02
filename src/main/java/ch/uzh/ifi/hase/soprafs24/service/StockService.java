@@ -40,88 +40,89 @@ public class StockService {
         this.API_KEY = API_KEY;
     }
 
-    private static final String BASE_URL = "https://www.alphavantage.co/query";
+    // private static final String BASE_URL = "https://www.alphavantage.co/query";
     private String API_KEY;
     // // Uses environment variable
-    private final Map<String, List<Double>> stockMemory = new HashMap<>();
-    private int roundCounter = 0;
+    // private final Map<String, List<Double>> stockMemory = new HashMap<>();
+    // private int roundCounter = 0;
 
-    public Double fetchStockReturn(String stockSymbol) throws Exception {
-        Map<LocalDate, Double> closingPrices = fetchTwoDaysClosingPricesFromAPI(stockSymbol);
-        if (closingPrices.size() < 2) {
-            throw new Exception("Not enough data to calculate returns.");
-        }
+    //     /// julius
+    // public Double fetchStockReturn(String stockSymbol) throws Exception {
+    //     Map<LocalDate, Double> closingPrices = fetchTwoDaysClosingPricesFromAPI(stockSymbol);
+    //     if (closingPrices.size() < 2) {
+    //         throw new Exception("Not enough data to calculate returns.");
+    //     }
 
-        List<Double> prices = new ArrayList<>(closingPrices.values());
-        double previousClose = prices.get(0);
-        double latestClose = prices.get(1);
+    //     List<Double> prices = new ArrayList<>(closingPrices.values());
+    //     double previousClose = prices.get(0);
+    //     double latestClose = prices.get(1);
 
-        // Store in memory
-        stockMemory.put(stockSymbol, prices);
-        return (latestClose - previousClose) / previousClose;
+    //     // Store in memory
+    //     stockMemory.put(stockSymbol, prices);
+    //     return (latestClose - previousClose) / previousClose;
 
-    }
+    // }
     /// julius
 
-    private Map<LocalDate, Double> fetchTwoDaysClosingPricesFromAPI(String stockSymbol) throws Exception {
-        String urlString = String.format("%s?function=TIME_SERIES_DAILY&symbol=%s&outputsize=compact&apikey=%s",
-                BASE_URL, stockSymbol, API_KEY);
+    // private Map<LocalDate, Double> fetchTwoDaysClosingPricesFromAPI(String stockSymbol) throws Exception {
+    //     String urlString = String.format("%s?function=TIME_SERIES_DAILY&symbol=%s&outputsize=compact&apikey=%s",
+    //             BASE_URL, stockSymbol, API_KEY);
 
-        URL url = new URL(urlString);
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setRequestMethod("GET");
+    //     URL url = new URL(urlString);
+    //     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+    //     connection.setRequestMethod("GET");
 
-        if (connection.getResponseCode() != 200) {
-            throw new Exception("Failed to fetch stock data.");
-        }
+    //     if (connection.getResponseCode() != 200) {
+    //         throw new Exception("Failed to fetch stock data.");
+    //     }
 
-        BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-        StringBuilder response = new StringBuilder();
-        String inputLine;
-        while ((inputLine = in.readLine()) != null) {
-            response.append(inputLine);
-        }
-        in.close();
+    //     BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+    //     StringBuilder response = new StringBuilder();
+    //     String inputLine;
+    //     while ((inputLine = in.readLine()) != null) {
+    //         response.append(inputLine);
+    //     }
+    //     in.close();
 
-        JSONObject jsonObject = new JSONObject(response.toString());
-        JSONObject timeSeries = jsonObject.getJSONObject("Time Series (Daily)");
+    //     JSONObject jsonObject = new JSONObject(response.toString());
+    //     JSONObject timeSeries = jsonObject.getJSONObject("Time Series (Daily)");
 
-        List<String> dates = new ArrayList<>(timeSeries.keySet());
-        Collections.sort(dates, Collections.reverseOrder());
+    //     List<String> dates = new ArrayList<>(timeSeries.keySet());
+    //     Collections.sort(dates, Collections.reverseOrder());
 
-        Map<LocalDate, Double> closingPrices = new LinkedHashMap<>();
-        for (int i = 0; i < Math.min(2, dates.size()); i++) {
-            String date = dates.get(i);
-            double closePrice = timeSeries.getJSONObject(date).getDouble("4. close");
-            closingPrices.put(LocalDate.parse(date, DateTimeFormatter.ISO_DATE), closePrice);
-        }
+    //     Map<LocalDate, Double> closingPrices = new LinkedHashMap<>();
+    //     for (int i = 0; i < Math.min(2, dates.size()); i++) {
+    //         String date = dates.get(i);
+    //         double closePrice = timeSeries.getJSONObject(date).getDouble("4. close");
+    //         closingPrices.put(LocalDate.parse(date, DateTimeFormatter.ISO_DATE), closePrice);
+    //     }
 
-        return closingPrices;
-    }
+    //     return closingPrices;
+    // }
 
     /// julius
-    public String fetchStockData(String stockSymbol) throws IOException {
-        String urlString = String.format("%s?function=TIME_SERIES_DAILY&symbol=%s&outputsize=compact&apikey=%s",
-                BASE_URL, stockSymbol, API_KEY);
+    // public String fetchStockData(String stockSymbol) throws IOException {
+    //     String urlString = String.format("%s?function=TIME_SERIES_DAILY&symbol=%s&outputsize=compact&apikey=%s",
+    //             BASE_URL, stockSymbol, API_KEY);
 
-        URL url = new URL(urlString);
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setRequestMethod("GET");
+    //     URL url = new URL(urlString);
+    //     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+    //     connection.setRequestMethod("GET");
 
-        if (connection.getResponseCode() != 200) {
-            throw new IOException("Failed to fetch stock data. HTTP Response Code: " + connection.getResponseCode());
-        }
+    //     if (connection.getResponseCode() != 200) {
+    //         throw new IOException("Failed to fetch stock data. HTTP Response Code: " + connection.getResponseCode());
+    //     }
 
-        BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-        StringBuilder response = new StringBuilder();
-        String inputLine;
-        while ((inputLine = in.readLine()) != null) {
-            response.append(inputLine);
-        }
-        in.close();
+    //     BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+    //     StringBuilder response = new StringBuilder();
+    //     String inputLine;
+    //     while ((inputLine = in.readLine()) != null) {
+    //         response.append(inputLine);
+    //     }
+    //     in.close();
 
-        return response.toString();
-    }
+    //     return response.toString();
+    // }
 
     // new function//Seung
     private static final List<String> POPULAR_SYMBOLS = List.of(
@@ -184,21 +185,21 @@ public class StockService {
 
     ////////////////
 
-    public String saveStockData(String stockSymbol, String jsonData) throws IOException {
-        LocalDate today = LocalDate.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
-        String filename = stockSymbol + "_daily_" + today.format(formatter) + ".json";
+    // public String saveStockData(String stockSymbol, String jsonData) throws IOException {
+    //     LocalDate today = LocalDate.now();
+    //     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+    //     String filename = stockSymbol + "_daily_" + today.format(formatter) + ".json";
 
-        JSONObject jsonObject = new JSONObject(jsonData);
-        String prettyJson = jsonObject.toString(4);
+    //     JSONObject jsonObject = new JSONObject(jsonData);
+    //     String prettyJson = jsonObject.toString(4);
 
-        try (FileWriter file = new FileWriter(filename)) {
-            file.write(prettyJson);
-            file.flush();
-        }
+    //     try (FileWriter file = new FileWriter(filename)) {
+    //         file.write(prettyJson);
+    //         file.flush();
+    //     }
 
-        return filename;
-    }
+    //     return filename;
+    // }
 
     public List<Map<String, Double>> getStockPrice(Long gameId, String symbol) {
         GameManager game = InMemoryGameRegistry.getGame(gameId);

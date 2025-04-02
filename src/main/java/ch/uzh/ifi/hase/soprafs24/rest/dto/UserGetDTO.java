@@ -4,22 +4,19 @@ import ch.uzh.ifi.hase.soprafs24.constant.UserStatus;
 
 public class UserGetDTO {
 
-  private Long userID;
+  private Long id;
   private String name;
-  private String token;
   private String username;
   private UserStatus status;
 
   public Long getId() {
-    return userID;
+    return id;
   }
 
   public void setId(Long id) {
-    this.userID = id;
+    this.id = id;
   }
 
-
-  //but why do we need a name?
   public String getName() {
     return name;
   }
@@ -36,21 +33,11 @@ public class UserGetDTO {
     this.username = username;
   }
 
-
   public UserStatus getStatus() {
     return status;
   }
+
   public void setStatus(UserStatus status) {
     this.status = status;
-  }
-
-
-
-  public String getToken() {
-    return token;
-  }
-
-  public void setToken(String token) {
-    this.token = token;
   }
 }

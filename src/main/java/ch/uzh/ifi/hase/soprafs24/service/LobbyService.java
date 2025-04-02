@@ -24,7 +24,7 @@ public class LobbyService {
     /**
      * Creates a new lobby for the specified creator.
      *
-     * @param userId     The ID of the user creating the lobby.
+     * @param userId The ID of the user creating the lobby.
      * @param lobbyInput A Lobby object built from the DTO (LobbyPostDTO), initially empty.
      * @return The persisted Lobby entity.
      */
@@ -38,12 +38,12 @@ public class LobbyService {
         // The @PrePersist method in the Lobby entity will automatically set createdAt and active.
         return lobbyRepository.save(lobbyInput);
     }
-
+    
     public Lobby getLobbyById(Long lobbyId) {
         return lobbyRepository.findById(lobbyId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Lobby not found"));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Lobby not found"));
     }
-
+    
     @Scheduled(fixedRate = 1000)
     public void deactivateExpiredLobbies() {
         List<Lobby> activeLobbies = lobbyRepository.findByActiveTrue();
@@ -63,7 +63,5 @@ public class LobbyService {
         lobby.getPlayerReadyStatuses().put(userId, false);
         return lobbyRepository.save(lobby);
     }
-
-    // need another class to start the session automatically when all users are ready
 }
 

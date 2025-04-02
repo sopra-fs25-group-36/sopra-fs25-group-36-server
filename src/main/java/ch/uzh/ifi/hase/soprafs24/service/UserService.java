@@ -12,10 +12,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.Comparator;
 
 /**
  * User Service
@@ -37,22 +35,8 @@ public class UserService {
     this.userRepository = userRepository;
   }
 
-  //
-  public void checkAuthentication(String token) {
-    if (token != null && !token.isEmpty() && userRepository.findByToken(token) != null) {
-      return;
-    }
-
-    throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authorization header is missing or incorrect");
-  }
-
   public List<User> getUsers() {
     return this.userRepository.findAll();
-  }
-
-  public User getUserById(Long id) {
-    return userRepository.findById(id)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found" + id));
   }
 
   public User createUser(User newUser) {
@@ -92,30 +76,4 @@ public class UserService {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, String.format(baseErrorMessage, "name", "is"));
     }
   }
-
-  public User loginUser(String username, String password) {
-    User user = userRepository.findByUsername(username);
-    if (user == null) {
-      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Username or password is incorrect");
-    }
-    if (user.getPassword().equals(password)) {
-      user.setStatus(UserStatus.ONLINE);
-      User savedUser = userRepository.save(user);
-      userRepository.flush();
-      return savedUser;
-    } else {
-      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Username or password is incorrect");
-    }
-  }
-
-  public void logoutUser(String token) {
-    User user = userRepository.findByToken(token);
-    if (user == null) {
-      new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
-    }
-    user.setStatus(UserStatus.OFFLINE);
-    userRepository.save(user);
-    userRepository.flush();
-  }
-
 }

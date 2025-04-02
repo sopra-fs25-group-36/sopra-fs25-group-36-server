@@ -44,5 +44,3 @@ local.properties
 .xcode*
 
 /bin
-
-.env

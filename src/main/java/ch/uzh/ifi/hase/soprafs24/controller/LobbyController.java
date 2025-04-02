@@ -50,8 +50,5 @@ public class LobbyController {
         Lobby lobby = lobbyService.getLobbyById(lobbyId);
         return DTOMapper.INSTANCE.convertEntityToLobbyGetDTO(lobby);
     }
-    
-    // From Shirley ;
-    // I need the gameID to be auto created and get gameID when i do a ("/lobbies/{lobbyId}/start") mapping
 }
 

@@ -111,4 +111,3 @@ public class Lobby implements Serializable {
         this.timeLimitSeconds = timeLimitSeconds;
     }
 }
-

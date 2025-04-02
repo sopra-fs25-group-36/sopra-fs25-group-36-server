@@ -210,4 +210,28 @@ public class StockService {
 
         return game.getStockTimeline();
     }
+
+    // get stock timeline
+    public List<Map<String, Double>> getStockTimelineFromDatabase() {
+        LocalDate startDate = stockRepository.findRandomStartDateWith10Days();
+        List<Stock> rawData = stockRepository.findStocksFromStartDate(startDate);
+
+        // Group by date (in order), then by symbol → price
+        Map<LocalDate, Map<String, Double>> byDate = new LinkedHashMap<>();
+
+        for (Stock stock : rawData) {
+            LocalDate date = stock.getDate();
+
+            byDate.putIfAbsent(date, new HashMap<>());
+            byDate.get(date).put(stock.getSymbol(), stock.getPrice());
+
+            // Stop after collecting 10 distinct dates
+            if (byDate.size() == 10) {
+                break;
+            }
+        }
+
+        return new ArrayList<>(byDate.values()); // List<Map<String, Double>>
+    }
+
 }

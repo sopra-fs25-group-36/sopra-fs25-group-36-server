@@ -1,12 +1,19 @@
 package ch.uzh.ifi.hase.soprafs24.game;
 
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
 
+//@Entity
 public class Transaction {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private String stockId;
     private int quantity;
     private double price;
     private String type; // "BUY" or "SELL"
-
+    public Transaction() {} // JPA requires a no-arg constructor
     public Transaction(String stockId, int quantity, double price, String type) {
         this.stockId = stockId;
         this.quantity = quantity;

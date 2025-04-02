@@ -9,6 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import ch.uzh.ifi.hase.soprafs24.service.StockService;
+import org.springframework.web.server.ResponseStatusException;
+
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,13 +23,14 @@ public class GameService {
 
     private final LobbyRepository lobbyRepository;
     private final GameRepository gameRepository;
-//    private final StockService stockService;
+    private final StockService stockService;
 
     @Autowired
-    public GameService(LobbyRepository lobbyRepository, GameRepository gameRepository) {
+    public GameService(LobbyRepository lobbyRepository, GameRepository gameRepository, StockService stockService) {
         this.lobbyRepository = lobbyRepository;
         this.gameRepository = gameRepository;
 //        this.stockService = stockService;
+        this.stockService = stockService;
     }
 
     public Game tryStartGame(Long lobbyId) {
@@ -47,11 +51,16 @@ public class GameService {
         game.setLobbyId(lobbyId);
         gameRepository.save(game);
 
-        // Generate stock timeline, currently it is a placeholder
-        List<Map<String, Double>> stockTimeline = new ArrayList<>();
-        Map<String, Double> prices = new HashMap<>();
-        prices.put("AAPL", 100.0);
-        stockTimeline.add(prices);
+        // Generate stock timeline
+        List<Map<String, Double>> stockTimeline = stockService.getStockTimelineFromDatabase();
+        //check if it is right by printing to console
+        System.out.println("===== Stock Timeline for Game =====");
+        int day = 1;
+        for (Map<String, Double> snapshot : stockTimeline) {
+            System.out.println("Day " + day++ + ":");
+            snapshot.forEach((symbol, price) -> System.out.println("  " + symbol + ": " + price));
+        }
+        System.out.println("===================================");
 
         // Create and register GameManager
         GameManager gameManager = new GameManager(game.getId(), stockTimeline);

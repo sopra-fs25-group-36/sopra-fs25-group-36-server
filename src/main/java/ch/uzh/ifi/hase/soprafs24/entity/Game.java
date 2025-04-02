@@ -3,10 +3,13 @@ package ch.uzh.ifi.hase.soprafs24.entity;
 import javax.persistence.GeneratedValue;
 import java.io.Serializable;
 import ch.uzh.ifi.hase.soprafs24.constant.UserStatus;
+import ch.uzh.ifi.hase.soprafs24.game.Transaction;
 
 import javax.persistence.*;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "GAME")
@@ -77,4 +80,16 @@ public class Game implements Serializable {
     public void setStartedAt(LocalDateTime startedAt) {
         this.startedAt = startedAt;
     }
+
+//    @OneToMany(mappedBy = "game", cascade = CascadeType.ALL, orphanRemoval = true)
+//    private List<Transaction> transactions = new ArrayList<>();
+
+//    public List<Transaction> getTransactions() {
+//        return transactions;
+//    }
+//
+//    public void addTransaction(Transaction txn) {
+//        transactions.add(txn);
+//    }
+
 }

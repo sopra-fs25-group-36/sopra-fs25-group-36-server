@@ -2,6 +2,8 @@ package ch.uzh.ifi.hase.soprafs24.repository;
 
 import ch.uzh.ifi.hase.soprafs24.entity.Stock;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
@@ -21,4 +23,8 @@ public interface StockRepository extends JpaRepository<Stock, Long> {
 
     // Get all prices for a symbol in a time range
     List<Stock> findBySymbolAndDateBetween(String symbol, LocalDate start, LocalDate end);
+
+    @Query(value = "SELECT * FROM stock WHERE symbol = :symbol ORDER BY date LIMIT :limit OFFSET :offset", nativeQuery = true)
+    List<Stock> findBySymbolWithLimitOffset(@Param("symbol") String symbol, @Param("offset") int offset,
+            @Param("limit") int limit);
 }

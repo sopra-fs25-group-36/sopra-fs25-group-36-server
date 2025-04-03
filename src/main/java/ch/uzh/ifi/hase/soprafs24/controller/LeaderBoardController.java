@@ -1,6 +1,5 @@
 package ch.uzh.ifi.hase.soprafs24.controller;
 import ch.uzh.ifi.hase.soprafs24.service.GameService;
-import ch.uzh.ifi.hase.soprafs24.service.UserService;
 import ch.uzh.ifi.hase.soprafs24.game.GameManager;
 import ch.uzh.ifi.hase.soprafs24.game.LeaderBoardEntry;
 
@@ -9,8 +8,6 @@ import org.springframework.web.bind.annotation.*;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.LeaderBoardEntryGetDTO;
 import java.util.List;
 import java.util.ArrayList;
-import org.springframework.http.HttpStatus; 
-
 
 
 @RestController

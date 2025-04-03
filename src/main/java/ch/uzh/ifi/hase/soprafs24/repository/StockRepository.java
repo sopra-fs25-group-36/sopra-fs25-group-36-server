@@ -36,14 +36,19 @@ public interface StockRepository extends JpaRepository<Stock, Long> {
     LIMIT 1
 """, nativeQuery = true)
     LocalDate findRandomStartDateWith10Days();
-
-    // Method to fetch the database data into repository
     @Query(value = """
     SELECT * FROM stock 
-    WHERE date >= :startDate 
+    WHERE date IN (
+        SELECT DISTINCT date 
+        FROM stock 
+        WHERE date >= :startDate 
+        ORDER BY date ASC 
+        LIMIT 10
+    )
     ORDER BY date ASC
 """, nativeQuery = true)
-    List<Stock> findStocksFromStartDate(@Param("startDate") LocalDate startDate);
+    List<Stock> findStocksForTenDays(@Param("startDate") LocalDate startDate);
+
 
     @Query(value = "SELECT * FROM stock WHERE symbol = :symbol ORDER BY date LIMIT :limit OFFSET :offset", nativeQuery = true)
     List<Stock> findBySymbolWithLimitOffset(@Param("symbol") String symbol, @Param("offset") int offset,

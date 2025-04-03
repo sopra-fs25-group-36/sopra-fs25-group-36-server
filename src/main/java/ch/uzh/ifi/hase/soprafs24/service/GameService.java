@@ -13,10 +13,8 @@ import ch.uzh.ifi.hase.soprafs24.service.StockService;
 import org.springframework.web.server.ResponseStatusException;
 
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.time.LocalDate;
+import java.util.*;
 
 @Service
 public class GameService {
@@ -52,18 +50,39 @@ public class GameService {
         gameRepository.save(game);
 
         // Generate stock timeline
-        List<Map<String, Double>> stockTimeline = stockService.getStockTimelineFromDatabase();
+        LinkedHashMap<LocalDate, Map<String, Double>> timeline = stockService.getStockTimelineFromDatabase();
         //check if it is right by printing to console
         System.out.println("===== Stock Timeline for Game =====");
         int day = 1;
-        for (Map<String, Double> snapshot : stockTimeline) {
-            System.out.println("Day " + day++ + ":");
+        for (Map.Entry<LocalDate, Map<String, Double>> entry : timeline.entrySet()) {
+            LocalDate date = entry.getKey();
+            Map<String, Double> snapshot = entry.getValue();
+            System.out.println("Day " + day++ + " (" + date + "):");
             snapshot.forEach((symbol, price) -> System.out.println("  " + symbol + ": " + price));
         }
         System.out.println("===================================");
 
         // Create and register GameManager
-        GameManager gameManager = new GameManager(game.getId(), stockTimeline);
+        List<Map<String, Double>> timelineList = new ArrayList<>();
+
+        // debugging data structure
+        for (Map<String, Double> snapshot : timeline.values()) {
+            try {
+                Map<String, Double> mutable = new HashMap<>(snapshot);
+                timelineList.add(mutable);
+                System.out.println("debug passed");
+
+            } catch (UnsupportedOperationException e) {
+                System.out.println("⚠ Snapshot was unmodifiable: " + snapshot.getClass().getName());
+                throw e;
+            }
+        }
+
+        for (Map<String, Double> snapshot : timeline.values()) {
+            timelineList.add(new HashMap<>(snapshot)); // deep copy each day's map
+        }
+
+        GameManager gameManager = new GameManager(game.getId(), timelineList);
         lobby.getPlayerReadyStatuses().keySet().forEach(gameManager::registerPlayer);
 
         InMemoryGameRegistry.registerGame(game.getId(), gameManager);
@@ -91,6 +110,8 @@ public class GameService {
     public boolean isGameActive(Long gameId) {
         return InMemoryGameRegistry.isGameActive(gameId);
     }
+
+
 }
 
 

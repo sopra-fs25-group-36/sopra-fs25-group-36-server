@@ -11,23 +11,28 @@ import ch.uzh.ifi.hase.soprafs24.rest.dto.TransactionRequestDTO;
 public class GameManager {
 
     private final Long gameId;
-    private final Map<Long, PlayerState> playerStates;
+    private final Map<Long, PlayerState> playerStates = new HashMap<>();
     private final List<Map<String, Double>> stockTimeline;
+    private final long roundDelayMillis;
     private List<LeaderBoardEntry> leaderBoard = new ArrayList<>();
-    private int currentRound;
-    private boolean active;
-    private final LocalDateTime startedAt;
+    private int currentRound = 1;
+    private boolean active = true;
+    private final LocalDateTime startedAt = LocalDateTime.now();
 
-    // for timing each round, 2mins
-    private final ScheduledExecutorService roundScheduler = Executors.newSingleThreadScheduledExecutor();
+    private static final long DEFAULT_ROUND_DELAY_MILLIS = 180_000; // 2 minutes
+    private final ScheduledExecutorService roundScheduler;
 
-    public GameManager(Long gameId, List<Map<String, Double>> stockTimeline) {
+    //  Main constructor with round delay override
+    public GameManager(Long gameId, List<Map<String, Double>> stockTimeline, long roundDelayMillis) {
         this.gameId = gameId;
         this.stockTimeline = stockTimeline;
-        this.currentRound = 1;
-        this.active = true;
-        this.startedAt = LocalDateTime.now();
-        this.playerStates = new HashMap<>();
+        this.roundDelayMillis = roundDelayMillis;
+        this.roundScheduler = Executors.newSingleThreadScheduledExecutor();
+    }
+
+    // Production constructor with default round delay
+    public GameManager(Long gameId, List<Map<String, Double>> stockTimeline) {
+        this(gameId, stockTimeline, DEFAULT_ROUND_DELAY_MILLIS);
     }
 
     public void registerPlayer(Long userId) {
@@ -42,7 +47,6 @@ public class GameManager {
     }
 
     public Map<String, Double> getCurrentStockPrices() {
-        // Return a mutable copy to avoid accidental immutability
         return new HashMap<>(stockTimeline.get(currentRound - 1));
     }
 
@@ -59,7 +63,6 @@ public class GameManager {
         }
     }
 
-    // update the leaderboard
     private void recalculateLeaderboard() {
         List<LeaderBoardEntry> updatedBoard = new ArrayList<>();
         for (Map.Entry<Long, PlayerState> entry : playerStates.entrySet()) {
@@ -69,7 +72,7 @@ public class GameManager {
             updatedBoard.add(new LeaderBoardEntry(userId, total));
         }
 
-        updatedBoard.sort((a, b) -> Double.compare(b.getTotalAssets(), a.getTotalAssets()));
+        updatedBoard.sort((a, b) -> Double.compare(b.getTotalAssets(), a.getTotalAssets())); // RANKING
         this.leaderBoard = updatedBoard;
     }
 
@@ -113,11 +116,10 @@ public class GameManager {
                 endGame();
                 roundScheduler.shutdown();
             }
-        }, 5, 5, TimeUnit.MINUTES); // wait 5 min before first round, then every 5 min
+        }, roundDelayMillis, roundDelayMillis, TimeUnit.MILLISECONDS);
     }
 
     public List<Map<String, Double>> getStockTimeline() {
         return stockTimeline;
     }
-
 }

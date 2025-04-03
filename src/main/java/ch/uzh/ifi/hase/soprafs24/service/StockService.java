@@ -124,6 +124,7 @@ public class StockService {
     //     return response.toString();
     // }
 
+    // CREATING DATABASE TO STORE STOCKS
     // new function//Seung
     private static final List<String> POPULAR_SYMBOLS = List.of(
             "TSLA", "GOOG", "MSFT", "NVDA", "AMZN", "META", "NFLX", "INTC",
@@ -211,13 +212,12 @@ public class StockService {
         return game.getStockTimeline();
     }
 
-    // get stock timeline
-    public List<Map<String, Double>> getStockTimelineFromDatabase() {
+    // CREATE STOCK TIMELINE UNIQUE TO GAME ; EXTRACTING STOCKS FROM DB TO GAME
+    public LinkedHashMap<LocalDate, Map<String, Double>> getStockTimelineFromDatabase() {
+        LinkedHashMap<LocalDate, Map<String, Double>> byDate = new LinkedHashMap<>();
         LocalDate startDate = stockRepository.findRandomStartDateWith10Days();
-        List<Stock> rawData = stockRepository.findStocksFromStartDate(startDate);
 
-        // Group by date (in order), then by symbol → price
-        Map<LocalDate, Map<String, Double>> byDate = new LinkedHashMap<>();
+        List<Stock> rawData = stockRepository.findStocksForTenDays(startDate);
 
         for (Stock stock : rawData) {
             LocalDate date = stock.getDate();
@@ -225,13 +225,9 @@ public class StockService {
             byDate.putIfAbsent(date, new HashMap<>());
             byDate.get(date).put(stock.getSymbol(), stock.getPrice());
 
-            // Stop after collecting 10 distinct dates
-            if (byDate.size() == 10) {
-                break;
-            }
         }
 
-        return new ArrayList<>(byDate.values()); // List<Map<String, Double>>
+        return byDate;
     }
 
 }

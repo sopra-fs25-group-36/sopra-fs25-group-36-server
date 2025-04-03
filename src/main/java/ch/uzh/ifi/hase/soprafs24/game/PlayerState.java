@@ -26,6 +26,11 @@ public class PlayerState {
         return cashBalance;
     }
 
+    public Map<String, Integer> getPlayerStocks() {
+        return new HashMap<>(stocksOwned); // return a copy to prevent external modification
+    }
+
+
     // Calculates the total assets of the player based on current stock prices.
 
     public double calculateTotalAssets(Map<String, Double> stockPrices) {
@@ -42,6 +47,9 @@ public class PlayerState {
     // Applies a transaction to the player's portfolio.
 
     public void applyTransaction(TransactionRequestDTO tx, Map<String, Double> currentPrices) {
+        if (!currentPrices.containsKey(tx.getStockId())) {
+            return; // silently ignore or throw an exception
+        }
         double price = currentPrices.getOrDefault(tx.getStockId(), 0.0);
         double total = price * tx.getQuantity();
 
@@ -58,5 +66,9 @@ public class PlayerState {
                 transactionHistory.add(new Transaction(tx.getStockId(), tx.getQuantity(), price, "SELL"));
             }
         }
+    }
+
+    public void setStock(String stockId, int quantity) {
+        stocksOwned.put(stockId, quantity);
     }
 }

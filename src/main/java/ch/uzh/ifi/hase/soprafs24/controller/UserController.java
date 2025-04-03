@@ -27,13 +27,11 @@ public class UserController {
 
   private final UserService userService;
   private final LobbyService lobbyService;
-  
+
   UserController(UserService userService, LobbyService lobbyService) {
-  this.userService = userService;
-  this.lobbyService = lobbyService;
+    this.userService = userService;
+    this.lobbyService = lobbyService;
   }
-  
-  
 
   @GetMapping("/users")
   @ResponseStatus(HttpStatus.OK)
@@ -66,7 +64,7 @@ public class UserController {
   @PostMapping("/users/login")
   @ResponseStatus(HttpStatus.OK)
   @ResponseBody
-  public UserGetDTO loginUser(@RequestBody UserPostDTO userPostDTO){
+  public UserGetDTO loginUser(@RequestBody UserPostDTO userPostDTO) {
     // Extract username and password from userPostDTO
     String username = userPostDTO.getUsername();
     String password = userPostDTO.getPassword();
@@ -83,11 +81,11 @@ public class UserController {
   @ResponseBody
   @CrossOrigin
   public UserGetDTO getUserById(@PathVariable("userID") Long userID, @RequestHeader("token") String token) {
-      //returns a user for a provided userID
-      this.userService.checkAuthentication(token);
-      User userById = userService.getUserById(userID);
+    // returns a user for a provided userID
+    this.userService.checkAuthentication(token);
+    User userById = userService.getUserById(userID);
 
-      return DTOMapper.INSTANCE.convertEntityToUserGetDTO(userById);
+    return DTOMapper.INSTANCE.convertEntityToUserGetDTO(userById);
   }
 
   @PostMapping("/users/{userID}/logout")
@@ -95,18 +93,18 @@ public class UserController {
   @ResponseBody
   @CrossOrigin
   public void logoutUser(@PathVariable("userID") Long userID, @RequestHeader("token") String token) {
-      this.userService.checkAuthentication(token);
-      this.userService.logoutUser(userID.toString());
+    this.userService.checkAuthentication(token);
+    this.userService.logoutUser(userID.toString());
   }
 
-  @PostMapping("/{userId}/lobby")  //do we need this? we can put it in game controller or lobbby
+  @PostMapping("/{userId}/lobby") // do we need this? we can put it in game controller or lobbby
 
   @ResponseStatus(HttpStatus.CREATED)
   public LobbyGetDTO createLobby(@PathVariable Long userID, @RequestBody LobbyPostDTO lobbyPostDTO) {
-      Lobby lobbyInput = DTOMapper.INSTANCE.convertLobbyPostDTOtoEntity(lobbyPostDTO);
+    Lobby lobbyInput = DTOMapper.INSTANCE.convertLobbyPostDTOtoEntity(lobbyPostDTO);
 
-      Lobby createdLobby = lobbyService.createLobby(userID, lobbyInput);
+    Lobby createdLobby = lobbyService.createLobby(userID, lobbyInput);
 
-      return DTOMapper.INSTANCE.convertEntityToLobbyGetDTO(createdLobby);
+    return DTOMapper.INSTANCE.convertEntityToLobbyGetDTO(createdLobby);
   }
 }

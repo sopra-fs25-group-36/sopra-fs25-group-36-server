@@ -80,9 +80,8 @@ public class UserController {
   @ResponseStatus(HttpStatus.OK)
   @ResponseBody
   @CrossOrigin
-  public UserGetDTO getUserById(@PathVariable("userID") Long userID, @RequestHeader("token") String token) {
+  public UserGetDTO getUserById(@PathVariable("userID") Long userID) {
     // returns a user for a provided userID
-    this.userService.checkAuthentication(token);
     User userById = userService.getUserById(userID);
 
     return DTOMapper.INSTANCE.convertEntityToUserGetDTO(userById);

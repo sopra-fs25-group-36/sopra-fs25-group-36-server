@@ -13,16 +13,19 @@ import org.mapstruct.factory.Mappers;
 /**
  * DTOMapper
  * This class is responsible for generating classes that will automatically
- * transform/map the internal representation
- * of an entity (e.g., the User or Lobby) to the external/API representation (e.g.,
- * UserGetDTO or LobbyGetDTO for getting, and UserPostDTO or LobbyPostDTO for creating)
- * and vice versa.
+ * transform/map the internal representation of an entity (e.g., the User or Lobby)
+ * to the external/API representation (e.g., UserGetDTO or LobbyGetDTO for getting,
+ * and UserPostDTO or LobbyPostDTO for creating) and vice versa.
  */
 @Mapper
 public interface DTOMapper {
 
   DTOMapper INSTANCE = Mappers.getMapper(DTOMapper.class);
 
+  // For User mapping, ignore the backend-controlled properties
+  @Mapping(target = "id", ignore = true)
+  @Mapping(target = "token", ignore = true)
+  @Mapping(target = "status", ignore = true)
   @Mapping(source = "name", target = "name")
   @Mapping(source = "username", target = "username")
   @Mapping(source = "password", target = "password")
@@ -44,6 +47,11 @@ public interface DTOMapper {
    * Convert LobbyPostDTO to Lobby entity.
    * All attributes are defined in the back end, no need to post anything from the front end.
    */
+  @Mapping(target = "id", ignore = true)
+  @Mapping(target = "playerReadyStatuses", ignore = true)
+  @Mapping(target = "createdAt", ignore = true)
+  @Mapping(target = "active", ignore = true)
+  @Mapping(target = "timeLimitSeconds", ignore = true)
   Lobby convertLobbyPostDTOtoEntity(LobbyPostDTO lobbyPostDTO);
 
   /**

@@ -50,6 +50,14 @@ public class LobbyController {
         Lobby lobby = lobbyService.getLobbyById(lobbyId);
         return DTOMapper.INSTANCE.convertEntityToLobbyGetDTO(lobby);
     }
+
+    @PostMapping("/{lobbyId}/ready")
+    @ResponseStatus(HttpStatus.OK)
+    public LobbyGetDTO setUserReady(@PathVariable Long lobbyId,
+                                    @RequestBody LobbyUserPostDTO lobbyUserPostDTO) {
+        Lobby updatedLobby = lobbyService.setUserReady(lobbyId, lobbyUserPostDTO.getUserId());
+        return DTOMapper.INSTANCE.convertEntityToLobbyGetDTO(updatedLobby);
+}
     
 }
 

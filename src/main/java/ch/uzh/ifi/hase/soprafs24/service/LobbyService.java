@@ -64,6 +64,21 @@ public class LobbyService {
         return lobbyRepository.save(lobby);
     }
 
+    public Lobby setUserReady(Long lobbyId, Long userId) {
+        Lobby lobby = lobbyRepository.findById(lobbyId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Lobby not found"));
+    
+        if (!lobby.getPlayerReadyStatuses().containsKey(userId)) {
+            // Optionally, you might add the user here, but usually the user should be added via joinLobby first.
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User is not part of the lobby");
+        }
+    
+        // Set the user's ready status to true
+        lobby.getPlayerReadyStatuses().put(userId, true);
+    
+        return lobbyRepository.save(lobby);
+    }
+
     // need another class to start the session automatically when all users are ready
 }
 

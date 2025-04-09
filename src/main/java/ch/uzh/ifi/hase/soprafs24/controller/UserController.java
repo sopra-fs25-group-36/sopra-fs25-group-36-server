@@ -1,10 +1,14 @@
 package ch.uzh.ifi.hase.soprafs24.controller;
 
+import ch.uzh.ifi.hase.soprafs24.entity.Lobby;
 import ch.uzh.ifi.hase.soprafs24.entity.User;
+import ch.uzh.ifi.hase.soprafs24.rest.dto.LobbyGetDTO;
+import ch.uzh.ifi.hase.soprafs24.rest.dto.LobbyPostDTO;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.UserGetDTO;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.UserPostDTO;
 import ch.uzh.ifi.hase.soprafs24.rest.mapper.DTOMapper;
 import ch.uzh.ifi.hase.soprafs24.service.UserService;
+import ch.uzh.ifi.hase.soprafs24.service.LobbyService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,9 +26,11 @@ import java.util.List;
 public class UserController {
 
   private final UserService userService;
+  private final LobbyService lobbyService;
 
-  UserController(UserService userService) {
+  UserController(UserService userService, LobbyService lobbyService) {
     this.userService = userService;
+    this.lobbyService = lobbyService;
   }
 
   @GetMapping("/users")
@@ -53,5 +59,51 @@ public class UserController {
     User createdUser = userService.createUser(userInput);
     // convert internal representation of user back to API
     return DTOMapper.INSTANCE.convertEntityToUserGetDTO(createdUser);
+  }
+
+  @PostMapping("/users/login")
+  @ResponseStatus(HttpStatus.OK)
+  @ResponseBody
+  public UserGetDTO loginUser(@RequestBody UserPostDTO userPostDTO) {
+    // Extract username and password from userPostDTO
+    String username = userPostDTO.getUsername();
+    String password = userPostDTO.getPassword();
+
+    // Login user using username and password
+    User loginUser = userService.loginUser(username, password);
+
+    // Convert internal representation back to API
+    return DTOMapper.INSTANCE.convertEntityToUserGetDTO(loginUser);
+  }
+
+  @GetMapping("/users/{userID}")
+  @ResponseStatus(HttpStatus.OK)
+  @ResponseBody
+  @CrossOrigin
+  public UserGetDTO getUserById(@PathVariable("userID") Long userID) {
+    // returns a user for a provided userID
+    User userById = userService.getUserById(userID);
+
+    return DTOMapper.INSTANCE.convertEntityToUserGetDTO(userById);
+  }
+
+  @PostMapping("/users/{userID}/logout")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  @ResponseBody
+  @CrossOrigin
+  public void logoutUser(@PathVariable("userID") Long userID, @RequestHeader("token") String token) {
+    this.userService.checkAuthentication(token);
+    this.userService.logoutUser(userID.toString());
+  }
+
+  @PostMapping("/{userId}/lobby") // do we need this? we can put it in game controller or lobbby
+
+  @ResponseStatus(HttpStatus.CREATED)
+  public LobbyGetDTO createLobby(@PathVariable Long userID, @RequestBody LobbyPostDTO lobbyPostDTO) {
+    Lobby lobbyInput = DTOMapper.INSTANCE.convertLobbyPostDTOtoEntity(lobbyPostDTO);
+
+    Lobby createdLobby = lobbyService.createLobby(userID, lobbyInput);
+
+    return DTOMapper.INSTANCE.convertEntityToLobbyGetDTO(createdLobby);
   }
 }

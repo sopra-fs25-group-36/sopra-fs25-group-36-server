@@ -12,10 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.time.LocalDate;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Arrays;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -28,6 +25,7 @@ public class LeaderboardControllerTest {
     public void setup() {
         gameService = mock(GameService.class);
         controller = new LeaderBoardController(gameService);
+
     }
 
     @Test
@@ -72,13 +70,15 @@ public class LeaderboardControllerTest {
     @Test
     public void testLeaderboardRanksPlayersByTotalAssets() {
         // Given: fake 1-day stock timeline
-        Map<String, Double> pricesDay1 = Map.of("AAPL", 100.0, "TSLA", 200.0);
-        LocalDate day1 = LocalDate.of(2025, 4, 9); // or LocalDate.now() if you prefer
+//        Map<String, Double> pricesDay1 = Map.of("AAPL", 100.0, "TSLA", 200.0);
+//        LocalDate day1 = LocalDate.of(2025, 4, 9); // or LocalDate.now() if you prefer
 
         LinkedHashMap<LocalDate, Map<String, Double>> timeline = new LinkedHashMap<>();
+        LocalDate day1 = LocalDate.of(2025, 4, 9);
+        Map<String, Double> pricesDay1 = Map.of("AAPL", 100.0, "TSLA", 200.0);
         timeline.put(day1, pricesDay1);
 
-        GameManager manager = new GameManager(1L, timeline, 999999); // long delay, no auto rounds
+        GameManager manager = new GameManager(1L, timeline, 999999);
 
         // Register players
         manager.registerPlayer(1L); // default 10k

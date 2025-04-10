@@ -49,7 +49,13 @@ public class GameManager {
     }
 
     public Map<String, Double> getCurrentStockPrices() {
-        return new HashMap<>(stockTimeline.get(currentRound - 1));
+        if (stockTimeline == null || stockTimeline.isEmpty() || currentRound <= 0 || currentRound > stockTimeline.size()) {
+            return new HashMap<>();
+        }
+
+        List<Map<String, Double>> rounds = new ArrayList<>(stockTimeline.values());
+        Map<String, Double> prices = rounds.get(currentRound - 1);
+        return prices != null ? new HashMap<>(prices) : new HashMap<>();
     }
 
     public List<LeaderBoardEntry> getLeaderBoard() {

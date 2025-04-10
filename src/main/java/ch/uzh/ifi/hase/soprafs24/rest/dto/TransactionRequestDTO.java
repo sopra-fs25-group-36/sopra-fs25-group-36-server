@@ -8,6 +8,7 @@ public class TransactionRequestDTO {
     private String stockId;
     private int quantity;
     private String type; // BUY or SELL
+    private double price;
 
     public String getStockId() {
         return stockId;
@@ -21,6 +22,10 @@ public class TransactionRequestDTO {
     public void setQuantity(int quantity) {
         this.quantity = quantity;
     }
+
+    public double getStockPrice(){return price; }
+
+    public void setStockPrice(double price){this.price=price;}
 
     public String getType() {
         return type;

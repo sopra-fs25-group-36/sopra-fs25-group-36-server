@@ -15,6 +15,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import ch.uzh.ifi.hase.soprafs24.rest.dto.StockPriceGetDTO;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -133,13 +134,13 @@ public class StockService {
     public void fetchKnownPopularStocks() {
         for (String symbol : POPULAR_SYMBOLS) {
             try {
-                fetchAndProcessStockData(symbol);
+//                fetchAndProcessStockData(symbol); //UNCOMMENT
             } catch (Exception e) {
                 System.err.println("Failed to fetch data for " + symbol + ": " + e.getMessage());
             }
         }
     }
-
+// ++++++++broken++++++++
     public void fetchAndProcessStockData(String symbol) {
         Config cfg = Config.builder()
                 .key(API_KEY)
@@ -184,7 +185,7 @@ public class StockService {
         System.out.println("Saved " + response.getStockUnits().size() + " records for " + symbol);
     }
 
-    ////////////////
+    //////////////
 
     // public String saveStockData(String stockSymbol, String jsonData) throws IOException {
     //     LocalDate today = LocalDate.now();
@@ -202,15 +203,26 @@ public class StockService {
     //     return filename;
     // }
 
-    public List<Map<String, Double>> getStockPrice(Long gameId, String symbol) {
+    public List<StockPriceGetDTO> getStockPrice(Long gameId, String symbol) {
         GameManager game = InMemoryGameRegistry.getGame(gameId);
 
         if (game == null) {
             throw new IllegalArgumentException("Game with ID " + gameId + " not found.");
         }
 
-        return game.getStockTimeline();
+        LinkedHashMap<LocalDate, Map<String, Double>> timeline = game.getStockTimeline();
+
+        return timeline.entrySet().stream()
+                .map(entry -> {
+                    StockPriceGetDTO dto = new StockPriceGetDTO();
+                    dto.setSymbol(symbol);
+                    dto.setDate(entry.getKey()); // make sure StockPriceGetDTO has `date`
+                    dto.setPrice(entry.getValue().get(symbol));
+                    return dto;
+                })
+                .toList();
     }
+
 
     // CREATE STOCK TIMELINE UNIQUE TO GAME ; EXTRACTING STOCKS FROM DB TO GAME
     public LinkedHashMap<LocalDate, Map<String, Double>> getStockTimelineFromDatabase() {
@@ -229,5 +241,6 @@ public class StockService {
 
         return byDate;
     }
+
 
 }

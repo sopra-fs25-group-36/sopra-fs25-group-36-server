@@ -11,6 +11,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.time.LocalDate;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Arrays;
 import java.util.Map;
@@ -71,7 +73,10 @@ public class LeaderboardControllerTest {
     public void testLeaderboardRanksPlayersByTotalAssets() {
         // Given: fake 1-day stock timeline
         Map<String, Double> pricesDay1 = Map.of("AAPL", 100.0, "TSLA", 200.0);
-        List<Map<String, Double>> timeline = List.of(pricesDay1);
+        LocalDate day1 = LocalDate.of(2025, 4, 9); // or LocalDate.now() if you prefer
+
+        LinkedHashMap<LocalDate, Map<String, Double>> timeline = new LinkedHashMap<>();
+        timeline.put(day1, pricesDay1);
 
         GameManager manager = new GameManager(1L, timeline, 999999); // long delay, no auto rounds
 

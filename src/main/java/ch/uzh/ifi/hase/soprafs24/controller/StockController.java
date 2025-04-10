@@ -72,15 +72,8 @@ public class StockController {
             @PathVariable Long gameID,
             @RequestParam String symbol,
             @RequestParam int round) {
-        List<Map<String, Double>> stockPrices = stockService.getStockPrice(gameID, symbol);
-        return stockPrices.stream()
-                .map(priceMap -> {
-                    StockPriceGetDTO dto = new StockPriceGetDTO();
-                    dto.setSymbol(symbol);
-                    dto.setPrice(priceMap.get("price"));
-                    return dto;
-                })
-                .toList();
+        return stockService.getStockPrice(gameID, symbol);
     }
+
 
 }

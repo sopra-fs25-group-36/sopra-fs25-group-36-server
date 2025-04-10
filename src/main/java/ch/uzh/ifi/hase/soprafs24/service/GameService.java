@@ -3,8 +3,10 @@ import ch.uzh.ifi.hase.soprafs24.entity.Game;
 import ch.uzh.ifi.hase.soprafs24.entity.Lobby;
 import ch.uzh.ifi.hase.soprafs24.game.GameManager;
 import ch.uzh.ifi.hase.soprafs24.game.InMemoryGameRegistry;
+import ch.uzh.ifi.hase.soprafs24.game.PlayerState;
 import ch.uzh.ifi.hase.soprafs24.repository.GameRepository;
 import ch.uzh.ifi.hase.soprafs24.repository.LobbyRepository;
+import ch.uzh.ifi.hase.soprafs24.rest.dto.StockHoldingDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -82,7 +84,7 @@ public class GameService {
             timelineList.add(new HashMap<>(snapshot)); // deep copy each day's map
         }
 
-        GameManager gameManager = new GameManager(game.getId(), timelineList);
+        GameManager gameManager = new GameManager(game.getId(), timeline); // timeline is LinkedHashMap
         lobby.getPlayerReadyStatuses().keySet().forEach(gameManager::registerPlayer);
 
         InMemoryGameRegistry.registerGame(game.getId(), gameManager);
@@ -111,6 +113,44 @@ public class GameService {
         return InMemoryGameRegistry.isGameActive(gameId);
     }
 
+    public Map<String, String> getCategoryMap() {
+        Map<String, String> map = new HashMap<>();
+
+        map.put("AAPL", "Tech");
+        map.put("MSFT", "Tech");
+        map.put("XOM", "Energy");
+        map.put("CVX", "Energy");
+        map.put("JPM", "Finance");
+        map.put("GS", "Finance");
+        map.put("JNJ", "Healthcare");
+        map.put("PFE", "Healthcare");
+        map.put("PG", "Consumer");
+        map.put("KO", "Consumer");
+
+        return map;
+    }
+    public List<StockHoldingDTO> toStockHoldings(PlayerState player,
+                                                 Map<String, Double> prices,
+                                                 Map<String, String> categories) {
+        List<StockHoldingDTO> holdings = new ArrayList<>();
+
+        for (Map.Entry<String, Integer> entry : player.getPlayerStocks().entrySet()) {
+            String symbol = entry.getKey();
+            int quantity = entry.getValue();
+            double price = prices.getOrDefault(symbol, 0.0);
+            String category = categories.getOrDefault(symbol, "Unknown");
+
+            StockHoldingDTO dto = new StockHoldingDTO();
+            dto.setSymbol(symbol);
+            dto.setQuantity(quantity);
+            dto.setCurrentPrice(price);
+            dto.setCategory(category);
+
+            holdings.add(dto);
+        }
+
+        return holdings;
+    }
 
 }
 

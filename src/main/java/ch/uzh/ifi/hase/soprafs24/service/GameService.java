@@ -46,6 +46,7 @@ public class GameService {
 
         // Create Game entity
         Game game = new Game();
+        game.setId(lobbyId);
         game.setLobbyId(lobbyId);
         gameRepository.save(game);
 

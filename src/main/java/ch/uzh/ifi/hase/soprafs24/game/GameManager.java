@@ -37,6 +37,7 @@ public class GameManager {
 
     public void registerPlayer(Long userId) {
         playerStates.put(userId, new PlayerState(userId));
+        recalculateLeaderboard(); // Update leaderboard after adding a new player
     }
 
     public void submitTransaction(Long userId, TransactionRequestDTO tx) {

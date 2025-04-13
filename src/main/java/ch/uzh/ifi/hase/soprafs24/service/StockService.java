@@ -126,9 +126,15 @@ public class StockService {
 
     // CREATING DATABASE TO STORE STOCKS
     // new function//Seung
+
+    // private static final List<String> POPULAR_SYMBOLS = List.of(
+    //     "TSLA", "GOOG", "MSFT", "NVDA", "AMZN", "META", "NFLX", "INTC",
+    //     "AMD", "AAPL")
+
+    //for updating more data from dbs_April.13
     private static final List<String> POPULAR_SYMBOLS = List.of(
-            "TSLA", "GOOG", "MSFT", "NVDA", "AMZN", "META", "NFLX", "INTC",
-            "AMD", "AAPL");
+            "GOOG", "INTC", "JPM", "GS",
+            "AMD", "AAPL","PFE", "JNJ", "PG", "XOM", "CVX");
 
     public void fetchKnownPopularStocks() {
         for (String symbol : POPULAR_SYMBOLS) {
@@ -202,14 +208,14 @@ public class StockService {
     //     return filename;
     // }
 
-    public List<Map<String, Double>> getStockPrice(Long gameId, String symbol) {
+    public Map<String, Double> getStockPrice(Long gameId) {
         GameManager game = InMemoryGameRegistry.getGame(gameId);
 
         if (game == null) {
             throw new IllegalArgumentException("Game with ID " + gameId + " not found.");
         }
 
-        return game.getStockTimeline();
+        return game.getCurrentStockPrices();
     }
 
     // CREATE STOCK TIMELINE UNIQUE TO GAME ; EXTRACTING STOCKS FROM DB TO GAME

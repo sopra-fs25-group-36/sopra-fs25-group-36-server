@@ -46,3 +46,4 @@ local.properties
 /bin
 
 .env
+src/main/resources/application.properties

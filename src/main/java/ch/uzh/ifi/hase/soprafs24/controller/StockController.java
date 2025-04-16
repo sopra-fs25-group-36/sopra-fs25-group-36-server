@@ -71,27 +71,15 @@ public class StockController {
     @GetMapping("/{gameID}/stocks")
     @ResponseStatus(HttpStatus.OK)
     public List<StockPriceGetDTO> getStockPrice(
-            @PathVariable Long gameID) {
-        Map<String, Double> stockPrices = stockService.getStockPrice(gameID);
-
-        List<StockPriceGetDTO> result = new ArrayList<StockPriceGetDTO>();
-
-        // return stockPrices.values().
-        // .map(priceMap -> {
-        // StockPriceGetDTO dto = new StockPriceGetDTO();
-        // // dto.setSymbol(priceMap.get("symbol"));
-        // dto.setPrice(priceMap.get("price"));
-        // return dto;
-        // })
-        // .toList();
-        for (Map.Entry<String, Double> entry : stockPrices.entrySet()) {
-            StockPriceGetDTO dto = new StockPriceGetDTO();
-            dto.setSymbol(entry.getKey());
-            dto.setPrice(entry.getValue());
-            result.add(dto);
+            @PathVariable Long gameID,
+            @RequestParam(required = false) String symbol,
+            @RequestParam(required = false) Integer round
+    ) {
+        // If symbol or round is missing, return all stock prices.
+        if (symbol == null || round == null) {
+            return stockService.getCurrentRoundStockPrices(gameID);
         }
-
-        return result;
+        // Otherwise, return specific price for symbol at a specific round
+        return stockService.getStockPrice(gameID, symbol, round);
     }
-
 }

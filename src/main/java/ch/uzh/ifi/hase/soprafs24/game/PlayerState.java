@@ -4,6 +4,20 @@ import java.util.*;
 
 import ch.uzh.ifi.hase.soprafs24.rest.dto.TransactionRequestDTO;
 
+// Current output in JSON
+
+//{
+//        "userId": 42,
+//        "cashBalance": 5000,
+//        "stocks": [
+//        { "symbol": "AAPL", "quantity": 10, "category": "Tech", "currentPrice": 150 }
+//        ],
+//        "transactionHistory": [
+//        { "stockId": "AAPL", "quantity": 5, "price": 140, "type": "BUY" },
+//        { "stockId": "AAPL", "quantity": 3, "price": 145, "type": "BUY" }
+//        ]
+//        }
+
 public class PlayerState {
 
     private final Long userId;
@@ -71,4 +85,8 @@ public class PlayerState {
     public void setStock(String stockId, int quantity) {
         stocksOwned.put(stockId, quantity);
     }
+    public List<Transaction> getTransactionHistory() {
+        return new ArrayList<>(transactionHistory); // or return Collections.unmodifiableList(...)
+    }
+
 }

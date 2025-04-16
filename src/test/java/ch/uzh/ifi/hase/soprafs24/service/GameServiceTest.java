@@ -12,10 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.time.LocalDate;
+import java.util.*;
 
 import static ch.uzh.ifi.hase.soprafs24.game.InMemoryGameRegistry.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -84,11 +82,13 @@ public class GameServiceTest {
     @Test
     public void testGameAutoFinishesAfter10Rounds() throws InterruptedException {
         // Arrange: create dummy 10-day stock timeline
-        List<Map<String, Double>> timeline = new ArrayList<>();
+        LinkedHashMap<LocalDate, Map<String, Double>> timeline = new LinkedHashMap<>();
+        LocalDate baseDate = LocalDate.of(2025, 4, 1); // or LocalDate.now()
+
         for (int i = 0; i < 10; i++) {
             Map<String, Double> snapshot = new HashMap<>();
             snapshot.put("AAPL", 150.0 + i); // 1 stock per day
-            timeline.add(snapshot);
+            timeline.put(baseDate.plusDays(i), snapshot);
         }
 
         // Create a test game with short delay (50 ms between rounds)

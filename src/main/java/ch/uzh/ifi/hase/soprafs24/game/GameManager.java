@@ -1,5 +1,6 @@
 package ch.uzh.ifi.hase.soprafs24.game;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.Executors;
@@ -12,7 +13,8 @@ public class GameManager {
 
     private final Long gameId;
     private final Map<Long, PlayerState> playerStates = new HashMap<>();
-    private final List<Map<String, Double>> stockTimeline;
+    private LinkedHashMap<LocalDate, Map<String, Double>> stockTimeline;
+
     private final long roundDelayMillis;
     private List<LeaderBoardEntry> leaderBoard = new ArrayList<>();
     private int currentRound = 1;
@@ -23,7 +25,7 @@ public class GameManager {
     private final ScheduledExecutorService roundScheduler;
 
     //  Main constructor with round delay override
-    public GameManager(Long gameId, List<Map<String, Double>> stockTimeline, long roundDelayMillis) {
+    public GameManager(Long gameId, LinkedHashMap<LocalDate, Map<String, Double>>  stockTimeline, long roundDelayMillis) {
         this.gameId = gameId;
         this.stockTimeline = stockTimeline;
         this.roundDelayMillis = roundDelayMillis;
@@ -31,7 +33,7 @@ public class GameManager {
     }
 
     // Production constructor with default round delay
-    public GameManager(Long gameId, List<Map<String, Double>> stockTimeline) {
+    public GameManager(Long gameId, LinkedHashMap<LocalDate, Map<String, Double>> stockTimeline) {
         this(gameId, stockTimeline, DEFAULT_ROUND_DELAY_MILLIS);
     }
 
@@ -48,7 +50,13 @@ public class GameManager {
     }
 
     public Map<String, Double> getCurrentStockPrices() {
-        return new HashMap<>(stockTimeline.get(currentRound - 1));
+        if (stockTimeline == null || stockTimeline.isEmpty() || currentRound <= 0 || currentRound > stockTimeline.size()) {
+            return new HashMap<>();
+        }
+
+        List<Map<String, Double>> rounds = new ArrayList<>(stockTimeline.values());
+        Map<String, Double> prices = rounds.get(currentRound - 1);
+        return prices != null ? new HashMap<>(prices) : new HashMap<>();
     }
 
     public List<LeaderBoardEntry> getLeaderBoard() {
@@ -120,7 +128,14 @@ public class GameManager {
         }, roundDelayMillis, roundDelayMillis, TimeUnit.MILLISECONDS);
     }
 
-    public List<Map<String, Double>> getStockTimeline() {
+    public LinkedHashMap<LocalDate, Map<String, Double>> getStockTimeline() {
         return stockTimeline;
+    }
+
+    public void setStockTimeline(LinkedHashMap<LocalDate, Map<String, Double>> stockTimeline) {
+        this.stockTimeline = stockTimeline;
+    }
+
+    public PlayerState getPlayerState(Long userId) { return playerStates.get(userId);
     }
 }

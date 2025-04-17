@@ -1,23 +1,18 @@
 package ch.uzh.ifi.hase.soprafs24.service;
+
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
+import org.springframework.scheduling.annotation.Scheduled;
+
 import java.util.*;
-import java.io.BufferedReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-import ch.uzh.ifi.hase.soprafs24.rest.dto.StockPriceGetDTO;
+//import org.checkerframework.checker.units.qual.A;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -31,7 +26,10 @@ import com.crazzyghost.alphavantage.timeseries.response.TimeSeriesResponse;
 import ch.uzh.ifi.hase.soprafs24.entity.Stock;
 import ch.uzh.ifi.hase.soprafs24.game.GameManager;
 import ch.uzh.ifi.hase.soprafs24.game.InMemoryGameRegistry;
+import ch.uzh.ifi.hase.soprafs24.game.PlayerState;
 import ch.uzh.ifi.hase.soprafs24.repository.StockRepository;
+import ch.uzh.ifi.hase.soprafs24.rest.dto.StockHoldingDTO;
+import ch.uzh.ifi.hase.soprafs24.rest.dto.StockPriceGetDTO;
 
 @Service
 public class StockService {
@@ -43,112 +41,51 @@ public class StockService {
         this.API_KEY = API_KEY;
     }
 
-    // private static final String BASE_URL = "https://www.alphavantage.co/query";
     private String API_KEY;
-    // // Uses environment variable
-    // private final Map<String, List<Double>> stockMemory = new HashMap<>();
-    // private int roundCounter = 0;
 
-    //     /// julius
-    // public Double fetchStockReturn(String stockSymbol) throws Exception {
-    //     Map<LocalDate, Double> closingPrices = fetchTwoDaysClosingPricesFromAPI(stockSymbol);
-    //     if (closingPrices.size() < 2) {
-    //         throw new Exception("Not enough data to calculate returns.");
-    //     }
-
-    //     List<Double> prices = new ArrayList<>(closingPrices.values());
-    //     double previousClose = prices.get(0);
-    //     double latestClose = prices.get(1);
-
-    //     // Store in memory
-    //     stockMemory.put(stockSymbol, prices);
-    //     return (latestClose - previousClose) / previousClose;
-
-    // }
-    /// julius
-
-    // private Map<LocalDate, Double> fetchTwoDaysClosingPricesFromAPI(String stockSymbol) throws Exception {
-    //     String urlString = String.format("%s?function=TIME_SERIES_DAILY&symbol=%s&outputsize=compact&apikey=%s",
-    //             BASE_URL, stockSymbol, API_KEY);
-
-    //     URL url = new URL(urlString);
-    //     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-    //     connection.setRequestMethod("GET");
-
-    //     if (connection.getResponseCode() != 200) {
-    //         throw new Exception("Failed to fetch stock data.");
-    //     }
-
-    //     BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-    //     StringBuilder response = new StringBuilder();
-    //     String inputLine;
-    //     while ((inputLine = in.readLine()) != null) {
-    //         response.append(inputLine);
-    //     }
-    //     in.close();
-
-    //     JSONObject jsonObject = new JSONObject(response.toString());
-    //     JSONObject timeSeries = jsonObject.getJSONObject("Time Series (Daily)");
-
-    //     List<String> dates = new ArrayList<>(timeSeries.keySet());
-    //     Collections.sort(dates, Collections.reverseOrder());
-
-    //     Map<LocalDate, Double> closingPrices = new LinkedHashMap<>();
-    //     for (int i = 0; i < Math.min(2, dates.size()); i++) {
-    //         String date = dates.get(i);
-    //         double closePrice = timeSeries.getJSONObject(date).getDouble("4. close");
-    //         closingPrices.put(LocalDate.parse(date, DateTimeFormatter.ISO_DATE), closePrice);
-    //     }
-
-    //     return closingPrices;
-    // }
-
-    /// julius
-    // public String fetchStockData(String stockSymbol) throws IOException {
-    //     String urlString = String.format("%s?function=TIME_SERIES_DAILY&symbol=%s&outputsize=compact&apikey=%s",
-    //             BASE_URL, stockSymbol, API_KEY);
-
-    //     URL url = new URL(urlString);
-    //     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-    //     connection.setRequestMethod("GET");
-
-    //     if (connection.getResponseCode() != 200) {
-    //         throw new IOException("Failed to fetch stock data. HTTP Response Code: " + connection.getResponseCode());
-    //     }
-
-    //     BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-    //     StringBuilder response = new StringBuilder();
-    //     String inputLine;
-    //     while ((inputLine = in.readLine()) != null) {
-    //         response.append(inputLine);
-    //     }
-    //     in.close();
-
-    //     return response.toString();
-    // }
-
-    // CREATING DATABASE TO STORE STOCKS
-    // new function//Seung
-
-    // private static final List<String> POPULAR_SYMBOLS = List.of(
-    //     "TSLA", "GOOG", "MSFT", "NVDA", "AMZN", "META", "NFLX", "INTC",
-    //     "AMD", "AAPL")
-
-    //for updating more data from dbs_April.13
+    // for updating more data from dbs_April.13
     private static final List<String> POPULAR_SYMBOLS = List.of(
-            "GOOG", "INTC", "JPM", "GS",
-            "AMD", "AAPL","PFE", "JNJ", "PG", "XOM", "CVX");
+            "TSLA", "GOOG", "MSFT", "NVDA", "AMZN", "META", "NFLX", "INTC", "AMD", "AAPL",
+            "JPM", "GS",
+            "PFE", "JNJ",
+            "XOM", "CVX",
+            "PG");
+
+    private static final Map<String, String> STOCK_CATEGORIES = Map.ofEntries(
+            Map.entry("TSLA", "TECH"), Map.entry("GOOG", "TECH"),
+            Map.entry("MSFT", "TECH"), Map.entry("NVDA", "TECH"),
+            Map.entry("AMZN", "TECH"), Map.entry("META", "TECH"),
+            Map.entry("NFLX", "TECH"), Map.entry("INTC", "TECH"),
+            Map.entry("AMD", "TECH"), Map.entry("AAPL", "TECH"),
+            Map.entry("XOM", "ENERGY"), Map.entry("CVX", "ENERGY"),
+            Map.entry("JPM", "FINANCE"), Map.entry("GS", "FINANCE"),
+            Map.entry("PFE", "HEALTHCARE"), Map.entry("JNJ", "HEALTHCARE"),
+            Map.entry("PG", "CONSUMER"));
+
+    public Map<String, String> getCategoryMap() {
+        return STOCK_CATEGORIES;
+
+    }
+
+ 
+    @Scheduled(cron = "0 0 1 * * ?") // everyday 1am! i change it like this as if i do it based on millisecond everytime i run the backend it refetch this function automatically
+    public void scheduleStockUpdate() {
+        System.out.println("Starting scheduled stock data fetch at 1 AM! :)))!");
+        fetchKnownPopularStocks();
+        System.out.println("Finished scheduled stock data fetch!!:))))!");
+    }
 
     public void fetchKnownPopularStocks() {
         for (String symbol : POPULAR_SYMBOLS) {
             try {
-//                fetchAndProcessStockData(symbol); //UNCOMMENT
+                // fetchAndProcessStockData(symbol); //UNCOMMENT
             } catch (Exception e) {
                 System.err.println("Failed to fetch data for " + symbol + ": " + e.getMessage());
             }
         }
     }
-// ++++++++broken++++++++
+
+    // 
     public void fetchAndProcessStockData(String symbol) {
         Config cfg = Config.builder()
                 .key(API_KEY)
@@ -193,25 +130,6 @@ public class StockService {
         System.out.println("Saved " + response.getStockUnits().size() + " records for " + symbol);
     }
 
-    //////////////
-
-    // public String saveStockData(String stockSymbol, String jsonData) throws IOException {
-    //     LocalDate today = LocalDate.now();
-    //     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
-    //     String filename = stockSymbol + "_daily_" + today.format(formatter) + ".json";
-
-    //     JSONObject jsonObject = new JSONObject(jsonData);
-    //     String prettyJson = jsonObject.toString(4);
-
-    //     try (FileWriter file = new FileWriter(filename)) {
-    //         file.write(prettyJson);
-    //         file.flush();
-    //     }
-
-    //     return filename;
-    // }
-
-
     public List<StockPriceGetDTO> getStockPrice(Long gameId, String symbol, Integer round) {
         GameManager game = InMemoryGameRegistry.getGame(gameId);
 
@@ -232,7 +150,6 @@ public class StockService {
                 .toList();
     }
 
-
     // CREATE STOCK TIMELINE UNIQUE TO GAME ; EXTRACTING STOCKS FROM DB TO GAME
     public LinkedHashMap<LocalDate, Map<String, Double>> getStockTimelineFromDatabase() {
         LinkedHashMap<LocalDate, Map<String, Double>> byDate = new LinkedHashMap<>();
@@ -250,7 +167,6 @@ public class StockService {
 
         return byDate;
     }
-
 
     public List<StockPriceGetDTO> getCurrentRoundStockPrices(Long gameId) {
         GameManager manager = InMemoryGameRegistry.getGame(gameId);
@@ -270,12 +186,80 @@ public class StockService {
             StockPriceGetDTO dto = new StockPriceGetDTO();
             dto.setSymbol(entry.getKey());
             dto.setPrice(entry.getValue());
+            dto.setCategory(getCategoryMap().getOrDefault(entry.getKey(), "UNKNOWN"));
             result.add(dto);
         }
 
         return result;
     }
 
+    // new
 
+    // --- New Methods for Player Data ---
+
+    /**
+     * Gets the player's stock holdings.
+     *
+     * @param userId The ID of the user.
+     * @return A list of StockHoldingDTO objects representing the player's stock
+     *         holdings.
+     */
+    public List<StockHoldingDTO> getPlayerHoldings(Long userId, Long gameId) {
+        // Retrieve the GameManager using the gameId
+        GameManager game = InMemoryGameRegistry.getGame(gameId);
+        if (game == null) {
+            throw new IllegalArgumentException("Game not found for gameId: " + gameId);
+        }
+
+        // Retrieve the PlayerState for this user
+        PlayerState player = game.getPlayerState(userId);
+        if (player == null) {
+            throw new IllegalArgumentException("Player state not found for userId: " + userId);
+        }
+
+        // Retrieve current stock prices and convert to StockHoldingDTO
+        Map<String, Double> prices = game.getCurrentStockPrices();
+        return toStockHoldings(player, prices, STOCK_CATEGORIES);
+    }
+
+    /**
+     * Converts player stock data into StockHoldingDTO objects.
+     *
+     * @param player     The PlayerState object.
+     * @param prices     The map of stock prices.
+     * @param categories The map of stock categories.
+     * @return A list of StockHoldingDTO objects.
+     */
+    public List<StockHoldingDTO> toStockHoldings(PlayerState player,
+            Map<String, Double> prices,
+            Map<String, String> categories) {
+        List<StockHoldingDTO> holdings = new ArrayList<>();
+
+        for (Map.Entry<String, Integer> entry : player.getPlayerStocks().entrySet()) {
+            String symbol = entry.getKey();
+            int quantity = entry.getValue();
+            double price = prices.getOrDefault(symbol, 0.0);
+            String category = categories.getOrDefault(symbol, "UNKNOWN");
+
+            StockHoldingDTO dto = new StockHoldingDTO(symbol, quantity, category, price);
+            holdings.add(dto);
+        }
+
+        return holdings;
+    }
+
+    /**
+     * Gets the GameManager associated with a user.
+     *
+     * @param userId The user's ID.
+     * @return The GameManager object.
+     */
+    public GameManager getGameManagerForUser(Long userId, Long gameId) {
+        GameManager game = InMemoryGameRegistry.getGame(gameId);
+        if (game == null || game.getPlayerState(userId) == null) {
+            throw new IllegalArgumentException("Game not found for userId: " + userId + " and gameId: " + gameId);
+        }
+        return game;
+    }
 
 }

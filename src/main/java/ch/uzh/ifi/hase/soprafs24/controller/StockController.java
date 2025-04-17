@@ -1,7 +1,4 @@
 package ch.uzh.ifi.hase.soprafs24.controller;
-
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -15,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import ch.uzh.ifi.hase.soprafs24.rest.dto.StockHoldingDTO;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.StockPriceGetDTO;
 import ch.uzh.ifi.hase.soprafs24.service.StockService;
 
@@ -28,26 +26,7 @@ public class StockController {
         this.stockService = stockService;
     }
 
-    // @GetMapping("/{symbol}/return")
-    // public ResponseEntity<String> getStockReturn(@PathVariable String symbol) {
-    // try {
-    // Double stockReturn = stockService.fetchStockReturn(symbol);
-    // return ResponseEntity.ok("Stock return: " + (stockReturn * 100) + "%");
-    // } catch (Exception e) {
-    // return ResponseEntity.status(500).body("Error: " + e.getMessage());
-    // }
-    // }
-
-    // @GetMapping("/{symbol}")
-    // public ResponseEntity<String> getStockData(@PathVariable String symbol) {
-    // try {
-    // String stockData = stockService.fetchStockData(symbol);
-    // return ResponseEntity.ok(stockData);
-    // } catch (IOException e) {
-    // return ResponseEntity.status(500).body("Error fetching stock data: " +
-    // e.getMessage());
-    // }
-    // }
+   
 
     @PostMapping("/fetch/popular-static")
     public ResponseEntity<String> fetchStaticPopularSymbols() {
@@ -55,31 +34,45 @@ public class StockController {
         return ResponseEntity.ok("Fetched and saved data for known popular stocks.");
     }
 
-    // @PostMapping("/{symbol}/save")
-    // public ResponseEntity<String> saveStockData(@PathVariable String symbol) {
-    // try {
-    // String stockData = stockService.fetchStockData(symbol);
-    // String filename = stockService.saveStockData(symbol, stockData);
-    // return ResponseEntity.ok("Stock data saved to file: " + filename);
-    // } catch (IOException e) {
-    // return ResponseEntity.status(500).body("Error saving stock data: " +
-    // e.getMessage());
-    // }
-    // }
 
-    // Get price of a specific stock at a specific round
-    @GetMapping("/{gameID}/stocks")
+    @GetMapping("/categories")
+    public ResponseEntity<Map<String, String>> getCategories() {
+        // bring the stock servoce from StockService
+        Map<String, String> categories = stockService.getCategoryMap();
+        return ResponseEntity.ok(categories);
+    }
+
+    @GetMapping("/player-holdings/{userId}")
+    public ResponseEntity<List<StockHoldingDTO>> getPlayerHoldings(
+            @PathVariable Long userId,
+            @RequestParam Long gameId) {
+        List<StockHoldingDTO> holdings = stockService.getPlayerHoldings(userId, gameId);
+        return ResponseEntity.ok(holdings);
+    }
+
+    @GetMapping("/{gameId}/stocks")
     @ResponseStatus(HttpStatus.OK)
-    public List<StockPriceGetDTO> getStockPrice(
-            @PathVariable Long gameID,
-            @RequestParam(required = false) String symbol,
-            @RequestParam(required = false) Integer round
-    ) {
-        // If symbol or round is missing, return all stock prices.
+    public List<StockPriceGetDTO> getPrice(
+    @PathVariable Long gameId,
+    @RequestParam(required = false) String symbol,
+    @RequestParam(required = false) Integer round) {
         if (symbol == null || round == null) {
-            return stockService.getCurrentRoundStockPrices(gameID);
+            return stockService.getCurrentRoundStockPrices(gameId);
         }
-        // Otherwise, return specific price for symbol at a specific round
-        return stockService.getStockPrice(gameID, symbol, round);
+        return stockService.getStockPrice(gameId, symbol, round);
+    }
+    @GetMapping("/all-data/{userId}")
+    public ResponseEntity<Map<String, Object>> getAllStockData(
+            @PathVariable Long userId,
+            @RequestParam Long gameId) {
+        Map<String, String> categories = stockService.getCategoryMap();
+        List<StockHoldingDTO> holdings = stockService.getPlayerHoldings(userId, gameId);
+
+        Map<String, Object> allData = Map.of(
+                "categories", categories,
+                "holdings", holdings
+        );
+
+        return ResponseEntity.ok(allData);
     }
 }

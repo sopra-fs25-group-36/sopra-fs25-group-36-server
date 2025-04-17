@@ -7,7 +7,7 @@ public class StockPriceGetDTO {
     private String symbol;
     private int round;
     private double price;
-
+    private String category;
     private LocalDate date;
 
     public String getSymbol() {
@@ -32,6 +32,14 @@ public class StockPriceGetDTO {
 
     public void setPrice(double price) {
         this.price = price;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
     }
 
     public LocalDate getDate() { return date; }

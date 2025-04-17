@@ -6,8 +6,7 @@ public class PlayerStateGetDTO {
 
     private Long userId;
     private double cashBalance;
-    private List<StockHoldingDTO> stocks;
-    private List<TransactionRequestDTO> transactionHistory;
+
 
     // Getters and Setters
 
@@ -27,20 +26,5 @@ public class PlayerStateGetDTO {
         this.cashBalance = cashBalance;
     }
 
-    public List<StockHoldingDTO> getStocks() {
-        return stocks;
-    }
-
-    public void setStocks(List<StockHoldingDTO> stocks) {
-        this.stocks = stocks;
-    }
-
-    public List<TransactionRequestDTO> getTransactionHistory() {
-        return transactionHistory;
-    }
-
-    public void setTransactionHistory(List<TransactionRequestDTO> transactionHistory) {
-        this.transactionHistory = transactionHistory;
-    }
 
 }

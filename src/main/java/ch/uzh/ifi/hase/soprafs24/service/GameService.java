@@ -114,45 +114,42 @@ public class GameService {
         return InMemoryGameRegistry.isGameActive(gameId);
     }
 
-    public Map<String, String> getCategoryMap() {
-        Map<String, String> map = new HashMap<>();
+    // public Map<String, String> getCategoryMap() {
+    //     Map<String, String> map = new HashMap<>();
 
-        map.put("AAPL", "Tech");
-        map.put("MSFT", "Tech");
-        map.put("XOM", "Energy");
-        map.put("CVX", "Energy");
-        map.put("JPM", "Finance");
-        map.put("GS", "Finance");
-        map.put("JNJ", "Healthcare");
-        map.put("PFE", "Healthcare");
-        map.put("PG", "Consumer");
-        map.put("KO", "Consumer");
+    //     map.put("AAPL", "Tech");
+    //     map.put("MSFT", "Tech");
+    //     map.put("XOM", "Energy");
+    //     map.put("CVX", "Energy");
+    //     map.put("JPM", "Finance");
+    //     map.put("GS", "Finance");
+    //     map.put("JNJ", "Healthcare");
+    //     map.put("PFE", "Healthcare");
+    //     map.put("PG", "Consumer");
+    //     map.put("KO", "Consumer");
 
-        return map;
-    }
-    public List<StockHoldingDTO> toStockHoldings(PlayerState player,
-                                                 Map<String, Double> prices,
-                                                 Map<String, String> categories) {
-        List<StockHoldingDTO> holdings = new ArrayList<>();
+    //     return map;
+    // }
+    // public List<StockHoldingDTO> toStockHoldings(PlayerState player,
+    //                                              Map<String, Double> prices) {
+    //     List<StockHoldingDTO> holdings = new ArrayList<>();
 
-        for (Map.Entry<String, Integer> entry : player.getPlayerStocks().entrySet()) {
-            String symbol = entry.getKey();
-            int quantity = entry.getValue();
-            double price = prices.getOrDefault(symbol, 0.0);
-            String category = categories.getOrDefault(symbol, "Unknown");
+    //     for (Map.Entry<String, Integer> entry : player.getPlayerStocks().entrySet()) {
+    //         String symbol = entry.getKey();
+    //         int quantity = entry.getValue();
+    //         double price = prices.getOrDefault(symbol, 0.0);
 
-            StockHoldingDTO dto = new StockHoldingDTO();
-            dto.setSymbol(symbol);
-            dto.setQuantity(quantity);
-            dto.setCurrentPrice(price);
-            dto.setCategory(category);
+    //         StockHoldingDTO dto = new StockHoldingDTO();
+    //         dto.setSymbol(symbol);
+    //         dto.setQuantity(quantity);
+    //         dto.setCurrentPrice(price);
 
-            holdings.add(dto);
-        }
+    //         holdings.add(dto);
+    //     }
 
-        return holdings;
+    //     return holdings;
     }
 
-}
+
 
 

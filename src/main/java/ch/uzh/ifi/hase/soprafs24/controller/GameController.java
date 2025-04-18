@@ -69,48 +69,6 @@ public class GameController {
         return new ResponseEntity<>(active, HttpStatus.OK);
     }
 
-//     @GetMapping("/{lobbyId}/players/{userId}/state")
-//     public ResponseEntity<PlayerStateGetDTO> getPlayerState(
-//             @PathVariable Long lobbyId,
-//             @PathVariable Long userId
-//     ) {
-//         GameManager game = InMemoryGameRegistry.getGame(lobbyId);
-//         if (game == null) {
-//             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Game not found");
-//         }
-
-//         PlayerState player = game.getPlayerState(userId);
-//         if (player == null) {
-//             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Player not found");
-//         }
-
-//         Map<String, Double> prices = game.getCurrentStockPrices();
-     
-
-//         List<StockHoldingDTO> stockDtos = gameService.toStockHoldings(player, prices); // ✅ move this to GameService
-
-//         List<TransactionRequestDTO> transactions = player.getTransactionHistory().stream().map(tx -> {
-//             TransactionRequestDTO dto = new TransactionRequestDTO();
-//             dto.setStockId(tx.getStockId());
-//             dto.setQuantity(tx.getQuantity());
-//             dto.setStockPrice(tx.getPrice());
-//             dto.setType(tx.getType());
-//             return dto;
-//         }).toList();
-
-//         PlayerStateGetDTO dto = new PlayerStateGetDTO();
-//         dto.setUserId(player.getUserId());
-//         dto.setCashBalance(player.getCashBalance());
-//         dto.setStocks(stockDtos);
-//         dto.setTransactionHistory(transactions);
-
-//         return ResponseEntity.ok(dto);
-
-
-        
-
-//     }
-// }
 
     @GetMapping("/{lobbyId}/players/{userId}/state")
     public ResponseEntity<PlayerStateGetDTO> getPlayerState(

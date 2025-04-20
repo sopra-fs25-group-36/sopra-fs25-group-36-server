@@ -44,12 +44,24 @@ public class GameManager {
         recalculateLeaderboard(); // Update leaderboard after adding a new player
     }
 
-    public void submitTransaction(Long userId, TransactionRequestDTO tx) {
+    public synchronized void submitTransaction(Long userId, TransactionRequestDTO tx) {
         PlayerState state = playerStates.get(userId);
-        if (state != null && isActive()) {
+        if (state != null && isActive() && !state.hasSubmittedForRound(currentRound)) {
             state.applyTransaction(tx, getCurrentStockPrices());
+            state.markSubmittedForRound(currentRound);
+
+            // Check if all players have submitted for this round
+            boolean allSubmitted = playerStates.values().stream()
+                    .allMatch(player -> player.hasSubmittedForRound(currentRound));
+
+            if (allSubmitted && !roundInProgress) {
+                roundInProgress = true;
+                System.out.println("All players submitted. Advancing round.");
+                nextRound();
+            }
         }
     }
+
 
     public Map<String, Double> getCurrentStockPrices() {
         if (stockTimeline == null || stockTimeline.isEmpty() || currentRound <= 0 || currentRound > stockTimeline.size()) {
@@ -66,10 +78,15 @@ public class GameManager {
     }
 
     public void nextRound() {
-        recalculateLeaderboard();
-        if (currentRound < 10) {
+        roundInProgress = false;
+//        for (PlayerState ps : playerStates.values()) {
+//            // placeholder loop in case we need to reset anything
+//        }
+        if (currentRound <   10) {
             currentRound++;
+            recalculateLeaderboard();
         } else {
+            recalculateLeaderboard();
             endGame();
         }
     }
@@ -80,6 +97,7 @@ public class GameManager {
             Long userId = entry.getKey();
             PlayerState player = entry.getValue();
             double total = player.calculateTotalAssets(getCurrentStockPrices());
+            System.out.println("User " + userId + " has total assets: " + total);
             updatedBoard.add(new LeaderBoardEntry(userId, total));
         }
 
@@ -120,6 +138,7 @@ public class GameManager {
             }
 
             if (currentRound < 10) {
+                roundInProgress = true;
                 System.out.println("Auto-progressing to round: " + (currentRound + 1));
                 nextRound();
             } else {
@@ -140,4 +159,7 @@ public class GameManager {
 
     public PlayerState getPlayerState(Long userId) { return playerStates.get(userId);
     }
+
+    private boolean roundInProgress = false;
+
 }

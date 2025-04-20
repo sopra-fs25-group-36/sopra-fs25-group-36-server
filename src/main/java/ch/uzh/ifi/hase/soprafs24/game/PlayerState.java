@@ -25,6 +25,9 @@ public class PlayerState {
     private double cashBalance;
     private final List<Transaction> transactionHistory;
 
+    private final Set<Integer> submittedRounds = new HashSet<>();
+
+
     public PlayerState(Long userId) {
         this.userId = userId;
         this.stocksOwned = new HashMap<>();
@@ -87,6 +90,14 @@ public class PlayerState {
     }
     public List<Transaction> getTransactionHistory() {
         return new ArrayList<>(transactionHistory); // or return Collections.unmodifiableList(...)
+    }
+
+    public boolean hasSubmittedForRound(int round) {
+        return submittedRounds.contains(round);
+    }
+
+    public void markSubmittedForRound(int round) {
+        submittedRounds.add(round);
     }
 
 }

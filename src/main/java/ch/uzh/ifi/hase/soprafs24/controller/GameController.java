@@ -70,12 +70,12 @@ public class GameController {
     }
 
 
-    @GetMapping("/{lobbyId}/players/{userId}/state")
+    @GetMapping("/{gameId}/players/{userId}/state")
     public ResponseEntity<PlayerStateGetDTO> getPlayerState(
-        @PathVariable Long lobbyId,
+        @PathVariable Long gameId,
         @PathVariable Long userId) 
     {
-    GameManager game = InMemoryGameRegistry.getGame(lobbyId);
+    GameManager game = InMemoryGameRegistry.getGame(gameId);
     if (game == null) {
         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Game not found");
     }

@@ -3,11 +3,9 @@ package ch.uzh.ifi.hase.soprafs24.game;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.Map.Entry;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
 
 import ch.uzh.ifi.hase.soprafs24.rest.dto.TransactionRequestDTO;
 
@@ -39,10 +37,27 @@ public class GameManager {
         this(gameId, stockTimeline, DEFAULT_ROUND_DELAY_MILLIS);
     }
 
+//    public void registerPlayer(Long userId) {
+//        playerStates.put(userId, new PlayerState(userId));
+//        recalculateLeaderboard(); // Update leaderboard after adding a new player
+//    }
     public void registerPlayer(Long userId) {
-        playerStates.put(userId, new PlayerState(userId));
-        recalculateLeaderboard(); // Update leaderboard after adding a new player
+
+        // 1. refuse duplicates
+        if (playerStates.containsKey(userId)) {
+            throw new IllegalStateException("Player " + userId + " already exists");
+        }
+
+        // 2. create the domain object that will track cash + shares
+        PlayerState ps = new PlayerState(userId);  // default cash inside ctor
+        playerStates.put(userId, ps);
+
+        // 3. leaderboard must reflect the newcomer
+        recalculateLeaderboard();
+
+        return;
     }
+
 
     public synchronized void submitTransaction(Long userId, TransactionRequestDTO tx) {
         PlayerState state = playerStates.get(userId);
@@ -82,11 +97,12 @@ public class GameManager {
 //        for (PlayerState ps : playerStates.values()) {
 //            // placeholder loop in case we need to reset anything
 //        }
+        recalculateLeaderboard();
         if (currentRound <   10) {
+            System.out.println("Current Round : " + currentRound);
             currentRound++;
-            recalculateLeaderboard();
+
         } else {
-            recalculateLeaderboard();
             endGame();
         }
     }

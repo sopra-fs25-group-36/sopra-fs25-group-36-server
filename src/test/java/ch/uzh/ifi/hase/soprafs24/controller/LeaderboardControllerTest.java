@@ -71,7 +71,7 @@ public class LeaderboardControllerTest {
     public void testLeaderboardRanksPlayersByTotalAssets() {
         // Given: fake 1-day stock timeline
 //        Map<String, Double> pricesDay1 = Map.of("AAPL", 100.0, "TSLA", 200.0);
-//        LocalDate day1 = LocalDate.of(2025, 4, 9); // or LocalDate.now() if you prefer
+//        LocalDate day1 = LocalDate.of(2025, 4, 9);
 
         LinkedHashMap<LocalDate, Map<String, Double>> timeline = new LinkedHashMap<>();
         LocalDate day1 = LocalDate.of(2025, 4, 9);

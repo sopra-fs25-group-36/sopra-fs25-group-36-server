@@ -100,4 +100,7 @@ public class PlayerState {
         submittedRounds.add(round);
     }
 
+    public double getTotalAssets(Map<String,Double> prices) {
+        return calculateTotalAssets(prices);
+    }
 }

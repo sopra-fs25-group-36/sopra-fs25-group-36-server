@@ -12,6 +12,16 @@ jobs:
   test:
     name: Test and Sonarqube
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - name: Checkout repository code
@@ -28,7 +38,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          API_KEY: ${{ secrets.API_KEY }}
+          ALPHAVANTAGE_API_KEY: ${{ secrets.API_KEY }}
+          DATABASE_USERNAME: postgres
+          DATABASE_PASSWORD: postgres
+          DATABASE_URL: jdbc:postgresql://postgres:5432/postgres
 
   deploy:
     name: Deploying to Google Cloud

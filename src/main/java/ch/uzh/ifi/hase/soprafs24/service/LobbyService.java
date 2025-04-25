@@ -2,15 +2,15 @@ package ch.uzh.ifi.hase.soprafs24.service;
 
 import ch.uzh.ifi.hase.soprafs24.entity.Lobby;
 import ch.uzh.ifi.hase.soprafs24.repository.LobbyRepository;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.List;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.time.Instant;
+import java.util.List;
+
 @Service
 @Transactional
 public class LobbyService {
@@ -21,64 +21,56 @@ public class LobbyService {
         this.lobbyRepository = lobbyRepository;
     }
 
-    /**
-     * Creates a new lobby for the specified creator.
-     *
-     * @param userId     The ID of the user creating the lobby.
-     * @param lobbyInput A Lobby object built from the DTO (LobbyPostDTO), initially empty.
-     * @return The persisted Lobby entity.
-     */
+    /* ---------- create ---------- */
+
     public Lobby createLobby(Long userId, Lobby lobbyInput) {
-        // Set a predetermined time limit for the lobby (e.g., 300 seconds)
-        lobbyInput.setTimeLimitSeconds(300L);
-
-        // Add the creator to the lobby's playerReadyStatuses with a default ready status (false)
+        lobbyInput.setTimeLimitSeconds(300L);             // 5 min default
         lobbyInput.getPlayerReadyStatuses().put(userId, false);
-
-        // The @PrePersist method in the Lobby entity will automatically set createdAt and active.
         return lobbyRepository.save(lobbyInput);
     }
 
+    /* ---------- read ---------- */
+
     public Lobby getLobbyById(Long lobbyId) {
         return lobbyRepository.findById(lobbyId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Lobby not found"));
+                .orElseThrow(() ->
+                        new ResponseStatusException(HttpStatus.NOT_FOUND, "Lobby not found"));
     }
 
-    @Scheduled(fixedRate = 1000)
+    /* ---------- scheduled: deactivate old lobbies ---------- */
+
+    @Scheduled(fixedRate = 1_000)
     public void deactivateExpiredLobbies() {
+        Instant now = Instant.now();
         List<Lobby> activeLobbies = lobbyRepository.findByActiveTrue();
-        LocalDateTime now = LocalDateTime.now();
+
         for (Lobby lobby : activeLobbies) {
-            // If the current time is after the lobby's expiration time, mark it as inactive.
-            if (lobby.getCreatedAt().plusSeconds(lobby.getTimeLimitSeconds()).isBefore(now)) {
+            Instant expiresAt = lobby.getCreatedAt()
+                                      .plusSeconds(lobby.getTimeLimitSeconds());
+            if (expiresAt.isBefore(now)) {
                 lobby.setActive(false);
                 lobbyRepository.save(lobby);
             }
         }
     }
 
+    /* ---------- membership + ready ---------- */
+
     public Lobby addUserToLobby(Long lobbyId, Long userId) {
-        Lobby lobby = lobbyRepository.findById(lobbyId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Lobby not found"));
-        // Add the new user with a default ready status (false)
+        Lobby lobby = getLobbyById(lobbyId);
         lobby.getPlayerReadyStatuses().put(userId, false);
         return lobbyRepository.save(lobby);
     }
 
     public Lobby setUserReady(Long lobbyId, Long userId) {
-        Lobby lobby = lobbyRepository.findById(lobbyId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Lobby not found"));
-    
+        Lobby lobby = getLobbyById(lobbyId);
+
         if (!lobby.getPlayerReadyStatuses().containsKey(userId)) {
-            // Optionally, you might add the user here, but usually the user should be added via joinLobby first.
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User is not part of the lobby");
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "User is not part of the lobby");
         }
-    
-        // Set the user's ready status to true
+
         lobby.getPlayerReadyStatuses().put(userId, true);
-    
         return lobbyRepository.save(lobby);
     }
-
-    // need another class to start the session automatically when all users are ready
 }
-

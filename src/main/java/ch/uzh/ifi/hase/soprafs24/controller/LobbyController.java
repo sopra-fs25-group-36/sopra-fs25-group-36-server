@@ -1,9 +1,7 @@
 package ch.uzh.ifi.hase.soprafs24.controller;
 
 import ch.uzh.ifi.hase.soprafs24.entity.Lobby;
-import ch.uzh.ifi.hase.soprafs24.rest.dto.LobbyGetDTO;
-import ch.uzh.ifi.hase.soprafs24.rest.dto.LobbyPostDTO;
-import ch.uzh.ifi.hase.soprafs24.rest.dto.LobbyUserPostDTO;
+import ch.uzh.ifi.hase.soprafs24.rest.dto.*;
 import ch.uzh.ifi.hase.soprafs24.rest.mapper.DTOMapper;
 import ch.uzh.ifi.hase.soprafs24.service.LobbyService;
 import org.springframework.http.HttpStatus;
@@ -13,51 +11,51 @@ import org.springframework.web.bind.annotation.*;
 public class LobbyController {
 
     private final LobbyService lobbyService;
+    private final DTOMapper mapper = DTOMapper.INSTANCE;
 
-    LobbyController(LobbyService lobbyService) {
+    public LobbyController(LobbyService lobbyService) {
         this.lobbyService = lobbyService;
     }
 
+    /* ---------- create ---------- */
+
     @PostMapping("/{userId}/createLobby")
     @ResponseStatus(HttpStatus.CREATED)
-    public LobbyGetDTO createLobby(@PathVariable Long userId, @RequestBody LobbyPostDTO lobbyPostDTO) {
-        Lobby lobbyInput = DTOMapper.INSTANCE.convertLobbyPostDTOtoEntity(lobbyPostDTO);
+    public LobbyGetDTO createLobby(@PathVariable Long userId,
+                                   @RequestBody LobbyPostDTO lobbyPostDTO) {
 
-        Lobby createdLobby = lobbyService.createLobby(userId, lobbyInput);
-
-        return DTOMapper.INSTANCE.convertEntityToLobbyGetDTO(createdLobby);
+        Lobby lobbyInput = mapper.convertLobbyPostDTOtoEntity(lobbyPostDTO);
+        Lobby created = lobbyService.createLobby(userId, lobbyInput);
+        return mapper.convertEntityToLobbyGetDTO(created);
     }
 
-    /**
-     * POST endpoint to add a user to an existing lobby.
-     *
-     * @param lobbyId the ID of the lobby to join
-     * @param lobbyUserPostDTO contains the userId to be added to the lobby
-     * @return the updated lobby as LobbyGetDTO
-     */
-    @PostMapping("/{lobbyId}/joinLobby")
+    /* ---------- join ---------- */
+
+    @PostMapping("lobby/{lobbyId}/joinLobby")
     @ResponseStatus(HttpStatus.OK)
     public LobbyGetDTO joinLobby(@PathVariable Long lobbyId,
-                                 @RequestBody LobbyUserPostDTO lobbyUserPostDTO) {
-        Lobby updatedLobby = lobbyService.addUserToLobby(lobbyId, lobbyUserPostDTO.getUserId());
-        return DTOMapper.INSTANCE.convertEntityToLobbyGetDTO(updatedLobby);
+                                 @RequestBody LobbyUserPostDTO dto) {
+
+        Lobby updated = lobbyService.addUserToLobby(lobbyId, dto.getUserId());
+        return mapper.convertEntityToLobbyGetDTO(updated);
     }
+
+    /* ---------- get ---------- */
 
     @GetMapping("/lobby/{lobbyId}")
     @ResponseStatus(HttpStatus.OK)
-    @ResponseBody
     public LobbyGetDTO getLobby(@PathVariable Long lobbyId) {
-        Lobby lobby = lobbyService.getLobbyById(lobbyId);
-        return DTOMapper.INSTANCE.convertEntityToLobbyGetDTO(lobby);
+        return mapper.convertEntityToLobbyGetDTO(lobbyService.getLobbyById(lobbyId));
     }
 
-    @PostMapping("/{lobbyId}/ready")
+    /* ---------- ready ---------- */
+
+    @PostMapping("lobby/{lobbyId}/ready")
     @ResponseStatus(HttpStatus.OK)
     public LobbyGetDTO setUserReady(@PathVariable Long lobbyId,
-                                    @RequestBody LobbyUserPostDTO lobbyUserPostDTO) {
-        Lobby updatedLobby = lobbyService.setUserReady(lobbyId, lobbyUserPostDTO.getUserId());
-        return DTOMapper.INSTANCE.convertEntityToLobbyGetDTO(updatedLobby);
-}
-    
-}
+                                    @RequestBody LobbyUserPostDTO dto) {
 
+        Lobby updated = lobbyService.setUserReady(lobbyId, dto.getUserId());
+        return mapper.convertEntityToLobbyGetDTO(updated);
+    }
+}

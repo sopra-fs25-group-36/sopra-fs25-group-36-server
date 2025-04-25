@@ -8,5 +8,5 @@ import java.util.List;
 
 @Repository("lobbyRepository")
 public interface LobbyRepository extends JpaRepository<Lobby, Long> {
-  List<Lobby> findByActiveTrue();
+    List<Lobby> findByActiveTrue();
 }

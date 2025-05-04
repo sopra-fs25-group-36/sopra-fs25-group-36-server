@@ -14,6 +14,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -51,7 +52,6 @@ class TransactionControllerTest {
         InMemoryGameRegistry.clear();
     }
 
-
     @Test
     void submitTransaction_success() throws Exception {
         TransactionRequestDTO requestDTO = new TransactionRequestDTO();
@@ -59,12 +59,14 @@ class TransactionControllerTest {
         requestDTO.setQuantity(10);
         requestDTO.setType("BUY");
 
+        List<TransactionRequestDTO> requestDTOs = List.of(requestDTO);
+
         mockMvc.perform(post("/api/transaction/{gameId}/submit", gameId)
-                        .param("userId", String.valueOf(userId))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(requestDTO)))
+                .param("userId", String.valueOf(userId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(requestDTOs)))
                 .andExpect(status().isOk())
-                .andExpect(content().string("Transaction submitted."));
+                .andExpect(content().string("Transactions submitted."));
     }
 
     @Test
@@ -77,10 +79,12 @@ class TransactionControllerTest {
         requestDTO.setQuantity(10);
         requestDTO.setType("BUY");
 
+        List<TransactionRequestDTO> requestDTOs = List.of(requestDTO);
+
         mockMvc.perform(post("/api/transaction/{gameId}/submit", gameId)
-                        .param("userId", String.valueOf(userId))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(requestDTO)))
+                .param("userId", String.valueOf(userId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(requestDTOs)))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string("Game not found."));
     }

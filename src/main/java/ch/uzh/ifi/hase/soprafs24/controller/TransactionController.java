@@ -4,6 +4,8 @@ import ch.uzh.ifi.hase.soprafs24.rest.dto.TransactionRequestDTO;
 import ch.uzh.ifi.hase.soprafs24.game.GameManager;
 import ch.uzh.ifi.hase.soprafs24.game.InMemoryGameRegistry;
 
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,14 +17,14 @@ public class TransactionController {
     public ResponseEntity<String> submitTransaction(
             @PathVariable Long gameId,
             @RequestParam Long userId,
-            @RequestBody TransactionRequestDTO transactionRequest) {
+            @RequestBody List<TransactionRequestDTO> transactionsRequest) {
 
         GameManager gameManager = InMemoryGameRegistry.getGame(gameId);
         if (gameManager == null) {
             return ResponseEntity.badRequest().body("Game not found.");
         }
 
-        gameManager.submitTransaction(userId, transactionRequest);
-        return ResponseEntity.ok("Transaction submitted.");
+        gameManager.submitTransactions(userId, transactionsRequest);
+        return ResponseEntity.ok("Transactions submitted.");
     }
 }

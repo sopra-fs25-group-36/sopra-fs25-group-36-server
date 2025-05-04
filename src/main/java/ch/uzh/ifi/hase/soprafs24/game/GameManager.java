@@ -24,8 +24,9 @@ public class GameManager {
     private static final long DEFAULT_ROUND_DELAY_MILLIS = 120_000; // 2 minutes
     private final ScheduledExecutorService roundScheduler;
 
-    //  Main constructor with round delay override
-    public GameManager(Long gameId, LinkedHashMap<LocalDate, Map<String, Double>>  stockTimeline, long roundDelayMillis) {
+    // Main constructor with round delay override
+    public GameManager(Long gameId, LinkedHashMap<LocalDate, Map<String, Double>> stockTimeline,
+            long roundDelayMillis) {
         this.gameId = gameId;
         this.stockTimeline = stockTimeline;
         this.roundDelayMillis = roundDelayMillis;
@@ -37,10 +38,10 @@ public class GameManager {
         this(gameId, stockTimeline, DEFAULT_ROUND_DELAY_MILLIS);
     }
 
-//    public void registerPlayer(Long userId) {
-//        playerStates.put(userId, new PlayerState(userId));
-//        recalculateLeaderboard(); // Update leaderboard after adding a new player
-//    }
+    // public void registerPlayer(Long userId) {
+    // playerStates.put(userId, new PlayerState(userId));
+    // recalculateLeaderboard(); // Update leaderboard after adding a new player
+    // }
     public void registerPlayer(Long userId) {
 
         // 1. refuse duplicates
@@ -49,7 +50,7 @@ public class GameManager {
         }
 
         // 2. create the domain object that will track cash + shares
-        PlayerState ps = new PlayerState(userId);  // default cash inside ctor
+        PlayerState ps = new PlayerState(userId); // default cash inside ctor
         playerStates.put(userId, ps);
 
         // 3. leaderboard must reflect the newcomer
@@ -58,11 +59,12 @@ public class GameManager {
         return;
     }
 
-
-    public synchronized void submitTransaction(Long userId, TransactionRequestDTO tx) {
+    public synchronized void submitTransactions(Long userId, List<TransactionRequestDTO> txs) {
         PlayerState state = playerStates.get(userId);
         if (state != null && isActive() && !state.hasSubmittedForRound(currentRound)) {
-            state.applyTransaction(tx, getCurrentStockPrices());
+            for (TransactionRequestDTO tx : txs) {
+                state.applyTransaction(tx, getCurrentStockPrices());
+            }
             state.markSubmittedForRound(currentRound);
 
 
@@ -79,9 +81,9 @@ public class GameManager {
         }
     }
 
-
     public Map<String, Double> getCurrentStockPrices() {
-        if (stockTimeline == null || stockTimeline.isEmpty() || currentRound <= 0 || currentRound > stockTimeline.size()) {
+        if (stockTimeline == null || stockTimeline.isEmpty() || currentRound <= 0
+                || currentRound > stockTimeline.size()) {
             return new HashMap<>();
         }
 
@@ -171,7 +173,8 @@ public class GameManager {
         this.stockTimeline = stockTimeline;
     }
 
-    public PlayerState getPlayerState(Long userId) { return playerStates.get(userId);
+    public PlayerState getPlayerState(Long userId) {
+        return playerStates.get(userId);
     }
 
     private boolean roundInProgress = false;

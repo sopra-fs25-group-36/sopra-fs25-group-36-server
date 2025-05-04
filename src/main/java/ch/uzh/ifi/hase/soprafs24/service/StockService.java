@@ -67,8 +67,8 @@ public class StockService {
 
     }
 
- 
-    @Scheduled(cron = "0 0 1 * * ?") // everyday 1am! i change it like this as if i do it based on millisecond everytime i run the backend it refetch this function automatically
+    @Scheduled(cron = "0 0 1 * * ?") // everyday 1am! i change it like this as if i do it based on millisecond
+                                     // everytime i run the backend it refetch this function automatically
     public void scheduleStockUpdate() {
         System.out.println("Starting scheduled stock data fetch at 1 AM! :)))!");
         fetchKnownPopularStocks();
@@ -85,7 +85,7 @@ public class StockService {
         }
     }
 
-    // 
+    //
     public void fetchAndProcessStockData(String symbol) {
         Config cfg = Config.builder()
                 .key(API_KEY)
@@ -155,7 +155,7 @@ public class StockService {
         LinkedHashMap<LocalDate, Map<String, Double>> byDate = new LinkedHashMap<>();
         LocalDate startDate = stockRepository.findRandomStartDateWith10Days();
 
-        List<Stock> rawData = stockRepository.findStocksForTenDays(startDate);
+        List<Stock> rawData = stockRepository.findRandom10SymbolsWithFirst10DatesFrom(startDate);
 
         for (Stock stock : rawData) {
             LocalDate date = stock.getDate();

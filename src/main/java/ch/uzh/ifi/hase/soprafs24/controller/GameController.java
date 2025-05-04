@@ -9,9 +9,7 @@ import java.util.Map;
 import ch.uzh.ifi.hase.soprafs24.game.GameManager;
 import ch.uzh.ifi.hase.soprafs24.game.InMemoryGameRegistry;
 import ch.uzh.ifi.hase.soprafs24.game.PlayerState;
-import ch.uzh.ifi.hase.soprafs24.rest.dto.PlayerStateGetDTO;
-import ch.uzh.ifi.hase.soprafs24.rest.dto.StockHoldingDTO;
-import ch.uzh.ifi.hase.soprafs24.rest.dto.TransactionRequestDTO;
+import ch.uzh.ifi.hase.soprafs24.rest.dto.*;
 
 import ch.uzh.ifi.hase.soprafs24.service.GameService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,7 +67,18 @@ public class GameController {
         return new ResponseEntity<>(active, HttpStatus.OK);
     }
 
-
+    @GetMapping("/{gameId}/round")
+    public ResponseEntity<GameStatusDTO> getGameRoundStatus(@PathVariable Long gameId) {
+        GameManager gameManager = gameService.getGame(gameId);
+        if (gameManager == null) {
+            return ResponseEntity.notFound().build();
+        }
+        GameStatusDTO dto = new GameStatusDTO(
+                gameManager.getCurrentRound(),
+                gameManager.isActive()
+        );
+        return ResponseEntity.ok(dto);
+    }
     @GetMapping("/{gameId}/players/{userId}/state")
     public ResponseEntity<PlayerStateGetDTO> getPlayerState(
         @PathVariable Long gameId,
@@ -89,5 +98,49 @@ public class GameController {
     dto.setUserId(player.getUserId());
     dto.setCashBalance(player.getCashBalance());
     return ResponseEntity.ok(dto);
-}
+    }
+
+
+        /**
+         * We need to be able to advance when only all players submitted transaction in addition to the timer running out
+         * Pollable endpoint for clients to know whether:
+         *  - allSubmitted: every player has called submit for the current round
+         *  - roundEnded:    either they’ve all submitted _or_ the server timer has auto-advanced
+         */
+    @GetMapping("/{gameId}/status")
+    public RoundStatusDTO getRoundStatus(
+            @PathVariable Long gameId,
+            @RequestParam(name="lastRound",defaultValue="0", required=false) Integer lastRound
+    ) {
+        // 1) lookup your GameManager
+        GameManager gm = InMemoryGameRegistry.getGame(gameId);
+        if (gm == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Game not found");
+        }
+
+        int current = gm.getCurrentRound();
+        System.out.printf(
+                "DEBUG: game %d status: currentRound=%d, lastRoundParam=%s%n",
+                gameId, current, lastRound);
+
+        // 2) have all players submitted for this round?
+        boolean allSubmitted = gm.getPlayerStates()
+                .values()
+                .stream()
+                .allMatch(ps -> ps.hasSubmittedForRound(current));
+
+        // 3) has the round ended?  Two cases:
+        //    a) everyone submitted
+        //    b) the server’s timer auto-advanced us past the client’s last‐seen round
+        boolean roundEnded;
+        if (lastRound != null) {
+            roundEnded = current > lastRound || allSubmitted;
+        } else {
+            // fallback: treat any all-submitted as “ended”
+            roundEnded = allSubmitted;
+        }
+        System.out.println("status for game " + gameId + " current=" + current + " lastRound=" + lastRound);
+        return new RoundStatusDTO(allSubmitted, roundEnded);
+    }
+
 }

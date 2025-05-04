@@ -21,7 +21,7 @@ public class GameManager {
     private boolean active = true;
     private final LocalDateTime startedAt = LocalDateTime.now();
 
-    private static final long DEFAULT_ROUND_DELAY_MILLIS = 180_000; // 2 minutes
+    private static final long DEFAULT_ROUND_DELAY_MILLIS = 120_000; // 2 minutes
     private final ScheduledExecutorService roundScheduler;
 
     //  Main constructor with round delay override
@@ -65,9 +65,11 @@ public class GameManager {
             state.applyTransaction(tx, getCurrentStockPrices());
             state.markSubmittedForRound(currentRound);
 
+
             // Check if all players have submitted for this round
             boolean allSubmitted = playerStates.values().stream()
                     .allMatch(player -> player.hasSubmittedForRound(currentRound));
+            System.out.println(" All submitted: " + allSubmitted + ", roundInProgress: " + roundInProgress);
 
             if (allSubmitted && !roundInProgress) {
                 roundInProgress = true;
@@ -94,19 +96,15 @@ public class GameManager {
 
     public void nextRound() {
         roundInProgress = false;
-//        for (PlayerState ps : playerStates.values()) {
-//            // placeholder loop in case we need to reset anything
-//        }
-        recalculateLeaderboard();
-        if (currentRound <   10) {
-            System.out.println("Current Round : " + currentRound);
+        int MAX_ROUNDS=10;
+        if (currentRound < MAX_ROUNDS) {
             currentRound++;
-
+            System.out.println("Advancing to round: " + currentRound);
+            recalculateLeaderboard();
         } else {
             endGame();
         }
     }
-
     private void recalculateLeaderboard() {
         List<LeaderBoardEntry> updatedBoard = new ArrayList<>();
         for (Map.Entry<Long, PlayerState> entry : playerStates.entrySet()) {
@@ -122,8 +120,8 @@ public class GameManager {
     }
 
     public void endGame() {
+        System.out.println("Game " + gameId + " is ending (marked inactive).");
         this.active = false;
-        InMemoryGameRegistry.remove(gameId);
     }
 
     public boolean isActive() {

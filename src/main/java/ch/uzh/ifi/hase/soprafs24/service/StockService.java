@@ -1,29 +1,31 @@
 package ch.uzh.ifi.hase.soprafs24.service;
 
-import org.springframework.web.server.ResponseStatusException;
-import org.springframework.http.HttpStatus;
-import org.springframework.scheduling.annotation.Scheduled;
-
-import java.util.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-//import org.checkerframework.checker.units.qual.A;
-import org.json.JSONObject;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
+import java.util.Map; // Added for Collections.emptyList() and Collections.emptyMap()
 
-import com.crazzyghost.alphavantage.AlphaVantage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+
+import com.crazzyghost.alphavantage.AlphaVantage; // For DB operations
 import com.crazzyghost.alphavantage.Config;
 import com.crazzyghost.alphavantage.parameters.DataType;
 import com.crazzyghost.alphavantage.parameters.OutputSize;
+import com.crazzyghost.alphavantage.timeseries.response.StockUnit;
 import com.crazzyghost.alphavantage.timeseries.response.TimeSeriesResponse;
 
-import ch.uzh.ifi.hase.soprafs24.entity.Stock;
+import ch.uzh.ifi.hase.soprafs24.entity.Stock; // Explicit import
 import ch.uzh.ifi.hase.soprafs24.game.GameManager;
 import ch.uzh.ifi.hase.soprafs24.game.InMemoryGameRegistry;
 import ch.uzh.ifi.hase.soprafs24.game.PlayerState;
@@ -34,232 +36,280 @@ import ch.uzh.ifi.hase.soprafs24.rest.dto.StockPriceGetDTO;
 @Service
 public class StockService {
 
+    private static final Logger log = LoggerFactory.getLogger(StockService.class);
     private final StockRepository stockRepository;
+    private final String API_KEY;
 
     public StockService(StockRepository stockRepository, @Value("${ALPHAVANTAGE_API_KEY}") String API_KEY) {
         this.stockRepository = stockRepository;
         this.API_KEY = API_KEY;
     }
 
-    private String API_KEY;
-
-    // for updating more data from dbs_April.13
     private static final List<String> POPULAR_SYMBOLS = List.of(
-            "TSLA", "GOOG", "MSFT", "NVDA", "AMZN", "META", "NFLX", "INTC", "AMD", "AAPL",
+            "TSLA", "GOOG", "MSFT", "NVDA", "AMZN", /*"META",*/ "NFLX", "INTC", "AMD", "AAPL", // META often has issues
             "JPM", "GS",
             "PFE", "JNJ",
             "XOM", "CVX",
             "PG");
 
-    private static final Map<String, String> STOCK_CATEGORIES = Map.ofEntries(
-            Map.entry("TSLA", "TECH"), Map.entry("GOOG", "TECH"),
-            Map.entry("MSFT", "TECH"), Map.entry("NVDA", "TECH"),
-            Map.entry("AMZN", "TECH"), Map.entry("META", "TECH"),
-            Map.entry("NFLX", "TECH"), Map.entry("INTC", "TECH"),
-            Map.entry("AMD", "TECH"), Map.entry("AAPL", "TECH"),
-            Map.entry("XOM", "ENERGY"), Map.entry("CVX", "ENERGY"),
-            Map.entry("JPM", "FINANCE"), Map.entry("GS", "FINANCE"),
-            Map.entry("PFE", "HEALTHCARE"), Map.entry("JNJ", "HEALTHCARE"),
-            Map.entry("PG", "CONSUMER"));
+    // Consistent category mapping
+    private static final Map<String, String> STOCK_CATEGORIES = Collections.unmodifiableMap(new HashMap<>() {{
+        put("TSLA", "TECH"); put("GOOG", "TECH"); put("MSFT", "TECH");
+        put("NVDA", "TECH"); put("AMZN", "TECH"); /*put("META", "TECH");*/
+        put("NFLX", "TECH"); put("INTC", "TECH"); put("AMD", "TECH");
+        put("AAPL", "TECH");
+        put("XOM", "ENERGY"); put("CVX", "ENERGY");
+        put("JPM", "FINANCE"); put("GS", "FINANCE");
+        put("PFE", "HEALTHCARE"); put("JNJ", "HEALTHCARE");
+        put("PG", "CONSUMER");
+        // Add any other symbols used in your game if they have specific categories
+        put("IBM", "MISC"); // Example if IBM is used
+    }});
 
     public Map<String, String> getCategoryMap() {
         return STOCK_CATEGORIES;
-
     }
 
-    @Scheduled(cron = "0 0 1 * * ?") // everyday 1am! i change it like this as if i do it based on millisecond
-                                     // everytime i run the backend it refetch this function automatically
+    @Scheduled(cron = "${stock.update.cron:0 0 1 * * ?}") // Use property or default to 1 AM
     public void scheduleStockUpdate() {
-        System.out.println("Starting scheduled stock data fetch at 1 AM! :)))!");
-        fetchKnownPopularStocks();
-        System.out.println("Finished scheduled stock data fetch!!:))))!");
+        log.info("Starting scheduled stock data fetch based on cron expression!");
+        fetchKnownPopularStocks(); // This method itself should decide if it fetches or not
+        log.info("Finished scheduled stock data fetch!");
     }
 
     public void fetchKnownPopularStocks() {
+        log.info("Attempting to fetch data for {} popular stocks.", POPULAR_SYMBOLS.size());
+        boolean performFetch = true; // Set to false to disable actual fetching during development if needed
+        if (!performFetch) {
+            log.warn("Actual data fetching is currently DISABLED in fetchKnownPopularStocks method.");
+            return;
+        }
+
         for (String symbol : POPULAR_SYMBOLS) {
             try {
-                // fetchAndProcessStockData(symbol); //UNCOMMENT
+                fetchAndProcessStockData(symbol);
             } catch (Exception e) {
-                System.err.println("Failed to fetch data for " + symbol + ": " + e.getMessage());
+                log.error("Failed to fetch data for symbol {}: {}", symbol, e.getMessage(), e);
             }
         }
     }
 
-    //
+    @Transactional // Ensures atomicity for DB operations related to one symbol's fetch
     public void fetchAndProcessStockData(String symbol) {
+        log.info("Fetching and processing stock data for symbol: {}", symbol);
         Config cfg = Config.builder()
                 .key(API_KEY)
-                .timeOut(10)
+                .timeOut(30) // Increased timeout for AlphaVantage
                 .build();
-
         AlphaVantage.api().init(cfg);
 
-        TimeSeriesResponse response = AlphaVantage.api()
-                .timeSeries()
-                .daily()
-                .forSymbol(symbol)
-                .outputSize(OutputSize.FULL)
-                .dataType(DataType.JSON)
-                .fetchSync();
+        try {
+            TimeSeriesResponse response = AlphaVantage.api()
+                    .timeSeries()
+                    .daily()
+                    .forSymbol(symbol)
+                    .outputSize(OutputSize.FULL) // Full history
+                    .dataType(DataType.JSON)
+                    .fetchSync();
 
-        System.out.println("Metadata: " + response.getMetaData().getInformation());
-        System.out.println("Error message: " + response.getErrorMessage());
-
-        response.getStockUnits().forEach(stockUnit -> {
-            System.out.println("Date: " + stockUnit.getDate());
-            System.out.println("Open: " + stockUnit.getOpen());
-            System.out.println("High: " + stockUnit.getHigh());
-            System.out.println("Low: " + stockUnit.getLow());
-            System.out.println("Close: " + stockUnit.getClose());
-            System.out.println("Volume: " + stockUnit.getVolume());
-
-            if (stockRepository
-                    .findBySymbolAndDate(symbol, LocalDate.parse(stockUnit.getDate(), DateTimeFormatter.ISO_DATE))
-                    .size() == 0) {
-                Stock stock = new Stock();
-                stock.setDate(LocalDate.parse(stockUnit.getDate(), DateTimeFormatter.ISO_DATE));
-                stock.setPrice(stockUnit.getClose());
-                stock.setCurrency("USD");
-                stock.setVolume(stockUnit.getVolume());
-                stock.setSymbol(symbol);
-                stockRepository.save(stock);
-                stockRepository.flush();
+            if (response.getErrorMessage() != null) {
+                log.error("AlphaVantage API error for symbol {}: {}", symbol, response.getErrorMessage());
+                return;
             }
-        });
 
-        System.out.println("Saved " + response.getStockUnits().size() + " records for " + symbol);
+            List<StockUnit> stockUnits = response.getStockUnits();
+            if (stockUnits == null || stockUnits.isEmpty()) {
+                log.warn("No stock units returned from AlphaVantage for symbol: {}", symbol);
+                return;
+            }
+
+            int newRecordsSaved = 0;
+            for (StockUnit unit : stockUnits) {
+                try {
+                    LocalDate date = LocalDate.parse(unit.getDate(), DateTimeFormatter.ISO_LOCAL_DATE);
+                    // Check if data for this symbol and date already exists to avoid duplicates
+                    if (stockRepository.findBySymbolAndDate(symbol, date).isEmpty()) {
+                        Stock stock = new Stock();
+                        stock.setSymbol(symbol);
+                        stock.setDate(date);
+                        stock.setPrice(unit.getClose()); // Using closing price
+                        stock.setVolume(unit.getVolume());
+                        stock.setCurrency("USD"); // Assuming USD
+                        // stock.setCategory(STOCK_CATEGORIES.getOrDefault(symbol, "OTHER")); // If your Stock entity has a category field
+                        stockRepository.save(stock);
+                        newRecordsSaved++;
+                    }
+                } catch (Exception e) {
+                    log.error("Error processing or saving stock unit for symbol {} on date {}: {}", symbol, unit.getDate(), e.getMessage(), e);
+                }
+            }
+            if (newRecordsSaved > 0) {
+                log.info("Saved {} new daily records for symbol {}.", newRecordsSaved, symbol);
+            } else {
+                log.info("No new daily records to save for symbol {} (data likely up-to-date).", symbol);
+            }
+
+        } catch (Exception e) { // Catch broader exceptions from AlphaVantage client or processing
+            log.error("Exception during AlphaVantage fetch or processing for symbol {}: {}", symbol, e.getMessage(), e);
+        }
     }
 
+    // This method is for getting historical prices, potentially for game setup or specific queries.
+    // It is NOT what /api/stocks/{gameId}/stocks calls for current round prices.
     public List<StockPriceGetDTO> getStockPrice(Long gameId, String symbol, Integer round) {
         GameManager game = InMemoryGameRegistry.getGame(gameId);
-
         if (game == null) {
-            throw new IllegalArgumentException("Game with ID " + gameId + " not found.");
+            log.warn("Game with ID {} not found for getStockPrice(symbol, round).", gameId);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Game with ID " + gameId + " not found.");
+        }
+
+        LocalDate dateForRound = game.getDateForRound(round);
+        if (dateForRound == null) {
+            log.warn("Could not determine date for round {} in game {}. Returning empty list.", round, gameId);
+            return Collections.emptyList();
         }
 
         LinkedHashMap<LocalDate, Map<String, Double>> timeline = game.getStockTimeline();
+        List<StockPriceGetDTO> result = new ArrayList<>();
 
-        return timeline.entrySet().stream()
-                .map(entry -> {
-                    StockPriceGetDTO dto = new StockPriceGetDTO();
-                    dto.setSymbol(symbol);
-                    dto.setDate(entry.getKey()); // make sure StockPriceGetDTO has `date`
-                    dto.setPrice(entry.getValue().get(symbol));
-                    return dto;
-                })
-                .toList();
+        for (Map.Entry<LocalDate, Map<String, Double>> entry : timeline.entrySet()) {
+            LocalDate entryDate = entry.getKey();
+            if (entryDate.isAfter(dateForRound)) { // Only data up to and including the round's date
+                continue; // Or break if timeline is sorted and we've passed the target date
+            }
+            Map<String, Double> pricesOnDate = entry.getValue();
+            if (pricesOnDate.containsKey(symbol)) {
+                StockPriceGetDTO dto = new StockPriceGetDTO();
+                dto.setSymbol(symbol);
+                dto.setDate(entryDate);
+                dto.setPrice(pricesOnDate.get(symbol));
+                dto.setCategory(STOCK_CATEGORIES.getOrDefault(symbol, "OTHER")); // Use consistent category mapping
+                dto.setRound(round); // Or determine round from date if mapping exists
+                result.add(dto);
+            }
+        }
+        return result;
     }
 
-    // CREATE STOCK TIMELINE UNIQUE TO GAME ; EXTRACTING STOCKS FROM DB TO GAME
     public LinkedHashMap<LocalDate, Map<String, Double>> getStockTimelineFromDatabase() {
         LinkedHashMap<LocalDate, Map<String, Double>> byDate = new LinkedHashMap<>();
+        // Ensure this logic is robust for game initialization.
+        // "findRandomStartDateWith10Days" might not be suitable for all game setups.
         LocalDate startDate = stockRepository.findRandomStartDateWith10Days();
+        if (startDate == null) {
+            log.error("Critical: Could not find a random start date with sufficient data. Stock timeline will be empty for new game.");
+            // This could lead to games starting without data. Consider throwing an exception or having a fallback.
+            return byDate;
+        }
 
         List<Stock> rawData = stockRepository.findRandom10SymbolsWithFirst10DatesFrom(startDate);
+        if (rawData.isEmpty()) {
+            log.warn("No stock data found from startDate {} for game timeline. Timeline will be empty.", startDate);
+            return byDate;
+        }
 
         for (Stock stock : rawData) {
             LocalDate date = stock.getDate();
-
-            byDate.putIfAbsent(date, new HashMap<>());
-            byDate.get(date).put(stock.getSymbol(), stock.getPrice());
-
+            byDate.computeIfAbsent(date, k -> new HashMap<>()).put(stock.getSymbol(), stock.getPrice());
         }
-
+        log.info("Generated stock timeline for a new game with {} dates, starting from {}. Total data points: {}",
+                byDate.size(), startDate, rawData.size());
         return byDate;
     }
 
     public List<StockPriceGetDTO> getCurrentRoundStockPrices(Long gameId) {
         GameManager manager = InMemoryGameRegistry.getGame(gameId);
-
         if (manager == null) {
+            log.warn("Game with ID {} not found for getCurrentRoundStockPrices.", gameId);
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Game not found: " + gameId);
         }
 
-        Map<String, Double> prices = manager.getCurrentStockPrices();
+        LocalDate currentMarketDate = manager.getCurrentMarketDate(); // THIS IS THE KEY
+        if (currentMarketDate == null) {
+            log.error("CRITICAL: GameManager for gameId {} did not provide a currentMarketDate. " +
+                      "Stock prices will be returned without a date, and frontend chart filtering will NOT work as intended.", gameId);
+            // This indicates a fundamental issue in game state or logic if the current date is unknown.
+            // Depending on game rules, you might throw an exception or return data without dates (current behavior).
+        }
 
-        if (prices == null || prices.isEmpty()) {
-            return new ArrayList<>(); // or optionally: throw new ResponseStatusException(...)
+        Map<String, Double> currentPrices = manager.getCurrentStockPrices();
+        if (currentPrices == null || currentPrices.isEmpty()) {
+            log.warn("No current stock prices available in GameManager for gameId {} and round {}.", gameId, manager.getCurrentRound());
+            return Collections.emptyList();
         }
 
         List<StockPriceGetDTO> result = new ArrayList<>();
-        for (Map.Entry<String, Double> entry : prices.entrySet()) {
+        int currentRound = manager.getCurrentRound(); // Get current round once
+
+        for (Map.Entry<String, Double> entry : currentPrices.entrySet()) {
             StockPriceGetDTO dto = new StockPriceGetDTO();
-            dto.setSymbol(entry.getKey());
+            String symbol = entry.getKey();
+            dto.setSymbol(symbol);
             dto.setPrice(entry.getValue());
-            dto.setCategory(getCategoryMap().getOrDefault(entry.getKey(), "UNKNOWN"));
+            dto.setCategory(STOCK_CATEGORIES.getOrDefault(symbol, "OTHER")); // Use consistent category mapping
+            dto.setRound(currentRound);
+            dto.setDate(currentMarketDate); // <<< SET THE DATE FOR THE CURRENT ROUND'S PRICES
             result.add(dto);
         }
-
+        log.debug("Returning {} stock prices for gameId {} for date {} and round {}.",
+                  result.size(), gameId, currentMarketDate, currentRound);
         return result;
     }
 
-    // new
-
-    // --- New Methods for Player Data ---
-
-    /**
-     * Gets the player's stock holdings.
-     *
-     * @param userId The ID of the user.
-     * @return A list of StockHoldingDTO objects representing the player's stock
-     *         holdings.
-     */
     public List<StockHoldingDTO> getPlayerHoldings(Long userId, Long gameId) {
-        // Retrieve the GameManager using the gameId
         GameManager game = InMemoryGameRegistry.getGame(gameId);
         if (game == null) {
-            throw new IllegalArgumentException("Game not found for gameId: " + gameId);
+            log.warn("Game not found for gameId: {} when getting player holdings for userId: {}.", gameId, userId);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Game not found for gameId: " + gameId);
         }
 
-        // Retrieve the PlayerState for this user
         PlayerState player = game.getPlayerState(userId);
         if (player == null) {
-            throw new IllegalArgumentException("Player state not found for userId: " + userId);
+            log.warn("Player state not found for userId: {} in gameId: {}.", userId, gameId);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Player state not found for userId: " + userId);
         }
 
-        // Retrieve current stock prices and convert to StockHoldingDTO
         Map<String, Double> prices = game.getCurrentStockPrices();
-        return toStockHoldings(player, prices, STOCK_CATEGORIES);
+        if (prices == null) {
+            log.warn("Current stock prices are null in gameId {} for player holdings. Using empty prices map.", gameId);
+            prices = Collections.emptyMap();
+        }
+        return toStockHoldings(player, prices);
     }
 
-    /**
-     * Converts player stock data into StockHoldingDTO objects.
-     *
-     * @param player     The PlayerState object.
-     * @param prices     The map of stock prices.
-     * @param categories The map of stock categories.
-     * @return A list of StockHoldingDTO objects.
-     */
-    public List<StockHoldingDTO> toStockHoldings(PlayerState player,
-            Map<String, Double> prices,
-            Map<String, String> categories) {
+    private List<StockHoldingDTO> toStockHoldings(PlayerState player, Map<String, Double> prices) {
         List<StockHoldingDTO> holdings = new ArrayList<>();
+        Map<String, Integer> playerStocks = player.getPlayerStocks();
 
-        for (Map.Entry<String, Integer> entry : player.getPlayerStocks().entrySet()) {
+        if (playerStocks == null || playerStocks.isEmpty()) {
+            return holdings;
+        }
+
+        for (Map.Entry<String, Integer> entry : playerStocks.entrySet()) {
             String symbol = entry.getKey();
             int quantity = entry.getValue();
+            if (quantity <= 0) continue; // Don't show holdings with zero or negative quantity
+
             double price = prices.getOrDefault(symbol, 0.0);
-            String category = categories.getOrDefault(symbol, "UNKNOWN");
+            String category = STOCK_CATEGORIES.getOrDefault(symbol, "OTHER");
 
             StockHoldingDTO dto = new StockHoldingDTO(symbol, quantity, category, price);
             holdings.add(dto);
         }
-
         return holdings;
     }
 
-    /**
-     * Gets the GameManager associated with a user.
-     *
-     * @param userId The user's ID.
-     * @return The GameManager object.
-     */
+    // This method seems primarily for validation or direct GameManager access.
     public GameManager getGameManagerForUser(Long userId, Long gameId) {
         GameManager game = InMemoryGameRegistry.getGame(gameId);
-        if (game == null || game.getPlayerState(userId) == null) {
-            throw new IllegalArgumentException("Game not found for userId: " + userId + " and gameId: " + gameId);
+        if (game == null) {
+            log.warn("Game not found for gameId {} during GameManager lookup for user {}.", gameId, userId);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Game not found for gameId: " + gameId);
+        }
+        if (game.getPlayerState(userId) == null) {
+            log.warn("Player {} not found in game {} during GameManager lookup.", userId, gameId);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Player " + userId + " not found in game " + gameId);
         }
         return game;
     }
-
 }

@@ -140,7 +140,7 @@ public class GameController {
             roundEnded = allSubmitted;
         }
         System.out.println("status for game " + gameId + " current=" + current + " lastRound=" + lastRound);
-        return new RoundStatusDTO(allSubmitted, roundEnded);
+        return new RoundStatusDTO(allSubmitted, roundEnded, gm.getNextRoundStartTimeMillis());
     }
 
 }

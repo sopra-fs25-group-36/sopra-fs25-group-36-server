@@ -23,6 +23,8 @@ public class GameManager {
 
     private static final long DEFAULT_ROUND_DELAY_MILLIS = 120_000; // 2 minutes
     private final ScheduledExecutorService roundScheduler;
+    private long nextRoundStartTimeMillis = 0L;
+
 
     // Main constructor with round delay override
     public GameManager(Long gameId, LinkedHashMap<LocalDate, Map<String, Double>> stockTimeline,
@@ -75,9 +77,19 @@ public class GameManager {
 
             if (allSubmitted && !roundInProgress) {
                 roundInProgress = true;
-                System.out.println("All players submitted. Advancing round.");
-                nextRound();
+
+                // Set synchronized start time (e.g., 2 seconds from now)
+                // coz now nextround is starting differently for diff players depending on order of submission
+                long syncBufferMillis = 2000;
+                nextRoundStartTimeMillis = System.currentTimeMillis() + syncBufferMillis;
+                System.out.println("All players submitted. Next round will start at: " + nextRoundStartTimeMillis);
+
+                // Schedule the round advance at that time
+                roundScheduler.schedule(() -> {
+                    nextRound();
+                }, syncBufferMillis, TimeUnit.MILLISECONDS);
             }
+
         }
     }
 
@@ -178,5 +190,9 @@ public class GameManager {
     }
 
     private boolean roundInProgress = false;
+
+    public long getNextRoundStartTimeMillis() {
+        return nextRoundStartTimeMillis;
+    }
 
 }

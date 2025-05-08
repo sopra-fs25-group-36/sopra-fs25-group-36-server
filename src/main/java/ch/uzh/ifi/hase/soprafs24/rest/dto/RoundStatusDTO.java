@@ -4,11 +4,14 @@ public class RoundStatusDTO {
     private boolean allSubmitted;
     private boolean roundEnded;
 
-    public RoundStatusDTO() { }
+    private Long nextRoundStartTime;
 
-    public RoundStatusDTO(boolean allSubmitted, boolean roundEnded) {
+
+    public RoundStatusDTO(boolean allSubmitted, boolean roundEnded, long nextRoundStartTime) {
         this.allSubmitted = allSubmitted;
         this.roundEnded    = roundEnded;
+        this.nextRoundStartTime = nextRoundStartTime;
+
     }
 
     public boolean isAllSubmitted() {
@@ -23,4 +26,16 @@ public class RoundStatusDTO {
     public void setRoundEnded(boolean roundEnded) {
         this.roundEnded = roundEnded;
     }
+    public Long getNextRoundStartTime() {
+        return nextRoundStartTime;
+    }
+
+    public void setNextRoundStartTime(Long nextRoundStartTime) {
+        this.nextRoundStartTime = nextRoundStartTime;
+    }
+
+
+
+
+
 }

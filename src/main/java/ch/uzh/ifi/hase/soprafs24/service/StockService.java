@@ -45,25 +45,35 @@ public class StockService {
         this.API_KEY = API_KEY;
     }
 
+
+             // for updating more data from dbs_May.11  --total 29 stocks
     private static final List<String> POPULAR_SYMBOLS = List.of(
-            "TSLA", "GOOG", "MSFT", "NVDA", "AMZN", /*"META",*/ "NFLX", "INTC", "AMD", "AAPL", // META often has issues
+            "TSLA", "GOOG", "MSFT", "NVDA", "AMZN", "META", "NFLX", "INTC", "AMD", "AAPL",
             "JPM", "GS",
             "PFE", "JNJ",
             "XOM", "CVX",
-            "PG");
+            "PG",     
+            "WDAY", "KO", "BTI", "MCD",  "SHEL", "WMT","COST", "BABA","LLY", "ABBV", "V", "MA"
+        );
 
     // Consistent category mapping
     private static final Map<String, String> STOCK_CATEGORIES = Collections.unmodifiableMap(new HashMap<>() {{
         put("TSLA", "TECH"); put("GOOG", "TECH"); put("MSFT", "TECH");
         put("NVDA", "TECH"); put("AMZN", "TECH"); /*put("META", "TECH");*/
         put("NFLX", "TECH"); put("INTC", "TECH"); put("AMD", "TECH");
-        put("AAPL", "TECH");
-        put("XOM", "ENERGY"); put("CVX", "ENERGY");
+        put("AAPL", "TECH"); put("WDAY", "TECH");
+        put("XOM", "ENERGY"); put("CVX", "ENERGY"); put("SHEL", "ENERGY");
         put("JPM", "FINANCE"); put("GS", "FINANCE");
-        put("PFE", "HEALTHCARE"); put("JNJ", "HEALTHCARE");
-        put("PG", "CONSUMER");
+        put("V", "FINANCE"); put("MA", "FINANCE");
+        put("PFE", "HEALTHCARE"); put("JNJ", "HEALTHCARE"); put("LLY", "HEALTHCARE");
+        put("ABBV", "HEALTHCARE");
+        put("PG", "CONSUMER");  put("KO", "CONSUMER"); put("BTI", "CONSUMER");
+        put("MCD", "CONSUMER");
+        put("WMT", "RETAIL"); put("COST", "RETAIL"); put("BABA", "RETAIL");
+     
+
         // Add any other symbols used in your game if they have specific categories
-        put("IBM", "MISC"); // Example if IBM is used
+      //  put("IBM", "MISC"); // Example if IBM is used
     }});
 
     public Map<String, String> getCategoryMap() {

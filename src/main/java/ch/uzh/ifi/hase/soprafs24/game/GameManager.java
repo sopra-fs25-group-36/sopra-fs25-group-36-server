@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors; // Kept from old version, might be useful
 
@@ -30,10 +31,13 @@ public class GameManager {
     private static final long DEFAULT_ROUND_DELAY_MILLIS = 120_000; // 2 minutes
     private static final int MAX_ROUNDS = 10; // Define max rounds once
     private static final long SYNC_BUFFER_MILLIS = 2_000; // Buffer for synchronized round start
+    private final ScheduledExecutorService scheduler;
 
-    private final ScheduledExecutorService roundScheduler;
-    private volatile boolean roundInProgress = false; // Flag to manage round transition logic
+
+//    private final ScheduledExecutorService roundScheduler;
+//    private volatile boolean roundInProgress = false; // Flag to manage round transition logic
     private long nextRoundStartTimeMillis = 0L; // For DTO, when next round might start due to all submissions
+    private ScheduledFuture<?> nextRoundFuture;
 
     public GameManager(Long gameId, LinkedHashMap<LocalDate, Map<String, Double>> stockTimeline, long roundDelayMillis) {
         this.gameId = gameId;
@@ -43,11 +47,10 @@ public class GameManager {
             // Consider throwing an IllegalArgumentException if an empty timeline is invalid for game start
         }
         this.roundDelayMillis = roundDelayMillis;
-        this.roundScheduler = Executors.newSingleThreadScheduledExecutor(runnable -> {
-            Thread thread = Executors.defaultThreadFactory().newThread(runnable);
-            thread.setName("GameRoundScheduler-" + gameId); // Named thread for easier debugging
-            return thread;
-        });
+        this.scheduler = Executors.newSingleThreadScheduledExecutor(r ->
+                new Thread(r, "GameRoundScheduler-" + this.gameId)
+        );
+
         log.info("GameManager for gameId {} created. Round delay: {}ms. Timeline entries: {}.",
                 gameId, roundDelayMillis, stockTimeline.size());
     }
@@ -101,35 +104,12 @@ public class GameManager {
         // Check if all active players have submitted
         boolean allSubmitted = haveAllPlayersSubmittedForCurrentRound();
 
-        log.debug("Game {}: All submitted for round {}: {}. Round in progress flag: {}.", gameId, currentRound, allSubmitted, this.roundInProgress);
+        log.debug("Game {}: All submitted for round {}: {}. Round in progress flag: {}.", gameId, currentRound, allSubmitted);
 
-        if (allSubmitted && !this.roundInProgress) {
-            this.roundInProgress = true; // Set flag to prevent re-entry by timer or other submissions
-            
-            this.nextRoundStartTimeMillis = System.currentTimeMillis() + SYNC_BUFFER_MILLIS;
-            log.info("Game {}: All players have submitted for round {}. Scheduling next round to start around {}.", gameId, currentRound, this.nextRoundStartTimeMillis);
-
-            roundScheduler.schedule(() -> {
-                try {
-                    synchronized (GameManager.this) {
-                        // Check if still active and if this task is still relevant (roundInProgress still true)
-                        if (active && this.roundInProgress) {
-                            log.info("Game {}: Executing scheduled nextRound (all players submitted) for round {}.", gameId, currentRound);
-                            nextRound(); // Advances round, recalculates leaderboard, and resets roundInProgress
-                        } else {
-                            log.warn("Game {}: Scheduled nextRound (all players submitted) for round {} was skipped. Active: {}, RoundInProgress: {}. Timer might have already advanced the round or game ended.",
-                                     gameId, currentRound, active, this.roundInProgress);
-                            // If nextRound wasn't called, and roundInProgress is true, it needs reset.
-                            // However, nextRound() is the primary place to set it to false.
-                            // If active is false, endGame handles scheduler.
-                            // If !roundInProgress, it means timer or another mechanism already handled it.
-                        }
-                    }
-                } catch (Exception e) {
-                    log.error("Game {}: Unhandled exception in scheduled nextRound (all players submitted) task: {}", gameId, e.getMessage(), e);
-                    // Consider implications for game state, possibly force end game or specific recovery.
-                }
-            }, SYNC_BUFFER_MILLIS, TimeUnit.MILLISECONDS);
+        if (haveAllPlayersSubmittedForCurrentRound()) {
+            // as soon as the last player in, throw out the old timer
+            // and schedule a 2 s “all‐in” dispatch:
+            scheduleNextRoundAfter(SYNC_BUFFER_MILLIS);
         }
     }
 
@@ -188,7 +168,6 @@ public class GameManager {
     public synchronized void nextRound() {
         if (!active) {
             log.info("Game {} is inactive. Not advancing to next round.", gameId);
-            this.roundInProgress = false; // Ensure flag is reset if called while inactive
             return;
         }
 
@@ -196,15 +175,36 @@ public class GameManager {
             currentRound++;
             log.info("Game {}: Advanced to round {}.", gameId, currentRound);
             recalculateLeaderboard();
+            // schedule the normal timeout for the new round
+            scheduleNextRoundAfter(roundDelayMillis);
+
             // Player submission status implicitly reset by PlayerState checking against new currentRound
-        } else {
+        }
+        else {
             log.info("Game {}: Max rounds ({}) reached. Ending game.", gameId, MAX_ROUNDS);
             endGame(); // endGame will also set active = false
         }
-        this.roundInProgress = false; // Reset flag: new round is ready for submissions or next auto-advance
-        // nextRoundStartTimeMillis is informational, doesn't need reset here unless specifically designed
     }
+    private void scheduleNextRoundAfter(long delay) {
+        // cancel whatever was already pending
+        if (nextRoundFuture != null && !nextRoundFuture.isDone()) {
+            nextRoundFuture.cancel(false);
+        }
 
+        // record for DTO / front‐end
+        nextRoundStartTimeMillis = System.currentTimeMillis() + delay;
+
+        nextRoundFuture = scheduler.schedule(() -> {
+            synchronized (GameManager.this) {
+                if (!active) return;
+                nextRound();
+            }
+        }, delay, TimeUnit.MILLISECONDS);
+    }
+    public synchronized void startGame() {
+        // Kick off the very first round’s timeout
+        scheduleNextRoundAfter(roundDelayMillis);
+    }
     private void recalculateLeaderboard() {
         List<LeaderBoardEntry> updatedBoard = new ArrayList<>();
         Map<String, Double> currentPricesForLeaderboard = getCurrentStockPrices(); // Get prices once
@@ -235,22 +235,29 @@ public class GameManager {
         this.active = false;
         recalculateLeaderboard(); // Final leaderboard calculation
 
-        if (roundScheduler != null && !roundScheduler.isShutdown()) {
-            log.info("Game {}: Shutting down round scheduler.", gameId);
-            roundScheduler.shutdown();
-            try {
-                if (!roundScheduler.awaitTermination(5, TimeUnit.SECONDS)) {
-                    log.warn("Game {}: Round scheduler did not terminate in 5 seconds. Forcing shutdown.", gameId);
-                    roundScheduler.shutdownNow();
-                } else {
-                    log.info("Game {}: Round scheduler terminated gracefully.", gameId);
-                }
-            } catch (InterruptedException e) {
-                log.warn("Game {}: Interrupted while waiting for round scheduler to terminate.", gameId, e);
-                roundScheduler.shutdownNow();
-                Thread.currentThread().interrupt();
-            }
+        // 1) cancel the one outstanding “next round” job, if any
+        if (nextRoundFuture != null && !nextRoundFuture.isDone()) {
+            log.info("Game {}: Cancelling pending nextRound task.", gameId);
+            nextRoundFuture.cancel(false);
         }
+
+        // 2) shut down the ScheduledExecutorService
+        log.info("Game {}: Shutting down round scheduler.", gameId);
+        scheduler.shutdown();
+        try {
+            // wait up to 5 seconds for any running task to finish
+            if (!scheduler.awaitTermination(5, TimeUnit.SECONDS)) {
+                log.warn("Game {}: Scheduler did not terminate in 5s; forcing shutdown.", gameId);
+                scheduler.shutdownNow();
+            } else {
+                log.info("Game {}: Scheduler terminated cleanly.", gameId);
+            }
+        } catch (InterruptedException e) {
+            log.warn("Game {}: Interrupted during scheduler shutdown; forcing shutdown.", gameId, e);
+            scheduler.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+
         log.info("Game {} processing finished.", gameId);
     }
 
@@ -275,37 +282,38 @@ public class GameManager {
         return startedAt;
     }
 
-    public void scheduleRounds() {
-        if (roundScheduler.isShutdown() || roundScheduler.isTerminated()) {
-            log.warn("Game {}: Round scheduler is already shutdown. Cannot schedule rounds.", gameId);
-            return;
-        }
-        log.info("Game {}: Scheduling automatic round progression every {} ms. Max rounds: {}.", gameId, roundDelayMillis, MAX_ROUNDS);
-        roundScheduler.scheduleAtFixedRate(() -> {
-            try {
-                synchronized (GameManager.this) { // Synchronize on GameManager instance
-                    if (!active) {
-                        log.info("Game {}: Game inactive, stopping scheduled round progression.", gameId);
-                        if (!roundScheduler.isShutdown()) roundScheduler.shutdown(); // Ensure scheduler stops
-                        return;
-                    }
-                    if (this.roundInProgress) {
-                        log.debug("Game {}: Round {} advancement is already in progress (likely due to all players submitting). Skipping scheduled advancement by timer.", gameId, currentRound);
-                        return;
-                    }
-
-                    // If not all players submitted and timer triggers
-                    log.info("Game {}: Scheduled task triggered for round {}. Auto-progressing.", gameId, currentRound);
-                    this.roundInProgress = true; // Set flag before calling nextRound
-                    nextRound(); // nextRound will advance round or end game, and reset roundInProgress
-                }
-            } catch (Exception e) {
-                log.error("Game {}: Unhandled exception in scheduled round progression task: {}", gameId, e.getMessage(), e);
-                // Consider critical error handling, e.g., ending the game or stopping the scheduler
-                // endGame(); // Example: if scheduler fails critically, end game.
-            }
-        }, roundDelayMillis, roundDelayMillis, TimeUnit.MILLISECONDS);
-    }
+//    public void scheduleRounds() {
+//        if (roundScheduler.isShutdown() || roundScheduler.isTerminated()) {
+//            log.warn("Game {}: Round scheduler is already shutdown. Cannot schedule rounds.", gameId);
+//            return;
+//        }
+//        log.info("Game {}: Scheduling automatic round progression every {} ms. Max rounds: {}.", gameId, roundDelayMillis, MAX_ROUNDS);
+//        roundScheduler.scheduleAtFixedRate(() -> {
+//            try {
+//                synchronized (GameManager.this) { // Synchronize on GameManager instance
+//                    if (!active) {
+//                        log.info("Game {}: Game inactive, stopping scheduled round progression.", gameId);
+//                        if (!roundScheduler.isShutdown()) roundScheduler.shutdown(); // Ensure scheduler stops
+//                        return;
+//                    }
+//                    if (this.roundInProgress) {
+//                        log.debug("Game {}: Round {} advancement is already in progress (likely due to all players submitting). Skipping scheduled advancement by timer.", gameId, currentRound);
+//                        return;
+//                    }
+//
+//                    // If not all players submitted and timer triggers
+//                    log.info("Game {}: Scheduled task triggered for round {}. Auto-progressing.", gameId, currentRound);
+//                    System.out.printf("DEBUG-timer is up: currentRound=%d%n", currentRound);
+//                    this.roundInProgress = true; // Set flag before calling nextRound
+//                    nextRound(); // nextRound will advance round or end game, and reset roundInProgress
+//                }
+//            } catch (Exception e) {
+//                log.error("Game {}: Unhandled exception in scheduled round progression task: {}", gameId, e.getMessage(), e);
+//                // Consider critical error handling, e.g., ending the game or stopping the scheduler
+//                // endGame(); // Example: if scheduler fails critically, end game.
+//            }
+//        }, roundDelayMillis, roundDelayMillis, TimeUnit.MILLISECONDS);
+//    }
 
     public LinkedHashMap<LocalDate, Map<String, Double>> getStockTimeline() {
         // Return a copy to prevent external modification of the game's timeline instance
@@ -335,9 +343,7 @@ public class GameManager {
                 .allMatch(player -> player.hasSubmittedForRound(currentRound));
     }
     
-    public boolean isRoundInProgress() {
-        return roundInProgress;
-    }
+
 
     public long getNextRoundStartTimeMillis() {
         return nextRoundStartTimeMillis;

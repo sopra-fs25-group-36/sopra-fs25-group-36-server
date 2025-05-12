@@ -65,33 +65,33 @@ public class GameService {
         }
         System.out.println("===================================");
 
-        // Create and register GameManager
-        List<Map<String, Double>> timelineList = new ArrayList<>();
-
-        // debugging data structure
-        for (Map<String, Double> snapshot : timeline.values()) {
-            try {
-                Map<String, Double> mutable = new HashMap<>(snapshot);
-                timelineList.add(mutable);
-                System.out.println("debug passed");
-
-            } catch (UnsupportedOperationException e) {
-                System.out.println("⚠ Snapshot was unmodifiable: " + snapshot.getClass().getName());
-                throw e;
-            }
-        }
-
-        for (Map<String, Double> snapshot : timeline.values()) {
-            timelineList.add(new HashMap<>(snapshot)); // deep copy each day's map
-        }
+//        // Create and register GameManager
+////        List<Map<String, Double>> timelineList = new ArrayList<>();
+//
+//        // debugging data structure
+//        for (Map<String, Double> snapshot : timeline.values()) {
+//            try {
+//                Map<String, Double> mutable = new HashMap<>(snapshot);
+//                timelineList.add(mutable);
+//                System.out.println("debug passed");
+//
+//            } catch (UnsupportedOperationException e) {
+//                System.out.println("⚠ Snapshot was unmodifiable: " + snapshot.getClass().getName());
+//                throw e;
+//            }
+//        }
+//
+//        for (Map<String, Double> snapshot : timeline.values()) {
+//            timelineList.add(new HashMap<>(snapshot)); // deep copy each day's map
+//        }
 
         GameManager gameManager = new GameManager(game.getId(), timeline); // timeline is LinkedHashMap
         lobby.getPlayerReadyStatuses().keySet().forEach(gameManager::registerPlayer);
 
         InMemoryGameRegistry.registerGame(game.getId(), gameManager);
 
-        // Start round progression timer
-        gameManager.scheduleRounds();
+        // Kick off the first round’s timeout
+                gameManager.startGame();
 
         // Mark lobby as inactive
         lobby.setActive(false);

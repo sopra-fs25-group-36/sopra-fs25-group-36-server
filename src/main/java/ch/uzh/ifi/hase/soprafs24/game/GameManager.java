@@ -33,23 +33,24 @@ public class GameManager {
     private static final long SYNC_BUFFER_MILLIS = 2_000; // Buffer for synchronized round start
     private final ScheduledExecutorService scheduler;
 
-
-//    private final ScheduledExecutorService roundScheduler;
-//    private volatile boolean roundInProgress = false; // Flag to manage round transition logic
+    // private final ScheduledExecutorService roundScheduler;
+    // private volatile boolean roundInProgress = false; // Flag to manage round
+    // transition logic
     private long nextRoundStartTimeMillis = 0L; // For DTO, when next round might start due to all submissions
     private ScheduledFuture<?> nextRoundFuture;
 
-    public GameManager(Long gameId, LinkedHashMap<LocalDate, Map<String, Double>> stockTimeline, long roundDelayMillis) {
+    public GameManager(Long gameId, LinkedHashMap<LocalDate, Map<String, Double>> stockTimeline,
+            long roundDelayMillis) {
         this.gameId = gameId;
         this.stockTimeline = Objects.requireNonNull(stockTimeline, "Stock timeline cannot be null");
         if (stockTimeline.isEmpty()) {
             log.warn("GameManager for gameId {} initialized with an empty stock timeline.", gameId);
-            // Consider throwing an IllegalArgumentException if an empty timeline is invalid for game start
+            // Consider throwing an IllegalArgumentException if an empty timeline is invalid
+            // for game start
         }
         this.roundDelayMillis = roundDelayMillis;
-        this.scheduler = Executors.newSingleThreadScheduledExecutor(r ->
-                new Thread(r, "GameRoundScheduler-" + this.gameId)
-        );
+        this.scheduler = Executors
+                .newSingleThreadScheduledExecutor(r -> new Thread(r, "GameRoundScheduler-" + this.gameId));
 
         log.info("GameManager for gameId {} created. Round delay: {}ms. Timeline entries: {}.",
                 gameId, roundDelayMillis, stockTimeline.size());
@@ -83,28 +84,36 @@ public class GameManager {
         }
 
         if (state.hasSubmittedForRound(currentRound)) {
-            log.warn("Player {} has already submitted for round {} in game {}. Additional transactions rejected.", userId, currentRound, gameId);
+            log.warn("Player {} has already submitted for round {} in game {}. Additional transactions rejected.",
+                    userId, currentRound, gameId);
             return;
         }
 
         Map<String, Double> pricesForTransaction = getCurrentStockPrices();
         if (pricesForTransaction.isEmpty() && txs.stream().anyMatch(tx -> !"INFO".equalsIgnoreCase(tx.getType()))) {
-            log.error("CRITICAL: Cannot process buy/sell transactions for player {} in game {}: Current stock prices are unavailable for round {}.", userId, gameId, currentRound);
-            // Depending on game rules, you might throw an exception or prevent submission entirely here.
-            // For now, logging and allowing applyTransaction to potentially fail internally.
-            // throw new IllegalStateException("Stock prices unavailable for current round, cannot process transactions.");
+            log.error(
+                    "CRITICAL: Cannot process buy/sell transactions for player {} in game {}: Current stock prices are unavailable for round {}.",
+                    userId, gameId, currentRound);
+            // Depending on game rules, you might throw an exception or prevent submission
+            // entirely here.
+            // For now, logging and allowing applyTransaction to potentially fail
+            // internally.
+            // throw new IllegalStateException("Stock prices unavailable for current round,
+            // cannot process transactions.");
         }
 
         for (TransactionRequestDTO tx : txs) {
             state.applyTransaction(tx, pricesForTransaction);
         }
         state.markSubmittedForRound(currentRound);
-        log.info("Player {} submitted {} transactions for round {} in game {}.", userId, txs.size(), currentRound, gameId);
+        log.info("Player {} submitted {} transactions for round {} in game {}.", userId, txs.size(), currentRound,
+                gameId);
 
         // Check if all active players have submitted
         boolean allSubmitted = haveAllPlayersSubmittedForCurrentRound();
 
-        log.debug("Game {}: All submitted for round {}: {}. Round in progress flag: {}.", gameId, currentRound, allSubmitted);
+        log.debug("Game {}: All submitted for round {}: {}. Round in progress flag: {}.", gameId, currentRound,
+                allSubmitted);
 
         if (haveAllPlayersSubmittedForCurrentRound()) {
             // as soon as the last player in, throw out the old timer
@@ -115,11 +124,13 @@ public class GameManager {
 
     public Map<String, Double> getCurrentStockPrices() {
         if (stockTimeline == null || stockTimeline.isEmpty()) {
-            log.warn("Game {}: Stock timeline is null or empty. Cannot get current stock prices for round {}.", gameId, currentRound);
+            log.warn("Game {}: Stock timeline is null or empty. Cannot get current stock prices for round {}.", gameId,
+                    currentRound);
             return Collections.emptyMap();
         }
         if (currentRound <= 0 || currentRound > stockTimeline.size()) {
-            log.warn("Game {}: currentRound {} is out of bounds for stockTimeline size {}. Cannot get prices.", gameId, currentRound, stockTimeline.size());
+            log.warn("Game {}: currentRound {} is out of bounds for stockTimeline size {}. Cannot get prices.", gameId,
+                    currentRound, stockTimeline.size());
             return Collections.emptyMap();
         }
 
@@ -132,11 +143,14 @@ public class GameManager {
     // Added from your version - crucial for chart data
     public LocalDate getCurrentMarketDate() {
         if (stockTimeline == null || stockTimeline.isEmpty()) {
-            log.warn("Game {}: Stock timeline is null or empty. Cannot get current market date for round {}.", gameId, currentRound);
+            log.warn("Game {}: Stock timeline is null or empty. Cannot get current market date for round {}.", gameId,
+                    currentRound);
             return null;
         }
         if (currentRound <= 0 || currentRound > stockTimeline.size()) {
-            log.warn("Game {}: currentRound {} is out of bounds for stockTimeline size {}. Cannot get current market date.", gameId, currentRound, stockTimeline.size());
+            log.warn(
+                    "Game {}: currentRound {} is out of bounds for stockTimeline size {}. Cannot get current market date.",
+                    gameId, currentRound, stockTimeline.size());
             return null;
         }
 
@@ -153,7 +167,8 @@ public class GameManager {
             return null;
         }
         if (stockTimeline == null || stockTimeline.isEmpty() || round > stockTimeline.size()) {
-            log.warn("Game {}: Round {} is out of bounds for stockTimeline size {}. Cannot get date.", gameId, round, stockTimeline.size());
+            log.warn("Game {}: Round {} is out of bounds for stockTimeline size {}. Cannot get date.", gameId, round,
+                    stockTimeline.size());
             return null;
         }
         List<LocalDate> datesInTimeline = new ArrayList<>(stockTimeline.keySet());
@@ -178,13 +193,14 @@ public class GameManager {
             // schedule the normal timeout for the new round
             scheduleNextRoundAfter(roundDelayMillis);
 
-            // Player submission status implicitly reset by PlayerState checking against new currentRound
-        }
-        else {
+            // Player submission status implicitly reset by PlayerState checking against new
+            // currentRound
+        } else {
             log.info("Game {}: Max rounds ({}) reached. Ending game.", gameId, MAX_ROUNDS);
             endGame(); // endGame will also set active = false
         }
     }
+
     private void scheduleNextRoundAfter(long delay) {
         // cancel whatever was already pending
         if (nextRoundFuture != null && !nextRoundFuture.isDone()) {
@@ -196,22 +212,27 @@ public class GameManager {
 
         nextRoundFuture = scheduler.schedule(() -> {
             synchronized (GameManager.this) {
-                if (!active) return;
+                if (!active)
+                    return;
                 nextRound();
             }
         }, delay, TimeUnit.MILLISECONDS);
     }
+
     public synchronized void startGame() {
         // Kick off the very first round’s timeout
         scheduleNextRoundAfter(roundDelayMillis);
     }
+
     private void recalculateLeaderboard() {
         List<LeaderBoardEntry> updatedBoard = new ArrayList<>();
         Map<String, Double> currentPricesForLeaderboard = getCurrentStockPrices(); // Get prices once
 
         for (PlayerState player : playerStates.values()) {
             double totalAssets = player.calculateTotalAssets(currentPricesForLeaderboard);
-            log.debug("Game {}: Player {} ({}) total assets for leaderboard: {}", gameId, player.getUserId(), totalAssets); // Assuming PlayerState might have a name/username field eventually for better logs
+            log.debug("Game {}: Player {} ({}) total assets for leaderboard: {}", gameId, player.getUserId(),
+                    totalAssets); // Assuming PlayerState might have a name/username field eventually for better
+                                  // logs
             updatedBoard.add(new LeaderBoardEntry(player.getUserId(), totalAssets));
         }
 
@@ -259,6 +280,7 @@ public class GameManager {
         }
 
         log.info("Game {} processing finished.", gameId);
+        InMemoryGameRegistry.remove(gameId);
     }
 
     public boolean isActive() {
@@ -282,41 +304,52 @@ public class GameManager {
         return startedAt;
     }
 
-//    public void scheduleRounds() {
-//        if (roundScheduler.isShutdown() || roundScheduler.isTerminated()) {
-//            log.warn("Game {}: Round scheduler is already shutdown. Cannot schedule rounds.", gameId);
-//            return;
-//        }
-//        log.info("Game {}: Scheduling automatic round progression every {} ms. Max rounds: {}.", gameId, roundDelayMillis, MAX_ROUNDS);
-//        roundScheduler.scheduleAtFixedRate(() -> {
-//            try {
-//                synchronized (GameManager.this) { // Synchronize on GameManager instance
-//                    if (!active) {
-//                        log.info("Game {}: Game inactive, stopping scheduled round progression.", gameId);
-//                        if (!roundScheduler.isShutdown()) roundScheduler.shutdown(); // Ensure scheduler stops
-//                        return;
-//                    }
-//                    if (this.roundInProgress) {
-//                        log.debug("Game {}: Round {} advancement is already in progress (likely due to all players submitting). Skipping scheduled advancement by timer.", gameId, currentRound);
-//                        return;
-//                    }
-//
-//                    // If not all players submitted and timer triggers
-//                    log.info("Game {}: Scheduled task triggered for round {}. Auto-progressing.", gameId, currentRound);
-//                    System.out.printf("DEBUG-timer is up: currentRound=%d%n", currentRound);
-//                    this.roundInProgress = true; // Set flag before calling nextRound
-//                    nextRound(); // nextRound will advance round or end game, and reset roundInProgress
-//                }
-//            } catch (Exception e) {
-//                log.error("Game {}: Unhandled exception in scheduled round progression task: {}", gameId, e.getMessage(), e);
-//                // Consider critical error handling, e.g., ending the game or stopping the scheduler
-//                // endGame(); // Example: if scheduler fails critically, end game.
-//            }
-//        }, roundDelayMillis, roundDelayMillis, TimeUnit.MILLISECONDS);
-//    }
+    // public void scheduleRounds() {
+    // if (roundScheduler.isShutdown() || roundScheduler.isTerminated()) {
+    // log.warn("Game {}: Round scheduler is already shutdown. Cannot schedule
+    // rounds.", gameId);
+    // return;
+    // }
+    // log.info("Game {}: Scheduling automatic round progression every {} ms. Max
+    // rounds: {}.", gameId, roundDelayMillis, MAX_ROUNDS);
+    // roundScheduler.scheduleAtFixedRate(() -> {
+    // try {
+    // synchronized (GameManager.this) { // Synchronize on GameManager instance
+    // if (!active) {
+    // log.info("Game {}: Game inactive, stopping scheduled round progression.",
+    // gameId);
+    // if (!roundScheduler.isShutdown()) roundScheduler.shutdown(); // Ensure
+    // scheduler stops
+    // return;
+    // }
+    // if (this.roundInProgress) {
+    // log.debug("Game {}: Round {} advancement is already in progress (likely due
+    // to all players submitting). Skipping scheduled advancement by timer.",
+    // gameId, currentRound);
+    // return;
+    // }
+    //
+    // // If not all players submitted and timer triggers
+    // log.info("Game {}: Scheduled task triggered for round {}. Auto-progressing.",
+    // gameId, currentRound);
+    // System.out.printf("DEBUG-timer is up: currentRound=%d%n", currentRound);
+    // this.roundInProgress = true; // Set flag before calling nextRound
+    // nextRound(); // nextRound will advance round or end game, and reset
+    // roundInProgress
+    // }
+    // } catch (Exception e) {
+    // log.error("Game {}: Unhandled exception in scheduled round progression task:
+    // {}", gameId, e.getMessage(), e);
+    // // Consider critical error handling, e.g., ending the game or stopping the
+    // scheduler
+    // // endGame(); // Example: if scheduler fails critically, end game.
+    // }
+    // }, roundDelayMillis, roundDelayMillis, TimeUnit.MILLISECONDS);
+    // }
 
     public LinkedHashMap<LocalDate, Map<String, Double>> getStockTimeline() {
-        // Return a copy to prevent external modification of the game's timeline instance
+        // Return a copy to prevent external modification of the game's timeline
+        // instance
         return new LinkedHashMap<>(stockTimeline);
     }
 
@@ -334,7 +367,8 @@ public class GameManager {
             return false; // No one to submit, so not "all submitted" in a meaningful way for progression
         }
         if (playerStates.isEmpty()) {
-            return true; // Or false, depending on desired behavior for empty games. Let's say true for no one to wait for.
+            return true; // Or false, depending on desired behavior for empty games. Let's say true for
+                         // no one to wait for.
                          // However, typically a game wouldn't run without players or would auto-end.
                          // For safety, if empty & active, means we wait for players.
                          // Changed to false if active and empty, as per old code logic.
@@ -342,8 +376,6 @@ public class GameManager {
         return playerStates.values().stream()
                 .allMatch(player -> player.hasSubmittedForRound(currentRound));
     }
-    
-
 
     public long getNextRoundStartTimeMillis() {
         return nextRoundStartTimeMillis;

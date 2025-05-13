@@ -2,6 +2,7 @@ package ch.uzh.ifi.hase.soprafs24.controller;
 
 import ch.uzh.ifi.hase.soprafs24.constant.UserStatus;
 import ch.uzh.ifi.hase.soprafs24.entity.User;
+import ch.uzh.ifi.hase.soprafs24.rest.dto.UserLoginDTO;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.UserPostDTO;
 import ch.uzh.ifi.hase.soprafs24.service.LobbyService;
 import ch.uzh.ifi.hase.soprafs24.service.UserService;
@@ -95,6 +96,35 @@ public class UserControllerTest {
     // then
     mockMvc.perform(postRequest)
         .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.id", is(user.getId().intValue())))
+        .andExpect(jsonPath("$.username", is(user.getUsername())))
+        .andExpect(jsonPath("$.status", is(user.getStatus().toString())));
+  }
+
+  @Test
+  public void loginUser_validInput_userLogged() throws Exception {
+    // given
+    User user = new User();
+    user.setId(1L);
+    user.setUsername("testUsername");
+    user.setToken("1");
+    user.setPassword("password");
+    user.setStatus(UserStatus.ONLINE);
+
+    UserLoginDTO userLoginDTO = new UserLoginDTO();
+    userLoginDTO.setPassword("Test Password");
+    userLoginDTO.setUsername("testUsername");
+
+    given(userService.loginUser(Mockito.any(), Mockito.any())).willReturn(user);
+
+    // when/then -> do the request + validate the result
+    MockHttpServletRequestBuilder postRequest = post("/users/login")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(asJsonString(userLoginDTO));
+
+    // then
+    mockMvc.perform(postRequest)
+        .andExpect(status().isOk())
         .andExpect(jsonPath("$.id", is(user.getId().intValue())))
         .andExpect(jsonPath("$.username", is(user.getUsername())))
         .andExpect(jsonPath("$.status", is(user.getStatus().toString())));

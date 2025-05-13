@@ -29,10 +29,6 @@ public interface DTOMapper {
   @Mapping(source = "status", target = "status")
   UserGetDTO convertEntityToUserGetDTO(User user);
 
-  @Mapping(source = "token", target = "token")
-  @Mapping(source = "id",    target = "id")
-  UserTokenDTO convertEntityToUserTokenDTO(User user);
-
   /* ----------------------------------------------------------------
    *  Lobby mappings
    * ---------------------------------------------------------------- */

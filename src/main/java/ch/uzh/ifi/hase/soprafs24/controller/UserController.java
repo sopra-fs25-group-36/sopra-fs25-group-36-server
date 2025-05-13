@@ -5,13 +5,13 @@ import ch.uzh.ifi.hase.soprafs24.entity.User;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.LobbyGetDTO;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.LobbyPostDTO;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.UserGetDTO;
+import ch.uzh.ifi.hase.soprafs24.rest.dto.UserLoginDTO;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.UserPostDTO;
 import ch.uzh.ifi.hase.soprafs24.rest.mapper.DTOMapper;
 import ch.uzh.ifi.hase.soprafs24.service.UserService;
 import ch.uzh.ifi.hase.soprafs24.service.LobbyService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -55,7 +55,6 @@ public class UserController {
     // convert API user to internal representation
     User userInput = DTOMapper.INSTANCE.convertUserPostDTOtoEntity(userPostDTO);
 
-    // create user
     User createdUser = userService.createUser(userInput);
     // convert internal representation of user back to API
     return DTOMapper.INSTANCE.convertEntityToUserGetDTO(createdUser);
@@ -64,10 +63,9 @@ public class UserController {
   @PostMapping("/users/login")
   @ResponseStatus(HttpStatus.OK)
   @ResponseBody
-  public UserGetDTO loginUser(@RequestBody UserPostDTO userPostDTO) {
-    // Extract username and password from userPostDTO
-    String username = userPostDTO.getUsername();
-    String password = userPostDTO.getPassword();
+  public UserGetDTO loginUser(@RequestBody UserLoginDTO userLoginDTO) {
+    String username = userLoginDTO.getUsername();
+    String password = userLoginDTO.getPassword();
 
     // Login user using username and password
     User loginUser = userService.loginUser(username, password);

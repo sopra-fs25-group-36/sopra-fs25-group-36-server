@@ -1,24 +1,17 @@
 package ch.uzh.ifi.hase.soprafs24.service;
-
 import ch.uzh.ifi.hase.soprafs24.entity.Game;
 import ch.uzh.ifi.hase.soprafs24.entity.Lobby;
 import ch.uzh.ifi.hase.soprafs24.game.GameManager;
 import ch.uzh.ifi.hase.soprafs24.game.InMemoryGameRegistry;
 import ch.uzh.ifi.hase.soprafs24.repository.GameRepository;
 import ch.uzh.ifi.hase.soprafs24.repository.LobbyRepository;
-
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDate;
 import java.util.*;
-
-import static ch.uzh.ifi.hase.soprafs24.game.InMemoryGameRegistry.*;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.springframework.test.util.AssertionErrors.assertTrue;
-
 @SpringBootTest
 @Transactional
 public class GameServiceTest {
@@ -63,13 +56,13 @@ public class GameServiceTest {
         Lobby lobby = new Lobby();
         Map<Long, Boolean> players = new HashMap<>();
         players.put(1L, true);
-        players.put(2L, false);  // One player not ready
+        players.put(2L, false); 
 
         lobby.setPlayerReadyStatuses(players);
         lobby.setTimeLimitSeconds(600L);
         lobby.setActive(true);
 
-        lobby = lobbyRepository.save(lobby);  // persist and get ID
+        lobby = lobbyRepository.save(lobby); // persist and get ID
 
         // When & Then: tryStartGame should throw IllegalStateException
         Lobby finalLobby = lobby;
@@ -78,7 +71,8 @@ public class GameServiceTest {
         });
     }
 
-    //tests that the game starts and ends correctly after 10 rounds, and works with inMemoryGameRegistry
+    // tests that the game starts and ends correctly after 10 rounds, and works with
+    // inMemoryGameRegistry
     @Test
     public void testGameAutoFinishesAfter10Rounds() throws InterruptedException {
         // Arrange: create dummy 10-day stock timeline
@@ -102,7 +96,7 @@ public class GameServiceTest {
         InMemoryGameRegistry.registerGame(testGameId, gameManager);
 
         // Act: start the game rounds
-        gameManager.scheduleRounds();
+        gameManager.startGame();
 
         // Wait long enough for 10 rounds to complete (10 * 50ms + buffer)
         Thread.sleep(1000); // 1 second should be plenty
@@ -111,6 +105,5 @@ public class GameServiceTest {
         assertFalse(InMemoryGameRegistry.isGameActive(testGameId), "Game should be removed after 10 rounds");
         assertEquals(10, gameManager.getCurrentRound(), "Game should have completed 10 rounds");
     }
-
 
 }

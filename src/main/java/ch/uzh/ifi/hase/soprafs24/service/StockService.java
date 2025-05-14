@@ -117,6 +117,7 @@ public class StockService {
             TimeSeriesResponse response = AlphaVantage.api()
                     .timeSeries()
                     .daily()
+                    .adjusted()
                     .forSymbol(symbol)
                     .outputSize(OutputSize.FULL) // Full history
                     .dataType(DataType.JSON)

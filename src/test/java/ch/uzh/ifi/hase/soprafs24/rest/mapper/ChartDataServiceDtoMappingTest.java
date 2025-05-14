@@ -1,11 +1,11 @@
 package ch.uzh.ifi.hase.soprafs24.rest.mapper;
+
 import ch.uzh.ifi.hase.soprafs24.service.ChartDataService;
 import ch.uzh.ifi.hase.soprafs24.entity.StockDataPoint;
 import ch.uzh.ifi.hase.soprafs24.repository.StockDataPointRepository;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.StockDataPointDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -60,7 +60,7 @@ class ChartDataServiceDtoMappingTest {
         assertEquals(620.0, d1.getHigh());
         assertEquals(590.0, d1.getLow());
         assertEquals(610.0, d1.getClose());
-        assertEquals(5000L,   d1.getVolume());
+        assertEquals(5000L, d1.getVolume());
 
         StockDataPointDTO d2 = dtos.get(1);
         assertEquals(6_000L, d2.getVolume());

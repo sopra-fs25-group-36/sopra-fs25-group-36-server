@@ -46,23 +46,4 @@ public class DTOMapperTest {
     assertEquals(user.getUsername(), userGetDTO.getUsername());
     assertEquals(user.getStatus(), userGetDTO.getStatus());
   }
-
-  @Test
-  public void testLogin_fromUser_toLoginDTO_success() {
-    // create User
-    User user = new User();
-    user.setName("Firstname Lastname");
-    user.setUsername("firstname@lastname");
-    user.setStatus(UserStatus.OFFLINE);
-    user.setToken("1");
-
-    // MAP -> Create UserGetDTO
-    UserGetDTO userGetDTO = DTOMapper.INSTANCE.convertEntityToUserGetDTO(user);
-
-    // check content
-    assertEquals(user.getId(), userGetDTO.getId());
-    assertEquals(user.getName(), userGetDTO.getName());
-    assertEquals(user.getUsername(), userGetDTO.getUsername());
-    assertEquals(user.getStatus(), userGetDTO.getStatus());
-  }
 }

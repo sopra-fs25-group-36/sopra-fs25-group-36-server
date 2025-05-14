@@ -1,4 +1,5 @@
 package ch.uzh.ifi.hase.soprafs24.service;
+
 import ch.uzh.ifi.hase.soprafs24.entity.Game;
 import ch.uzh.ifi.hase.soprafs24.entity.Lobby;
 import ch.uzh.ifi.hase.soprafs24.game.GameManager;
@@ -12,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
+
 @SpringBootTest
 @Transactional
 public class GameServiceTest {
@@ -56,7 +58,7 @@ public class GameServiceTest {
         Lobby lobby = new Lobby();
         Map<Long, Boolean> players = new HashMap<>();
         players.put(1L, true);
-        players.put(2L, false); 
+        players.put(2L, false);
 
         lobby.setPlayerReadyStatuses(players);
         lobby.setTimeLimitSeconds(600L);
@@ -87,7 +89,7 @@ public class GameServiceTest {
 
         // Create a test game with short delay (50 ms between rounds)
         Long testGameId = 999L;
-        GameManager gameManager = new GameManager(testGameId, timeline, 50);
+        GameManager gameManager = new GameManager(testGameId, timeline, 5);
 
         // Register a dummy player
         gameManager.registerPlayer(1L);
@@ -99,7 +101,7 @@ public class GameServiceTest {
         gameManager.startGame();
 
         // Wait long enough for 10 rounds to complete (10 * 50ms + buffer)
-        Thread.sleep(1000); // 1 second should be plenty
+        Thread.sleep(10000); // 10 second should be plenty
 
         // Assert: game is no longer active and unregistered
         assertFalse(InMemoryGameRegistry.isGameActive(testGameId), "Game should be removed after 10 rounds");

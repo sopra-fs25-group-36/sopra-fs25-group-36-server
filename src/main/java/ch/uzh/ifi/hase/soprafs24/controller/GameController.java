@@ -3,10 +3,6 @@ package ch.uzh.ifi.hase.soprafs24.controller;
 import ch.uzh.ifi.hase.soprafs24.entity.Game;
 import ch.uzh.ifi.hase.soprafs24.game.GameManager;
 
-import java.util.List;
-import java.util.Map;
-
-import ch.uzh.ifi.hase.soprafs24.game.GameManager;
 import ch.uzh.ifi.hase.soprafs24.game.InMemoryGameRegistry;
 import ch.uzh.ifi.hase.soprafs24.game.PlayerState;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.*;
@@ -18,10 +14,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
-
-import java.util.ArrayList;
-import java.util.List;
-
 @RestController
 @RequestMapping("/game")
 
@@ -29,15 +21,13 @@ public class GameController {
 
     private final GameService gameService;
 
-
     @Autowired
     public GameController(GameService gameService) {
         this.gameService = gameService;
     }
 
-
     @PostMapping("/{gameId}/start")
-    public ResponseEntity<Game> startGame(@RequestParam Long gameId) {
+    public ResponseEntity<Game> startGame(@PathVariable Long gameId) {
         Game game = gameService.tryStartGame(gameId);
         // Returns the created Game with a CREATED status.
         return new ResponseEntity<>(game, HttpStatus.CREATED);
@@ -75,43 +65,42 @@ public class GameController {
         }
         GameStatusDTO dto = new GameStatusDTO(
                 gameManager.getCurrentRound(),
-                gameManager.isActive()
-        );
+                gameManager.isActive());
         return ResponseEntity.ok(dto);
     }
+
     @GetMapping("/{gameId}/players/{userId}/state")
     public ResponseEntity<PlayerStateGetDTO> getPlayerState(
-        @PathVariable Long gameId,
-        @PathVariable Long userId) 
-    {
-    GameManager game = InMemoryGameRegistry.getGame(gameId);
-    if (game == null) {
-        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Game not found");
+            @PathVariable Long gameId,
+            @PathVariable Long userId) {
+        GameManager game = InMemoryGameRegistry.getGame(gameId);
+        if (game == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Game not found");
+        }
+
+        PlayerState player = game.getPlayerState(userId);
+        if (player == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Player not found");
+        }
+
+        PlayerStateGetDTO dto = new PlayerStateGetDTO();
+        dto.setUserId(player.getUserId());
+        dto.setCashBalance(player.getCashBalance());
+        return ResponseEntity.ok(dto);
     }
 
-    PlayerState player = game.getPlayerState(userId);
-    if (player == null) {
-        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Player not found");
-    }
-
-    PlayerStateGetDTO dto = new PlayerStateGetDTO();
-    dto.setUserId(player.getUserId());
-    dto.setCashBalance(player.getCashBalance());
-    return ResponseEntity.ok(dto);
-    }
-
-
-        /**
-         * We need to be able to advance when only all players submitted transaction in addition to the timer running out
-         * Pollable endpoint for clients to know whether:
-         *  - allSubmitted: every player has called submit for the current round
-         *  - roundEnded:    either they’ve all submitted _or_ the server timer has auto-advanced
-         */
+    /**
+     * We need to be able to advance when only all players submitted transaction in
+     * addition to the timer running out
+     * Pollable endpoint for clients to know whether:
+     * - allSubmitted: every player has called submit for the current round
+     * - roundEnded: either they’ve all submitted _or_ the server timer has
+     * auto-advanced
+     */
     @GetMapping("/{gameId}/status")
     public RoundStatusDTO getRoundStatus(
             @PathVariable Long gameId,
-            @RequestParam(name="lastRound",defaultValue="0", required=false) Integer lastRound
-    ) {
+            @RequestParam(name = "lastRound", defaultValue = "0", required = false) Integer lastRound) {
         // 1) lookup your GameManager
         GameManager gm = InMemoryGameRegistry.getGame(gameId);
         if (gm == null) {
@@ -129,9 +118,9 @@ public class GameController {
                 .stream()
                 .allMatch(ps -> ps.hasSubmittedForRound(current));
 
-        // 3) has the round ended?  Two cases:
-        //    a) everyone submitted
-        //    b) the server’s timer auto-advanced us past the client’s last‐seen round
+        // 3) has the round ended? Two cases:
+        // a) everyone submitted
+        // b) the server’s timer auto-advanced us past the client’s last‐seen round
         boolean roundEnded;
         if (lastRound != null) {
             roundEnded = current > lastRound || allSubmitted;

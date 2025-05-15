@@ -26,6 +26,7 @@ public class PlayerState {
     private final List<Transaction> transactionHistory;
 
     private final Set<Integer> submittedRounds = new HashSet<>();
+    private final Map<Integer, Map<String, Integer>> stockHistory = new HashMap<>();
 
 
     public PlayerState(Long userId) {
@@ -103,4 +104,14 @@ public class PlayerState {
     public double getTotalAssets(Map<String,Double> prices) {
         return calculateTotalAssets(prices);
     }
+    public void snapshotHoldingsAtRound(int round) {
+        if (stocksOwned == null) return;
+        stockHistory.put(round, new HashMap<>(stocksOwned)); // shallow copy
+    }
+
+
+    public Map<String, Integer> getHoldingsForRound(int round) {
+        return stockHistory.getOrDefault(round, Collections.emptyMap());
+    }
+
 }

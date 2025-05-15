@@ -75,4 +75,22 @@ public class StockController {
 
         return ResponseEntity.ok(allData);
     }
+    @GetMapping("/player-holdings/{userId}/round/{round}")
+    public ResponseEntity<List<StockHoldingDTO>> getPlayerHoldingsByRound(
+            @PathVariable Long userId,
+            @PathVariable Integer round,
+            @RequestParam Long gameId) {
+
+        List<StockHoldingDTO> holdings = stockService.getPlayerHoldingsByRound(userId, gameId, round);
+        return ResponseEntity.ok(holdings);
+    }
+    @GetMapping("/player-holdings/{userId}/all-rounds")
+    public ResponseEntity<Map<Integer, List<StockHoldingDTO>>> getPlayerHoldingsAllRounds(
+            @PathVariable Long userId,
+            @RequestParam Long gameId) {
+
+        Map<Integer, List<StockHoldingDTO>> allHoldings = stockService.getPlayerHoldingsAllRounds(userId, gameId);
+        return ResponseEntity.ok(allHoldings);
+    }
+
 }

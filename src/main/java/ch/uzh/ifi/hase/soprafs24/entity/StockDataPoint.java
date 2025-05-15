@@ -12,7 +12,7 @@ import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
 @Entity
-@Table(name = "stock_data_points", uniqueConstraints = {
+@Table(name = "stock_data_points_adjusted", uniqueConstraints = {
     @UniqueConstraint(columnNames = {"symbol", "date"})
 })
 public class StockDataPoint {

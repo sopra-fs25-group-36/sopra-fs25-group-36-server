@@ -58,6 +58,8 @@ public class GameManager {
 
     public GameManager(Long gameId, LinkedHashMap<LocalDate, Map<String, Double>> stockTimeline) {
         this(gameId, stockTimeline, DEFAULT_ROUND_DELAY_MILLIS);
+        log.info("GameManager for gameId {} created with default round delay: {}ms.", gameId,
+                DEFAULT_ROUND_DELAY_MILLIS);
     }
 
     public void registerPlayer(Long userId) {

@@ -30,8 +30,8 @@ public interface StockRepository extends JpaRepository<Stock, Long> {
                 SELECT date
                 FROM (
                     SELECT DISTINCT date
-                    FROM stock
-                    WHERE date <= (SELECT MAX(date) - INTERVAL '9 days' FROM stock)
+                    FROM stock_adjusted
+                    WHERE date <= (SELECT MAX(date) - INTERVAL '9 days' FROM stock_adjusted)
                 ) AS valid_dates
                 ORDER BY RANDOM()
                 LIMIT 1
@@ -39,10 +39,10 @@ public interface StockRepository extends JpaRepository<Stock, Long> {
     LocalDate findRandomStartDateWith10Days();
 
     @Query(value = """
-                SELECT * FROM stock
+                SELECT * FROM stock_adjusted
                 WHERE date IN (
                     SELECT DISTINCT date
-                    FROM stock
+                    FROM stock_adjusted
                     WHERE date >= :startDate
                     ORDER BY date ASC
                     LIMIT 10
@@ -52,16 +52,16 @@ public interface StockRepository extends JpaRepository<Stock, Long> {
     List<Stock> findStocksForTenDays(@Param("startDate") LocalDate startDate);
 
     @Query(value = """
-                SELECT * FROM stock
+                SELECT * FROM stock_adjusted
                 WHERE symbol IN (
-                    SELECT symbol FROM stock
+                    SELECT symbol FROM stock_adjusted
                     GROUP BY symbol
                     ORDER BY RANDOM()
                     LIMIT 10
                 )
                 AND date IN (
                     SELECT DISTINCT date
-                    FROM stock
+                    FROM stock_adjusted
                     WHERE date >= :startDate
                     ORDER BY date ASC
                     LIMIT 10
@@ -70,7 +70,7 @@ public interface StockRepository extends JpaRepository<Stock, Long> {
             """, nativeQuery = true)
     List<Stock> findRandom10SymbolsWithFirst10DatesFrom(@Param("startDate") LocalDate startDate);
 
-    @Query(value = "SELECT * FROM stock WHERE symbol = :symbol ORDER BY date LIMIT :limit OFFSET :offset", nativeQuery = true)
+    @Query(value = "SELECT * FROM stock_adjusted WHERE symbol = :symbol ORDER BY date LIMIT :limit OFFSET :offset", nativeQuery = true)
     List<Stock> findBySymbolWithLimitOffset(@Param("symbol") String symbol, @Param("offset") int offset,
             @Param("limit") int limit);
 }

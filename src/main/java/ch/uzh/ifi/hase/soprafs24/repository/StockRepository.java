@@ -1,13 +1,14 @@
 package ch.uzh.ifi.hase.soprafs24.repository;
 
-import ch.uzh.ifi.hase.soprafs24.entity.Stock;
+import java.time.LocalDate;
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDate;
-import java.util.List;
+import ch.uzh.ifi.hase.soprafs24.entity.Stock;
 
 @Repository
 public interface StockRepository extends JpaRepository<Stock, Long> {
@@ -24,19 +25,21 @@ public interface StockRepository extends JpaRepository<Stock, Long> {
     // Get all prices for a symbol in a time range
     List<Stock> findBySymbolAndDateBetween(String symbol, LocalDate start, LocalDate end);
 
-    // Method to load random stock, but only dates with 10 days of consecutive day
-    // data after it
+    // MODIFIED: Method to load random stock, but only dates from 2023 onwards
+    // with 10 days of consecutive day data after it
     @Query(value = """
                 SELECT date
                 FROM (
                     SELECT DISTINCT date
                     FROM stock_adjusted
-                    WHERE date <= (SELECT MAX(date) - INTERVAL '9 days' FROM stock_adjusted)
+                    WHERE 
+                        date >= '2023-01-01' AND  -- Only consider dates from 2023-01-01 onwards
+                        date <= (SELECT MAX(date) - INTERVAL '9 days' FROM stock_adjusted) 
                 ) AS valid_dates
                 ORDER BY RANDOM()
                 LIMIT 1
             """, nativeQuery = true)
-    LocalDate findRandomStartDateWith10Days();
+    LocalDate findRandomStartDateWith10Days(); // Name remains the same, but logic is updated
 
     @Query(value = """
                 SELECT * FROM stock_adjusted

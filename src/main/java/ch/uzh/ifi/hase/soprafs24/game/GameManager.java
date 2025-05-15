@@ -187,7 +187,9 @@ public class GameManager {
             log.info("Game {} is inactive. Not advancing to next round.", gameId);
             return;
         }
-
+        for (PlayerState player : playerStates.values()) {
+            player.snapshotHoldingsAtRound(currentRound);
+        }
         if (currentRound < MAX_ROUNDS) {
             currentRound++;
             log.info("Game {}: Advanced to round {}.", gameId, currentRound);

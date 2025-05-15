@@ -168,7 +168,7 @@ public class NewsService {
                 .queryParam("tickers", ticker)
                 .queryParam("time_from", timeFrom)
                 .queryParam("time_to", timeTo)
-                .queryParam("sort", "LATEST") // Crucial for getting the "latest N"
+                .queryParam("sort", "EARLIEST") // Crucial for getting the "EARLIEST" news first
                 .queryParam("limit", requestLimit); 
 
         URI uri = uriBuilder.build().toUri();

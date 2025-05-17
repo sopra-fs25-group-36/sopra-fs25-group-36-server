@@ -287,11 +287,10 @@ Top features that new developers who want to contribute to this project could ad
 ## Contributing
 
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, the process for submitting pull requests to us, and other guidelines for contributing to the Stockico backend project.
-*(You will need to create a `CONTRIBUTING.md` file. A good starting point can be a template like the one from [PurpleBooth's Gist](https://gist.github.com/PurpleBooth/b24679402957c63ec426) and then customize it for your project's specifics.)*
 
 ## Versioning
 
-We use [Semantic Versioning (SemVer)](http://semver.org/) for versioning our releases. For the versions available, see the [tags on this repository](https://github.com/YOUR_GITHUB_USERNAME/YOUR_BACKEND_REPOSITORY_NAME/tags).
+We use [Semantic Versioning (SemVer)](http://semver.org/) for versioning our releases. For the versions available, see the [tags on this repository](https://github.com/sopra-fs25-group-36/sopra-fs25-group-36-server/tags).
 
 ## Authors
 

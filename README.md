@@ -1,136 +1,314 @@
-# SoPra RESTful Service Template FS25
+# Stockico - Backend Service
 
-## Getting started with Spring Boot
--   Documentation: https://docs.spring.io/spring-boot/docs/current/reference/html/index.html
--   Guides: http://spring.io/guides
-    -   Building a RESTful Web Service: http://spring.io/guides/gs/rest-service/
-    -   Building REST services with Spring: https://spring.io/guides/tutorials/rest/
+Stockico is a competitive, fast-paced multiplayer game that simulates real-world stock trading. This repository contains the backend service responsible for managing game logic, user data, stock information, and transactions. Players join a game room, analyze stock data, and make strategic transactions over ten rounds to maximize their portfolio value. The game integrates real stock market data via the Alpha Vantage API and enforces financial constraints.
 
-## Setup this Template with your IDE of choice
-Download your IDE of choice (e.g., [IntelliJ](https://www.jetbrains.com/idea/download/), [Visual Studio Code](https://code.visualstudio.com/), or [Eclipse](http://www.eclipse.org/downloads/)). Make sure Java 17 is installed on your system (for Windows, please make sure your `JAVA_HOME` environment variable is set to the correct version of Java).
+## Introduction
 
-### IntelliJ
-If you consider to use IntelliJ as your IDE of choice, you can make use of your free educational license [here](https://www.jetbrains.com/community/education/#students).
-1. File -> Open... -> SoPra server template
-2. Accept to import the project as a `gradle project`
-3. To build right click the `build.gradle` file and choose `Run Build`
+*   **Project Goal:** To create a robust backend service that powers the Stockico stock trading game, handling game state, user management, real-time stock data integration, and transaction processing.
+*   **Motivation:** To provide a fun and engaging multiplayer experience that educates players about stock market dynamics in a simulated, competitive environment.
 
-### VS Code
-The following extensions can help you get started more easily:
--   `vmware.vscode-spring-boot`
--   `vscjava.vscode-spring-initializr`
--   `vscjava.vscode-spring-boot-dashboard`
--   `vscjava.vscode-java-pack``
+## Technologies Used
 
-**Note:** You'll need to build the project first with Gradle, just click on the `build` command in the _Gradle Tasks_ extension. Then check the _Spring Boot Dashboard_ extension if it already shows `soprafs24` and hit the play button to start the server. If it doesn't show up, restart VS Code and check again.
+*   **Spring Boot:** Core framework for building the RESTful API.
+*   **Java 17:** Programming language.
+*   **Gradle:** Dependency management and build tool.
+*   **Alpha Vantage API:** Source for real-time and historical stock data.
+*   **Docker:** For containerization and simplified deployment.
+*   **Spring Data JPA:** For database interaction.
+*   **POSTGRES Database (Default for Dev):** Database for local development.
+*   **JUnit & Mockito:** For unit and integration testing.
+*   **MapStruct (Assumed for DTO mapping):** For mapping between entities and DTOs.
 
-## Building with Gradle
-You can use the local Gradle Wrapper to build the application.
--   macOS: `./gradlew`
--   Linux: `./gradlew`
--   Windows: `./gradlew.bat`
+## High-level Components
 
-More Information about [Gradle Wrapper](https://docs.gradle.org/current/userguide/gradle_wrapper.html) and [Gradle](https://gradle.org/docs/).
+The backend is structured into several key components that work together to deliver the Stockico game experience:
 
-### Build
+1.  **API Endpoints (Controllers):**
+    *   **Role:** Handle incoming HTTP requests from the client, validate input, and delegate business logic processing to the appropriate service components. They define the contract for how the frontend interacts with the backend, often using DTOs for request and response bodies.
+    *   **Correlation:** Controllers interact primarily with Service components and use DTOs to structure data exchanged with the client.
+    *   **Main Path:** [`src/main/java/ch/uzh/ifi/hase/soprafs24/controller/`](src/main/java/ch/uzh/ifi/hase/soprafs24/controller/)
+    *   **Main Files:**
+        *   [`ChartDataController.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/controller/ChartDataController.java): Manages endpoints related to fetching and displaying chart data for stocks.
+        *   [`GameController.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/controller/GameController.java): Handles game lifecycle operations like creating, starting, joining games, and game progression.
+        *   [`LeaderBoardController.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/controller/LeaderBoardController.java): Provides endpoints for retrieving leaderboard information.
+        *   [`LobbyController.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/controller/LobbyController.java): Manages game lobbies, player readiness, and countdowns.
+        *   [`NewsController.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/controller/NewsController.java): Delivers news items or events relevant to the game or stocks.
+        *   [`StockController.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/controller/StockController.java): Handles requests for stock information and potentially player stock holdings.
+        *   [`TransactionController.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/controller/TransactionController.java): Processes player buy/sell stock transactions.
+        *   [`UserController.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/controller/UserController.java): Manages user authentication (login, registration) and user profile information.
 
-```bash
-./gradlew build
-```
+2.  **Business Logic (Services & Game Managers):**
+    *   **Role:** Contain the core application logic, including game rules, user management, transaction processing, and coordination of data access. They encapsulate complex operations and business rules.
+    *   **Correlation:** Services are called by Controllers and use Repositories for data persistence. They may also call other services or external APIs (like Alpha Vantage via a dedicated client). Game-specific managers handle detailed game mechanics.
+    *   **Main Paths:** `src/main/java/ch/uzh/ifi/hase/soprafs24/service/` (for general services) and `src/main/java/ch/uzh/ifi/hase/soprafs24/game/` (for game-specific logic).
+    *   **Main Files (Services):**
+        *   [`ChartDataService.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/service/ChartDataService.java): Provides business logic for chart data, possibly interacting with Alpha Vantage.
+        *   [`GameService.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/service/GameService.java): Orchestrates overall game logic, player actions, and game state transitions, possibly using `GameManager`.
+        *   [`LobbyService.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/service/LobbyService.java): Handles logic for game lobbies, player joining/leaving, and game start preparations.
+        *   [`NewsService.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/service/NewsService.java): Manages the retrieval and provision of news items.
+        *   [`StockService.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/service/StockService.java): Contains business logic related to stocks, potentially including fetching data via `AlphaVantageClient`.
+        *   [`UserService.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/service/UserService.java): Manages user registration, login, authentication, and profile operations.
+    *   **Main Files (from `game/` directory - Game-specific Logic):**
+        *   [`GameManager.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/game/GameManager.java): Likely responsible for managing the detailed state and flow of an active game, including rounds, player turns, and applying game rules.
+        *   [`InMemoryGameRegistry.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/game/InMemoryGameRegistry.java): Possibly manages active game instances or lobbies in memory, providing quick access.
 
-### Run
+3.  **Data Model (Entities):**
+    *   **Role:** Define the structure of the data used within the application, representing users, games, stocks, transactions, and other core concepts. These are typically Plain Old Java Objects (POJOs) annotated for persistence (e.g., with JPA).
+    *   **Correlation:** Entities are the primary objects managed by Repositories and often transformed into DTOs by Services or Mappers before being sent to Controllers.
+    *   **Main Paths:** `src/main/java/ch/uzh/ifi/hase/soprafs24/entity/` (for general entities) and `src/main/java/ch/uzh/ifi/hase/soprafs24/game/` (for game-specific domain objects).
+    *   **Main Files (Entities):**
+        *   [`User.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/entity/User.java): Represents a player or user of the system.
+    *   **Main Files (from `game/` directory - Game-specific Entities/Models):**
+        *   [`Game.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/game/Game.java): Represents a single game instance, its settings, and status.
+        *   [`Lobby.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/game/Lobby.java): Represents a game lobby before a game starts, holding players.
+        *   [`News.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/game/News.java): Represents a news item or event affecting the game.
+        *   [`Stock.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/game/Stock.java): Represents a tradable stock within the game.
+        *   [`StockDataPoint.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/game/StockDataPoint.java): Represents a specific data point for a stock (e.g., price at a time).
+        *   [`LeaderBoardEntry.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/game/LeaderBoardEntry.java): Represents an entry in the game's leaderboard, typically a player and their score.
+        *   [`PlayerState.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/game/PlayerState.java): Represents the state of a player within a game (e.g., portfolio, cash, stocks owned).
+        *   [`Transaction.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/game/Transaction.java): Represents a buy or sell transaction made by a player.
 
-```bash
-./gradlew bootRun
-```
+4.  **Data Transfer Objects (DTOs):**
+    *   **Role:** Simple objects used to transfer data between layers, especially between the Service layer and the Controller/API layer. They help define the API contract and decouple it from the internal entity structure.
+    *   **Correlation:** DTOs are used as request bodies for POST/PUT requests and as response bodies for GET requests. Mappers (e.g., MapStruct) are often used to convert between Entities and DTOs.
+    *   **Main Path:** `src/main/java/ch/uzh/ifi/hase/soprafs24/rest/dto/`
+    *   **Main Files:**
+        *   [`GameStatusDTO.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/rest/dto/GameStatusDTO.java)
+        *   [`LeaderBoardEntryDTO.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/rest/dto/LeaderBoardEntryDTO.java)
+        *   [`LobbyGetDTO.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/rest/dto/LobbyGetDTO.java)
+        *   [`LobbyPostDTO.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/rest/dto/LobbyPostDTO.java)
+        *   [`LobbyUserPostDTO.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/rest/dto/LobbyUserPostDTO.java)
+        *   [`NewsDTO.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/rest/dto/NewsDTO.java)
+        *   [`PlayerStateGetDTO.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/rest/dto/PlayerStateGetDTO.java)
+        *   [`RoundStatusDTO.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/rest/dto/RoundStatusDTO.java)
+        *   [`StockDataPointDTO.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/rest/dto/StockDataPointDTO.java)
+        *   [`StockHoldingDTO.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/rest/dto/StockHoldingDTO.java)
+        *   [`StockPriceGetDTO.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/rest/dto/StockPriceGetDTO.java)
+        *   [`TransactionRequestDTO.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/rest/dto/TransactionRequestDTO.java)
+        *   [`UserGetDTO.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/rest/dto/UserGetDTO.java)
+        *   [`UserLoginDTO.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/rest/dto/UserLoginDTO.java)
+        *   [`UserPostDTO.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/rest/dto/UserPostDTO.java)
 
-You can verify that the server is running by visiting `localhost:8080` in your browser.
+5.  **Data Access (Repositories):**
+    *   **Role:** Provide an abstraction layer for all database interactions (e.g., Create, Read, Update, Delete - CRUD operations). They translate service-layer calls into database queries using Spring Data JPA.
+    *   **Correlation:** Repositories are interfaces extending Spring Data JPA interfaces (e.g., `JpaRepository`). They are used by Service components to persist and retrieve entity data.
+    *   **Main Path:** `src/main/java/ch/uzh/ifi/hase/soprafs24/repository/`
+    *   **Main Files:**
+        *   [`GameRepository.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/repository/GameRepository.java)
+        *   [`LobbyRepository.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/repository/LobbyRepository.java)
+        *   [`NewsRepository.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/repository/NewsRepository.java)
+        *   [`StockDataPointRepository.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/repository/StockDataPointRepository.java)
+        *   [`StockRepository.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/repository/StockRepository.java)
+        *   [`UserRepository.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/repository/UserRepository.java)
 
-### Test
+6.  **External API Integration (Alpha Vantage Client):**
+    *   **Role:** Dedicated component for interacting with the Alpha Vantage API to fetch real-world stock data. This might be a specific class within the `service` package or a dedicated `client` or `connector` package. The `dto/alphavantage` folder suggests DTOs specifically for Alpha Vantage responses.
+    *   **Correlation:** Used by a `StockService` or `ChartDataService` to retrieve market data.
+    *   **Main Files/Folders:**
+        *   Likely a client class: `AlphaVantageClient.java` (e.g., in `src/main/java/ch/uzh/ifi/hase/soprafs24/service/external/` or similar, please verify and update path if needed)
+        *   DTOs for Alpha Vantage: `src/main/java/ch/uzh/ifi/hase/soprafs24/rest/dto/alphavantage/`
 
-```bash
-./gradlew test
-```
+## Launch & Deployment
 
-### Development Mode
-You can start the backend in development mode, this will automatically trigger a new build and reload the application
-once the content of a file has been changed.
+These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
 
-Start two terminal windows and run:
+### Prerequisites
 
-`./gradlew build --continuous`
+*   **Java 17 JDK:** Ensure Java 17 is installed. On Windows, also ensure your `JAVA_HOME` environment variable is correctly set to your Java 17 installation directory.
+*   **IDE:** An Integrated Development Environment like IntelliJ IDEA (recommended, free educational license available), VS Code with Java extensions, or Eclipse.
+*   **Alpha Vantage API Key:** You need a free API key from [Alpha Vantage](https://www.alphavantage.co/support/#api-key) to fetch stock data.
+*   **Git:** For cloning the repository.
 
-and in the other one:
+### External Dependencies (for local development)
 
-`./gradlew bootRun`
+*   **Alpha Vantage API:** The application requires an active internet connection and a valid Alpha Vantage API key to fetch stock data.
+*   **Database:**
+    *   By default, for local development, the application uses an **in-memory H2 database**. This database is created when the application starts and destroyed when it stops, requiring no separate setup. The H2 console can usually be accessed at `http://localhost:8080/h2-console` (check your `application.properties` for exact path and credentials if enabled).
+    *   If you configure the application to use an **external database** (e.g., PostgreSQL, MySQL) by modifying `src/main/resources/application.properties`, you must ensure that database server is running and accessible with the configured credentials *before* starting the application.
 
-If you want to avoid running all tests with every change, use the following command instead:
+### Setting up API Key
 
-`./gradlew build --continuous -xtest`
+The application reads the Alpha Vantage API key from an environment variable named `ALPHAVANTAGE_API_KEY`.
 
-## API Endpoint Testing with Postman
-We recommend using [Postman](https://www.getpostman.com) to test your API Endpoints.
-
-## Debugging
-If something is not working and/or you don't know what is going on. We recommend using a debugger and step-through the process step-by-step.
-
-To configure a debugger for SpringBoot's Tomcat servlet (i.e. the process you start with `./gradlew bootRun` command), do the following:
-
-1. Open Tab: **Run**/Edit Configurations
-2. Add a new Remote Configuration and name it properly
-3. Start the Server in Debug mode: `./gradlew bootRun --debug-jvm`
-4. Press `Shift + F9` or the use **Run**/Debug "Name of your task"
-5. Set breakpoints in the application where you need it
-6. Step through the process one step at a time
-
-## Testing
-Have a look here: https://www.baeldung.com/spring-boot-testing
-
-<br>
-<br>
-<br>
-
-## Docker
-
-### Introduction
-This year, for the first time, Docker will be used to ease the process of deployment.\
-Docker is a tool that uses containers as isolated environments, ensuring that the application runs consistently and uniformly across different devices.\
-Everything in this repository is already set up to minimize your effort for deployment.\
-All changes to the main branch will automatically be pushed to dockerhub and optimized for production.
-
-### Setup
-1. **One** member of the team should create an account on [dockerhub](https://hub.docker.com/), _incorporating the group number into the account name_, for example, `SoPra_group_XX`.\
-2. This account then creates a repository on dockerhub with the _same name as the group's Github repository name_.\
-3. Finally, the person's account details need to be added as [secrets](https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions#creating-secrets-for-a-repository) to the group's repository:
-    - dockerhub_username (the username of the dockerhub account from step 1, for example, `SoPra_group_XX`)
-    - dockerhub_password (a generated PAT([personal access token](https://docs.docker.com/docker-hub/access-tokens/)) of the account with read and write access)
-    - dockerhub_repo_name (the name of the dockerhub repository from step 2)
-
-### Pull and run
-Once the image is created and has been successfully pushed to dockerhub, the image can be run on any machine.\
-Ensure that [Docker](https://www.docker.com/) is installed on the machine you wish to run the container.\
-First, pull (download) the image with the following command, replacing your username and repository name accordingly.
-
-```docker pull <dockerhub_username>/<dockerhub_repo_name>```
-
-Then, run the image in a container with the following command, again replacing _<dockerhub_username>_ and _<dockerhub_repo_name>_ accordingly.
-
-```docker run -p 3000:3000 <dockerhub_username>/<dockerhub_repo_name>```
-
-
-# Env Variable for API KEY 
-
-Windows (PowerShell):
-```shell
+**Windows (PowerShell - for current session):**
+```powershell
 $env:ALPHAVANTAGE_API_KEY="YOUR_SECRET_API_KEY"
 ```
 
-Linux/macOS (Terminal):
-```
-export ALPHAVANTAGE_API_KEY=YOUR_SECRET_API_KEY
+**Linux/macOS (Terminal - for current session):**
+
+```bash   
+export ALPHAVANTAGE_API_KEY="YOUR_SECRET_API_KEY"
 ```
 
-Windows (Command Prompt):
+**Windows (Command Prompt - for current session):**
+
 ```shell
 set ALPHAVANTAGE_API_KEY=YOUR_SECRET_API_KEY
 ```
+*For persistent storage, add this variable to your system's environment variables or your shell's profile script (e.g., `.bashrc`, `.zshrc`, or IDE run configuration).*
+
+### Installing & Running Locally
+
+**1. Clone the repository:**
+ *  ```bash
+    git clone https://github.com/sopra-fs25-group-36/sopra-fs25-group-36-server.git
+    cd sopra-fs25-group-36-server
+    ```
+
+**2. Build the project:**
+
+This step compiles your code and downloads all necessary dependencies using the Gradle Wrapper.
+*   macOS/Linux:
+    ```bash
+    ./gradlew build
+    ```
+*   Windows (Command Prompt/PowerShell):
+    ```bash
+    .\gradlew.bat build
+    ```
+
+**3. Run the application:**
+
+This starts the Spring Boot application.
+*   macOS/Linux:
+    ```bash
+    ./gradlew bootRun
+    ```
+*   Windows (Command Prompt/PowerShell):
+    ```bash
+    .\gradlew.bat bootRun
+    ```
+The server will typically start on http://localhost:8080. You can verify this by opening the URL in your browser or by sending a request to a known API endpoint (e.g., using Postman or curl).
+
+**Example Demo (using curl to check a hypothetical health endpoint):**
+```bash
+curl http://localhost:8080/users
+```
+
+## Launch & Deployment
+
+### Development Mode (Faster Feedback Loop)
+
+For a more efficient development workflow where changes are automatically reloaded:
+1.  Open two terminal windows/tabs in the project root directory.
+2.  In the **first terminal**, run the continuous build (skipping tests for speed):
+    *   macOS/Linux:
+        ```bash
+        ./gradlew build --continuous -xtest
+        ```
+    *   Windows (Command Prompt/PowerShell):
+        ```bash
+        .\gradlew.bat build --continuous -xtest
+        ```
+3.  In the **second terminal**, run the application:
+    *   macOS/Linux:
+        ```bash
+        ./gradlew bootRun
+        ```
+    *   Windows (Command Prompt/PowerShell):
+        ```bash
+        .\gradlew.bat bootRun
+        ```
+    Spring Boot DevTools (if included as a dependency) should automatically restart the application when class files change, reflecting your code updates without a manual restart.
+
+### Debugging
+
+To debug the application using your IDE:
+1.  In your IDE (e.g., IntelliJ IDEA), go to **Run/Edit Configurations**.
+2.  Add a new **Remote JVM Debug** configuration.
+    *   **Name:** Give it a descriptive name (e.g., "Backend Debug").
+    *   **Host:** Set to `localhost`.
+    *   **Port:** Set to `5005` (this is a common default, but can be any available port).
+3.  Start the application in debug mode from your terminal. This tells the JVM to listen for a debugger connection:
+    *   macOS/Linux:
+        ```bash
+        ./gradlew bootRun --debug-jvm
+        ```
+    *   Windows (Command Prompt/PowerShell):
+        ```bash
+        .\gradlew.bat bootRun --debug-jvm
+        ```
+    *(This command usually makes Spring Boot start the JVM with arguments like `-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005`, causing it to listen on port 5005).*
+4.  In your IDE, run the "Backend Debug" configuration you created (often by pressing `Shift + F9` or a debug icon). The IDE will attach to the running Java process.
+5.  Set breakpoints in your Java code where you want to pause execution and inspect variables or step through the code.
+
+## Running the tests
+
+To execute all automated tests (unit and integration tests) defined in the project:
+*   macOS/Linux:
+    ```bash
+    ./gradlew test
+    ```
+*   Windows (Command Prompt/PowerShell):
+    ```bash
+    .\gradlew.bat test
+    ```
+After the tests complete, detailed HTML reports are typically generated in the `build/reports/tests/test/index.html` file. Open this file in a web browser to see the test results.
+
+### Unit & Integration Tests
+
+*   **What these tests test and why:**
+    *   **Unit Tests:** These tests verify the correctness of individual, isolated components or methods (e.g., a specific calculation in a `Service` class). They often use mocking frameworks like Mockito to simulate dependencies, ensuring that the unit under test behaves as expected independently. This helps catch bugs early and makes refactoring safer.
+    *   **Integration Tests:** These tests verify the interaction and collaboration between multiple components of the application (e.g., a full request flow from a `Controller` through a `Service` to a `Repository`). In Spring Boot, `@SpringBootTest` is commonly used to load the application context, and `@AutoConfigureMockMvc` can be used to test controller endpoints via mock HTTP requests. Integration tests ensure that different parts of the system work together correctly.
+
+*   **Example (Conceptual):** For actual implementations, refer to the test classes located in `src/test/java/ch/uzh/ifi/hase/soprafs24/`. For instance, you might find tests for `UserServiceTest.java` (unit test) or `GameControllerIntegrationTest.java` (integration test).
+
+### Releases
+
+Releases provide stable, versioned snapshots of your application. They are typically managed using Git tags and often automated with CI/CD pipelines (like GitHub Actions).
+
+1.  **Preparation:** Ensure the `main` branch is stable, all tests are passing, and it contains all the features intended for the new release.
+2.  **Create an Annotated Git Tag:** Follow Semantic Versioning (SemVer - `MAJOR.MINOR.PATCH`).
+    ```bash
+    git tag -a v1.0.0 -m "Release version 1.0.0: Initial stable release with core game features and user authentication."
+    ```
+    (Replace `v1.0.0` with the appropriate version number and write a meaningful annotation message summarizing the release).
+3.  **Push the Tag to Remote:**
+    ```bash
+    git push origin v1.0.0
+    ```
+    (Or `git push origin --tags` to push all local tags).
+4.  **Automated Release Process (via GitHub Actions - if configured):**
+    Pushing a new tag (especially one matching a pattern like `v*.*.*`) can trigger a GitHub Actions workflow that:
+    *   Checks out the tagged commit.
+    *   Builds the application.
+    *   Runs all tests.
+    *   Optionally, creates a corresponding "Release" on GitHub, attaching release notes (which can be automatically generated from commit messages or manually written).
+      
+## Roadmap
+
+Top features that new developers who want to contribute to this project could add:
+
+1.  **Advanced Player Statistics & History:** Implement endpoints and service logic to track and retrieve detailed player performance metrics over time. This could include profit/loss per stock, overall win/loss ratio, average game score, and a persistent history of trades across multiple games. This would enhance player engagement by allowing them to track their progress and compare with others.
+2.  **Real-time Game Event Notifications (WebSockets):** Extend the backend with WebSocket support (e.g., using Spring WebSockets) to push real-time notifications to connected clients about game events. Examples: round start/end, significant stock price changes, notifications when other players make trades (if game rules allow for public visibility), or instant leaderboard updates. This would make the game feel more dynamic and interactive.
+3.  **Achievement System:** Design and implement an achievement system where players can earn badges or points for accomplishing specific milestones or performing notable actions within the game (e.g., "First Million Made," "Diversified Investor," "Day Trader Pro," "Survived a Market Crash"). This involves defining achievements, creating logic to track player progress towards these achievements, and providing API endpoints for clients to display earned achievements.
+
+## Contributing
+
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, the process for submitting pull requests to us, and other guidelines for contributing to the Stockico backend project.
+*(You will need to create a `CONTRIBUTING.md` file. A good starting point can be a template like the one from [PurpleBooth's Gist](https://gist.github.com/PurpleBooth/b24679402957c63ec426) and then customize it for your project's specifics.)*
+
+## Versioning
+
+We use [Semantic Versioning (SemVer)](http://semver.org/) for versioning our releases. For the versions available, see the [tags on this repository](https://github.com/YOUR_GITHUB_USERNAME/YOUR_BACKEND_REPOSITORY_NAME/tags).
+
+## Authors
+
+*   **SoPra FS24 Group 36** - *Initial work & Development*
+    *   [Shirley Lau](https://github.com/shirleyl1220)
+    *   [SeungJu Paek](https://github.com/sing-git)
+    *   [Jianwen Cao](https://github.com/JianwenCao)
+    *   [Ilias Karagiannakis](https://github.com/LiakosKari)
+    *   [Julius Landes](https://github.com/JuliusLhamo)
+
+## License
+
+This project is licensed under the **MIT License**.
+See the [LICENSE.md](LICENSE.md) file for the full license text.
+
+## Acknowledgments
+
+*   Our gratitude to the **SoPra FS24 Teaching Team** at the University of Zurich for their guidance, support, and providing the initial project templates and framework.
+*   Appreciation for the open-source community and the creators of the many libraries and frameworks that made this project possible, including Spring Boot, Gradle, and others.
+*   Inspiration from various stock market simulation games and real-world trading platforms.

@@ -40,13 +40,13 @@ The backend is structured into several key components that work together to deli
 2.  **Business Logic (Services & Game Managers):**
     *   **Role:** Contain the core application logic, including game rules, user management, transaction processing, and coordination of data access. They encapsulate complex operations and business rules.
     *   **Correlation:** Services are called by Controllers and use Repositories for data persistence. They may also call other services or external APIs (like Alpha Vantage via a dedicated client). Game-specific managers handle detailed game mechanics.
-    *   **Main Paths:** `src/main/java/ch/uzh/ifi/hase/soprafs24/service/` (for general services) and `src/main/java/ch/uzh/ifi/hase/soprafs24/game/` (for game-specific logic).
+    *   **Main Paths:** [`src/main/java/ch/uzh/ifi/hase/soprafs24/service/`](src/main/java/ch/uzh/ifi/hase/soprafs24/service/) (for general services) and [`src/main/java/ch/uzh/ifi/hase/soprafs24/game/`](src/main/java/ch/uzh/ifi/hase/soprafs24/game/) (for game-specific logic).
     *   **Main Files (Services):**
         *   [`ChartDataService.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/service/ChartDataService.java): Provides business logic for chart data, possibly interacting with Alpha Vantage.
         *   [`GameService.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/service/GameService.java): Orchestrates overall game logic, player actions, and game state transitions, possibly using `GameManager`.
         *   [`LobbyService.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/service/LobbyService.java): Handles logic for game lobbies, player joining/leaving, and game start preparations.
         *   [`NewsService.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/service/NewsService.java): Manages the retrieval and provision of news items.
-        *   [`StockService.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/service/StockService.java): Contains business logic related to stocks, potentially including fetching data via `AlphaVantageClient`.
+        *   [`StockService.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/service/StockService.java): Contains business logic related to stocks, potentially including fetching data.
         *   [`UserService.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/service/UserService.java): Manages user registration, login, authentication, and profile operations.
     *   **Main Files (from `game/` directory - Game-specific Logic):**
         *   [`GameManager.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/game/GameManager.java): Likely responsible for managing the detailed state and flow of an active game, including rounds, player turns, and applying game rules.
@@ -55,7 +55,7 @@ The backend is structured into several key components that work together to deli
 3.  **Data Model (Entities):**
     *   **Role:** Define the structure of the data used within the application, representing users, games, stocks, transactions, and other core concepts. These are typically Plain Old Java Objects (POJOs) annotated for persistence (e.g., with JPA).
     *   **Correlation:** Entities are the primary objects managed by Repositories and often transformed into DTOs by Services or Mappers before being sent to Controllers.
-    *   **Main Paths:** `src/main/java/ch/uzh/ifi/hase/soprafs24/entity/` (for general entities) and `src/main/java/ch/uzh/ifi/hase/soprafs24/game/` (for game-specific domain objects).
+    *   **Main Paths:** [`src/main/java/ch/uzh/ifi/hase/soprafs24/entity/`](src/main/java/ch/uzh/ifi/hase/soprafs24/entity/) (for general entities) and [`src/main/java/ch/uzh/ifi/hase/soprafs24/game/`](src/main/java/ch/uzh/ifi/hase/soprafs24/game/) (for game-specific domain objects).
     *   **Main Files (Entities):**
         *   [`User.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/entity/User.java): Represents a player or user of the system.
     *   **Main Files (from `game/` directory - Game-specific Entities/Models):**
@@ -70,8 +70,8 @@ The backend is structured into several key components that work together to deli
 
 4.  **Data Transfer Objects (DTOs):**
     *   **Role:** Simple objects used to transfer data between layers, especially between the Service layer and the Controller/API layer. They help define the API contract and decouple it from the internal entity structure.
-    *   **Correlation:** DTOs are used as request bodies for POST/PUT requests and as response bodies for GET requests. Mappers (e.g., MapStruct) are often used to convert between Entities and DTOs.
-    *   **Main Path:** `src/main/java/ch/uzh/ifi/hase/soprafs24/rest/dto/`
+    *   **Correlation:** DTOs are used as request bodies for POST/PUT requests and as response bodies for GET requests. Mappers are often used to convert between Entities and DTOs.
+    *   **Main Path:** [`src/main/java/ch/uzh/ifi/hase/soprafs24/rest/dto/`](src/main/java/ch/uzh/ifi/hase/soprafs24/rest/dto/)
     *   **Main Files:**
         *   [`GameStatusDTO.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/rest/dto/GameStatusDTO.java)
         *   [`LeaderBoardEntryDTO.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/rest/dto/LeaderBoardEntryDTO.java)
@@ -90,9 +90,9 @@ The backend is structured into several key components that work together to deli
         *   [`UserPostDTO.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/rest/dto/UserPostDTO.java)
 
 5.  **Data Access (Repositories):**
-    *   **Role:** Provide an abstraction layer for all database interactions (e.g., Create, Read, Update, Delete - CRUD operations). They translate service-layer calls into database queries using Spring Data JPA.
-    *   **Correlation:** Repositories are interfaces extending Spring Data JPA interfaces (e.g., `JpaRepository`). They are used by Service components to persist and retrieve entity data.
-    *   **Main Path:** `src/main/java/ch/uzh/ifi/hase/soprafs24/repository/`
+    *   **Role:** Provide an abstraction layer for all database interactions. They translate service-layer calls into database queries using Spring Data JPA.
+    *   **Correlation:** Repositories are interfaces extending Spring Data JPA interfaces. They are used by Service components to persist and retrieve entity data.
+    *   **Main Path:** [`src/main/java/ch/uzh/ifi/hase/soprafs24/repository/`](src/main/java/ch/uzh/ifi/hase/soprafs24/repository/)
     *   **Main Files:**
         *   [`GameRepository.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/repository/GameRepository.java)
         *   [`LobbyRepository.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/repository/LobbyRepository.java)
@@ -100,13 +100,6 @@ The backend is structured into several key components that work together to deli
         *   [`StockDataPointRepository.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/repository/StockDataPointRepository.java)
         *   [`StockRepository.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/repository/StockRepository.java)
         *   [`UserRepository.java`](src/main/java/ch/uzh/ifi/hase/soprafs24/repository/UserRepository.java)
-
-6.  **External API Integration (Alpha Vantage Client):**
-    *   **Role:** Dedicated component for interacting with the Alpha Vantage API to fetch real-world stock data. This might be a specific class within the `service` package or a dedicated `client` or `connector` package. The `dto/alphavantage` folder suggests DTOs specifically for Alpha Vantage responses.
-    *   **Correlation:** Used by a `StockService` or `ChartDataService` to retrieve market data.
-    *   **Main Files/Folders:**
-        *   Likely a client class: `AlphaVantageClient.java` (e.g., in `src/main/java/ch/uzh/ifi/hase/soprafs24/service/external/` or similar, please verify and update path if needed)
-        *   DTOs for Alpha Vantage: `src/main/java/ch/uzh/ifi/hase/soprafs24/rest/dto/alphavantage/`
 
 ## Launch & Deployment
 

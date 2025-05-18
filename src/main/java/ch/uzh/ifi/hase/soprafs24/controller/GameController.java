@@ -63,9 +63,13 @@ public class GameController {
         if (gameManager == null) {
             return ResponseEntity.notFound().build();
         }
+
+        long remainingTime = gameManager.getNextRoundStartTimeMillis() - System.currentTimeMillis();
+
         GameStatusDTO dto = new GameStatusDTO(
                 gameManager.getCurrentRound(),
-                gameManager.isActive());
+                gameManager.isActive(),
+                remainingTime);
         return ResponseEntity.ok(dto);
     }
 

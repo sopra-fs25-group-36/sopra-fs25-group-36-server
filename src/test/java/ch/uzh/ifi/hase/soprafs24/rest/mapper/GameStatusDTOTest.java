@@ -1,6 +1,5 @@
 package ch.uzh.ifi.hase.soprafs24.rest.mapper;
 
-
 import ch.uzh.ifi.hase.soprafs24.rest.dto.GameStatusDTO;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -12,12 +11,14 @@ public class GameStatusDTOTest {
         // Given
         int currentRound = 5;
         boolean active = true;
+        long remainingTime = 120L;
 
         // When
-        GameStatusDTO gameStatusDTO = new GameStatusDTO(currentRound, active);
+        GameStatusDTO gameStatusDTO = new GameStatusDTO(currentRound, active, remainingTime);
 
         // Then
         assertEquals(currentRound, gameStatusDTO.currentRound());
         assertEquals(active, gameStatusDTO.active());
+        assertEquals(remainingTime, gameStatusDTO.remainingTime());
     }
 }

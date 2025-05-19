@@ -55,21 +55,14 @@ public class GameServiceTest {
         lobby.setPlayerReadyStatuses(players);
         lobby.setTimeLimitSeconds(60L); // Example time limit for rounds (in seconds)
         lobby.setActive(true); // Lobby must be active to start a game
-        
-        // Save the lobby to the database and ensure it gets an ID
+
         lobby = lobbyRepository.saveAndFlush(lobby);
 
-        // Act: Call the method under test.
-        // This assumes gameService.tryStartGame(lobby.getId()) is the intended usage,
-        // where the ID passed is the lobby's ID from which a game should be created and started.
         Game game = gameService.tryStartGame(lobby.getId());
 
         // Assert: Game object is returned, has an ID, and is active in the InMemoryGameRegistry
         assertNotNull(game, "The returned game object should not be null.");
         assertNotNull(game.getId(), "The game ID should not be null after creation.");
-        
-        // If your Game entity stores a reference to the lobbyId, you can assert it:
-        // assertEquals(lobby.getId(), game.getLobbyId(), "Game's lobbyId should match the original lobby's ID.");
         
         assertTrue(InMemoryGameRegistry.isGameActive(game.getId()),
                 "The game should be active in InMemoryGameRegistry after a successful start.");
@@ -79,9 +72,6 @@ public class GameServiceTest {
         assertNotNull(activeGameManager, "A GameManager instance should be found in the registry.");
         assertEquals(game.getId(), activeGameManager.getGameId(), "The GameManager's ID should match the Game entity's ID.");
     }
-
-    // The problematic local `private void assertTrue(boolean gameActive) {}` has been removed.
-    // All assertion calls will now correctly use JUnit's assertions.
 
     @Test
     public void testTryStartGame_playersNotReady_shouldFail() {
@@ -102,9 +92,6 @@ public class GameServiceTest {
             gameService.tryStartGame(finalLobby.getId());
         }, "tryStartGame should throw IllegalStateException if not all players are ready.");
         
-        // Optionally, you can assert the exception message if it's specific and consistent:
-        // assertTrue(exception.getMessage().toLowerCase().contains("not all players are ready"),
-        //         "Exception message should indicate that not all players are ready.");
     }
 
     @Test
@@ -135,15 +122,10 @@ public class GameServiceTest {
         // Act: Start the game. The GameManager should handle round progression.
         gameManager.startGame();
 
-        // Wait for a period sufficient for all rounds to complete.
-        // Total time = numberOfRounds * roundDurationSeconds. Add a buffer for processing overhead.
         long processingBufferMillis = 3000; // 3-second buffer
         long totalWaitTimeMillis = ((long)numberOfRounds * roundDurationSeconds * 1000) + processingBufferMillis;
         Thread.sleep(totalWaitTimeMillis);
 
-        // Assert: The game should no longer be active in the registry, and all rounds should be completed.
-        // This relies on the GameManager correctly calling InMemoryGameRegistry.remove(this.gameId)
-        // after the final round.
         assertFalse(InMemoryGameRegistry.isGameActive(testGameId),
                 "Game should be removed from InMemoryGameRegistry after " + numberOfRounds + " rounds are completed. " +
                 "Current round reported by GameManager: " + gameManager.getCurrentRound() +
@@ -152,7 +134,5 @@ public class GameServiceTest {
         assertEquals(numberOfRounds, gameManager.getCurrentRound(),
                 "GameManager should have processed all " + numberOfRounds + " rounds.");
         
-        // If your GameManager has a method to check if it's finished, assert that too:
-        // assertTrue(gameManager.isGameFinished(), "GameManager should be marked as finished.");
     }
 }

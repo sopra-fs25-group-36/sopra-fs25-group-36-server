@@ -65,26 +65,6 @@ public class GameService {
         }
         System.out.println("===================================");
 
-//        // Create and register GameManager
-////        List<Map<String, Double>> timelineList = new ArrayList<>();
-//
-//        // debugging data structure
-//        for (Map<String, Double> snapshot : timeline.values()) {
-//            try {
-//                Map<String, Double> mutable = new HashMap<>(snapshot);
-//                timelineList.add(mutable);
-//                System.out.println("debug passed");
-//
-//            } catch (UnsupportedOperationException e) {
-//                System.out.println("⚠ Snapshot was unmodifiable: " + snapshot.getClass().getName());
-//                throw e;
-//            }
-//        }
-//
-//        for (Map<String, Double> snapshot : timeline.values()) {
-//            timelineList.add(new HashMap<>(snapshot)); // deep copy each day's map
-//        }
-
         GameManager gameManager = new GameManager(game.getId(), timeline); // timeline is LinkedHashMap
         lobby.getPlayerReadyStatuses().keySet().forEach(gameManager::registerPlayer);
 
@@ -113,41 +93,6 @@ public class GameService {
     public boolean isGameActive(Long gameId) {
         return InMemoryGameRegistry.isGameActive(gameId);
     }
-
-    // public Map<String, String> getCategoryMap() {
-    //     Map<String, String> map = new HashMap<>();
-
-    //     map.put("AAPL", "Tech");
-    //     map.put("MSFT", "Tech");
-    //     map.put("XOM", "Energy");
-    //     map.put("CVX", "Energy");
-    //     map.put("JPM", "Finance");
-    //     map.put("GS", "Finance");
-    //     map.put("JNJ", "Healthcare");
-    //     map.put("PFE", "Healthcare");
-    //     map.put("PG", "Consumer");
-    //     map.put("KO", "Consumer");
-
-    //     return map;
-    // }
-    // public List<StockHoldingDTO> toStockHoldings(PlayerState player,
-    //                                              Map<String, Double> prices) {
-    //     List<StockHoldingDTO> holdings = new ArrayList<>();
-
-    //     for (Map.Entry<String, Integer> entry : player.getPlayerStocks().entrySet()) {
-    //         String symbol = entry.getKey();
-    //         int quantity = entry.getValue();
-    //         double price = prices.getOrDefault(symbol, 0.0);
-
-    //         StockHoldingDTO dto = new StockHoldingDTO();
-    //         dto.setSymbol(symbol);
-    //         dto.setQuantity(quantity);
-    //         dto.setCurrentPrice(price);
-
-    //         holdings.add(dto);
-    //     }
-
-    //     return holdings;
     }
 
 

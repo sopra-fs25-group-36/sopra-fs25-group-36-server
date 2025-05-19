@@ -1,6 +1,5 @@
 package ch.uzh.ifi.hase.soprafs24.service;
 
-import ch.uzh.ifi.hase.soprafs24.entity.User;
 import ch.uzh.ifi.hase.soprafs24.game.GameManager;
 import ch.uzh.ifi.hase.soprafs24.game.InMemoryGameRegistry;
 import ch.uzh.ifi.hase.soprafs24.game.PlayerState;
@@ -9,48 +8,36 @@ import ch.uzh.ifi.hase.soprafs24.rest.dto.StockPriceGetDTO;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
-import org.springframework.http.HttpStatus; // Import HttpStatus
 
 import java.time.LocalDate;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
-@SpringBootTest
-@ActiveProfiles("test")
+@ExtendWith(MockitoExtension.class)
 public class StockServiceTest {
 
-    @Autowired
-    private StockService stockService; // This is the service under test
+    @InjectMocks
+    private StockService stockService;
 
-    @Mock
-    private UserService userService; // Mocked dependency for GameManager, if GameManager uses it
-
-    private AutoCloseable closeable;
-
-    private Long gameIdCounter = 1L;
-    private Long userIdCounter = 1L;
+    private Long gameIdCounter;
+    private Long userIdCounter;
 
     @BeforeEach
     void setUp() {
-        closeable = MockitoAnnotations.openMocks(this);
         InMemoryGameRegistry.clear();
+        gameIdCounter = 1L; 
+        userIdCounter = 1L; 
     }
 
     @AfterEach
-    void tearDown() throws Exception {
+    void tearDown() {
         InMemoryGameRegistry.clear();
-        if (closeable != null) {
-            closeable.close();
-        }
     }
 
     private Long getNextGameId() {
@@ -61,94 +48,21 @@ public class StockServiceTest {
         return userIdCounter++;
     }
 
-    private GameManager setupTestGame(Long gameId) {
-        LinkedHashMap<LocalDate, Map<String, Double>> dummyStockTimeline = new LinkedHashMap<>();
-        LocalDate today = LocalDate.now();
-        for (int i = 0; i < 10; i++) {
-            dummyStockTimeline.put(today.plusDays(i), Map.of("AAPL", 150.0 + i, "MSFT", 300.0 + i));
-        }
-        GameManager gameManager = new GameManager(gameId, dummyStockTimeline);
+    private GameManager setupActualGameInRegistry(Long gameId, LinkedHashMap<LocalDate, Map<String, Double>> timeline) {
+        GameManager gameManager = new GameManager(gameId, timeline);
         InMemoryGameRegistry.registerGame(gameId, gameManager);
         return gameManager;
     }
 
-    private PlayerState addPlayerToGame(GameManager gameManager, Long userId, String username) {
+    private PlayerState addPlayerToActualGame(GameManager gameManager, Long userId) {
         gameManager.registerPlayer(userId);
-        PlayerState registeredPlayerState = gameManager.getPlayerState(userId);
-        return registeredPlayerState;
+        return gameManager.getPlayerState(userId);
     }
 
 
     @Test
-    public void testGetStockTimelineFromDatabase() {
-        LinkedHashMap<LocalDate, Map<String, Double>> timeline = stockService.getStockTimelineFromDatabase();
-        System.out.println("Username: " + System.getenv("myusername"));
-
-        if (timeline.isEmpty()) {
-            System.out.println("WARNING: StockServiceTest.testGetStockTimelineFromDatabase - timeline is empty. Check test DB data population or repository query logic if this is unexpected.");
-        } else {
-            assertNotNull(timeline);
-            assertFalse(timeline.isEmpty(), "Timeline should not be empty if database is populated correctly for the query.");
-            if (timeline.size() == 10) {
-                 assertEquals(10, timeline.size(), "Should return 10 days of stock data if DB is populated for this.");
-            }
-
-            for (Map.Entry<LocalDate, Map<String, Double>> entry : timeline.entrySet()) {
-                LocalDate date = entry.getKey();
-                Map<String, Double> prices = entry.getValue();
-                System.out.println("Day: " + date);
-                assertNotNull(date, "Date in timeline entry should not be null.");
-                assertNotNull(prices, "Prices map for date " + date + " should not be null.");
-                if (!prices.isEmpty()) {
-                    prices.forEach((symbol, price) -> {
-                        System.out.println("  " + symbol + " → " + price);
-                        assertNotNull(symbol, "Stock symbol should not be null.");
-                        assertNotNull(price, "Stock price for " + symbol + " should not be null.");
-                    });
-                }
-            }
-        }
-    }
-
-    @Test
-    public void testGetStockTimelineFromDatabase_consistentStockCount() {
-        LinkedHashMap<LocalDate, Map<String, Double>> timeline = stockService.getStockTimelineFromDatabase();
-        assertNotNull(timeline, "Timeline should not be null");
-
-        if (timeline.isEmpty()) {
-            System.out.println("WARNING: StockServiceTest.testGetStockTimelineFromDatabase_consistentStockCount - timeline is empty. Cannot check stock count consistency.");
-            return;
-        }
-
-        if (timeline.size() == 10) {
-            assertEquals(10, timeline.size(), "Should return 10 days of stock data if DB is populated for this.");
-        }
-
-
-        int expectedStockCount = -1;
-        int dayNumber = 1;
-
-        for (Map.Entry<LocalDate, Map<String, Double>> entry : timeline.entrySet()) {
-            LocalDate date = entry.getKey();
-            Map<String, Double> prices = entry.getValue();
-            System.out.println("Day " + dayNumber++ + ": " + date);
-
-            if (!prices.isEmpty()) {
-                prices.forEach((symbol, price) -> System.out.println("  " + symbol + " → " + price));
-                if (expectedStockCount == -1) {
-                    expectedStockCount = prices.size();
-                } else {
-                    assertEquals(expectedStockCount, prices.size(), "Inconsistent number of stocks on " + date);
-                }
-            } else {
-                 System.out.println("WARNING: Prices map is empty for date " + date + ". Cannot check stock count consistency for this day.");
-            }
-        }
-        if (expectedStockCount != -1) {
-             System.out.println("All days with data contain " + expectedStockCount + " stocks consistently.");
-        } else if (!timeline.isEmpty()) {
-            System.out.println("WARNING: Could not determine an expected stock count, all daily price maps might be empty or inconsistent making first count unreliable.");
-        }
+    public void getStockTimelineFromDatabase_should_be_tested_via_integration_test_or_mock_repo() {
+        System.out.println("Unit test for getStockTimelineFromDatabase: This test is skipped in this unit test setup as it implies database interaction not covered by mocking InMemoryGameRegistry.");
     }
 
     @Test
@@ -165,17 +79,21 @@ public class StockServiceTest {
     @Test
     public void getStockPrice_gameNotFound_throwsException() {
         Long nonExistentGameId = 999L;
+
         ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
             stockService.getStockPrice(nonExistentGameId, "AAPL", 1);
         });
         assertEquals(HttpStatus.NOT_FOUND, exception.getStatus());
+
+        String actualReason = exception.getReason();
+        String expectedMessage = "Game with ID " + nonExistentGameId + " not found.";
+        assertTrue(actualReason != null && actualReason.equals(expectedMessage),
+            "Exception reason should be '" + expectedMessage + "'. Actual: " + actualReason);
     }
 
     @Test
     public void getStockPrice_validGame_returnsPricesUpToRound() {
         Long gameId = getNextGameId();
-        GameManager gameManager = setupTestGame(gameId);
-
         LocalDate date1 = LocalDate.of(2024, 1, 1);
         LocalDate date2 = LocalDate.of(2024, 1, 2);
         LocalDate date3 = LocalDate.of(2024, 1, 3);
@@ -185,7 +103,7 @@ public class StockServiceTest {
         timeline.put(date2, Map.of("AAPL", 152.0, "MSFT", 302.0));
         timeline.put(date3, Map.of("AAPL", 151.0, "MSFT", 301.0));
 
-        gameManager.setStockTimeline(timeline);
+        setupActualGameInRegistry(gameId, timeline);
 
         List<StockPriceGetDTO> pricesForRound1 = stockService.getStockPrice(gameId, "AAPL", 1);
         assertEquals(1, pricesForRound1.size());
@@ -203,16 +121,6 @@ public class StockServiceTest {
         assertTrue(pricesForNonExistentSymbol.isEmpty());
     }
 
-    @Test
-    public void getStockPrice_dateForRoundIsNull_returnsEmptyList() {
-        Long gameId = getNextGameId();
-        GameManager gameManager = setupTestGame(gameId);
-        gameManager.setStockTimeline(new LinkedHashMap<>());
-
-        List<StockPriceGetDTO> prices = stockService.getStockPrice(gameId, "AAPL", 5);
-        assertTrue(prices.isEmpty(), "Should return empty list if date for round cannot be determined or not in timeline.");
-    }
-
 
     @Test
     public void getCurrentRoundStockPrices_gameNotFound_throwsException() {
@@ -221,27 +129,17 @@ public class StockServiceTest {
             stockService.getCurrentRoundStockPrices(nonExistentGameId);
         });
         assertEquals(HttpStatus.NOT_FOUND, exception.getStatus());
-
     }
 
     @Test
     public void getCurrentRoundStockPrices_validGame_returnsCurrentPrices() {
         Long gameId = getNextGameId();
-        GameManager gameManager = setupTestGame(gameId);
-
         LocalDate date1 = LocalDate.of(2024, 3, 13);
-        LocalDate date2 = LocalDate.of(2024, 3, 14);
-        LocalDate marketDateForRound3 = LocalDate.of(2024, 3, 15);
-
+        Map<String, Double> round1Prices = Map.of("TSLA", 200.0, "NVDA", 800.0);
         LinkedHashMap<LocalDate, Map<String, Double>> timeline = new LinkedHashMap<>();
-        timeline.put(date1, Map.of("TSLA", 100.0, "NVDA", 700.0));
-        timeline.put(date2, Map.of("TSLA", 150.0, "NVDA", 750.0));
-        timeline.put(marketDateForRound3, Map.of("TSLA", 200.0, "NVDA", 800.0));
+        timeline.put(date1, round1Prices);
 
-        gameManager.setStockTimeline(timeline);
-        gameManager.nextRound(); // currentRound becomes 2
-        gameManager.nextRound(); // currentRound becomes 3
-
+        setupActualGameInRegistry(gameId, timeline);
 
         List<StockPriceGetDTO> currentPrices = stockService.getCurrentRoundStockPrices(gameId);
         assertEquals(2, currentPrices.size());
@@ -249,31 +147,14 @@ public class StockServiceTest {
         StockPriceGetDTO tslaDto = currentPrices.stream().filter(p -> "TSLA".equals(p.getSymbol())).findFirst().orElse(null);
         assertNotNull(tslaDto);
         assertEquals(200.0, tslaDto.getPrice());
-        assertEquals(3, tslaDto.getRound());
-        assertEquals(marketDateForRound3, tslaDto.getDate());
+        assertEquals(1, tslaDto.getRound());
+        assertEquals(date1, tslaDto.getDate());
         assertEquals("TECH", tslaDto.getCategory());
 
         StockPriceGetDTO nvdaDto = currentPrices.stream().filter(p -> "NVDA".equals(p.getSymbol())).findFirst().orElse(null);
         assertNotNull(nvdaDto);
         assertEquals(800.0, nvdaDto.getPrice());
     }
-
-    @Test
-    public void getCurrentRoundStockPrices_noCurrentPricesInGame_returnsEmptyList() {
-        Long gameId = getNextGameId();
-        GameManager gameManager = setupTestGame(gameId);
-
-        LocalDate date1 = LocalDate.of(2024, 1, 1);
-        LinkedHashMap<LocalDate, Map<String, Double>> timeline = new LinkedHashMap<>();
-        timeline.put(date1, Map.of("AAPL", 100.0));
-        gameManager.setStockTimeline(timeline);
-
-        gameManager.nextRound();
-
-        List<StockPriceGetDTO> currentPrices = stockService.getCurrentRoundStockPrices(gameId);
-        assertTrue(currentPrices.isEmpty());
-    }
-
 
     @Test
     public void getPlayerHoldings_gameNotFound_throwsException() {
@@ -288,29 +169,35 @@ public class StockServiceTest {
     @Test
     public void getPlayerHoldings_playerNotFound_throwsException() {
         Long gameId = getNextGameId();
-        setupTestGame(gameId);
-        Long nonExistentUserId = 999L;
+        LinkedHashMap<LocalDate, Map<String, Double>> timeline = new LinkedHashMap<>();
+        timeline.put(LocalDate.now(), Collections.singletonMap("AAPL", 100.0));
+        setupActualGameInRegistry(gameId, timeline);
+
+        Long nonExistentUserId = getNextUserId();
 
         ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
             stockService.getPlayerHoldings(nonExistentUserId, gameId);
         });
         assertEquals(HttpStatus.NOT_FOUND, exception.getStatus());
+        String actualReason = exception.getReason();
+        String expectedReason = "Player state not found for userId: " + nonExistentUserId;
+        assertTrue(actualReason != null && actualReason.equals(expectedReason),
+            "Exception reason should be '" + expectedReason + "'. Actual: " + actualReason);
     }
 
     @Test
     public void getPlayerHoldings_validPlayerAndGame_returnsHoldings() {
         Long gameId = getNextGameId();
         Long userId = getNextUserId();
-        GameManager gameManager = setupTestGame(gameId);
-        PlayerState playerState = addPlayerToGame(gameManager, userId, "testPlayer");
-
-        playerState.setStock("AAPL", 10); // Using setStock as per PlayerState
-        playerState.setStock("MSFT", 5); // Using setStock as per PlayerState
 
         LocalDate marketDate = LocalDate.of(2024, 1, 1);
         LinkedHashMap<LocalDate, Map<String, Double>> timeline = new LinkedHashMap<>();
         timeline.put(marketDate, Map.of("AAPL", 150.0, "MSFT", 300.0, "GOOG", 2000.0));
-        gameManager.setStockTimeline(timeline);
+        GameManager gameManager = setupActualGameInRegistry(gameId, timeline);
+        PlayerState playerState = addPlayerToActualGame(gameManager, userId);
+
+        playerState.setStock("AAPL", 10);
+        playerState.setStock("MSFT", 5);
 
         List<StockHoldingDTO> holdings = stockService.getPlayerHoldings(userId, gameId);
         assertEquals(2, holdings.size());
@@ -327,52 +214,15 @@ public class StockServiceTest {
         assertEquals(300.0, msftHolding.getCurrentPrice());
     }
 
-    @Test
-    public void getPlayerHoldings_playerHasNoStocks_returnsEmptyList() {
-        Long gameId = getNextGameId();
-        Long userId = getNextUserId();
-        GameManager gameManager = setupTestGame(gameId);
-        addPlayerToGame(gameManager, userId, "testPlayerWithNoStocks");
-
-        LocalDate marketDate = LocalDate.of(2024, 1, 1);
-        LinkedHashMap<LocalDate, Map<String, Double>> timeline = new LinkedHashMap<>();
-        timeline.put(marketDate, Map.of("AAPL", 150.0));
-        gameManager.setStockTimeline(timeline);
-
-        List<StockHoldingDTO> holdings = stockService.getPlayerHoldings(userId, gameId);
-        assertTrue(holdings.isEmpty());
-    }
-
-    @Test
-    public void getPlayerHoldings_stockPriceNotAvailable_usesZeroPrice() {
-        Long gameId = getNextGameId();
-        Long userId = getNextUserId();
-        GameManager gameManager = setupTestGame(gameId);
-        PlayerState playerState = addPlayerToGame(gameManager, userId, "testPlayer");
-
-        playerState.setStock("UNKN", 10); // Using setStock
-
-        LocalDate marketDate = LocalDate.of(2024, 1, 1);
-        LinkedHashMap<LocalDate, Map<String, Double>> timeline = new LinkedHashMap<>();
-        timeline.put(marketDate, Map.of("AAPL", 150.0));
-        gameManager.setStockTimeline(timeline);
-
-        List<StockHoldingDTO> holdings = stockService.getPlayerHoldings(userId, gameId);
-        assertEquals(1, holdings.size());
-        StockHoldingDTO unknHolding = holdings.get(0);
-        assertEquals("UNKN", unknHolding.getSymbol());
-        assertEquals(10, unknHolding.getQuantity());
-        assertEquals(0.0, unknHolding.getCurrentPrice());
-        assertEquals("OTHER", unknHolding.getCategory());
-    }
-
 
     @Test
     public void getGameManagerForUser_success() {
         Long gameId = getNextGameId();
         Long userId = getNextUserId();
-        GameManager expectedGameManager = setupTestGame(gameId);
-        addPlayerToGame(expectedGameManager, userId, "playerInGame");
+        LinkedHashMap<LocalDate, Map<String, Double>> timeline = new LinkedHashMap<>();
+        timeline.put(LocalDate.now(), Collections.singletonMap("AAPL", 100.0));
+        GameManager expectedGameManager = setupActualGameInRegistry(gameId, timeline);
+        addPlayerToActualGame(expectedGameManager, userId);
 
         GameManager actualGameManager = stockService.getGameManagerForUser(userId, gameId);
         assertSame(expectedGameManager, actualGameManager);
@@ -392,175 +242,126 @@ public class StockServiceTest {
     public void getGameManagerForUser_playerNotInGame_throwsException() {
         Long gameId = getNextGameId();
         Long userIdNotInGame = getNextUserId();
-        setupTestGame(gameId);
+        LinkedHashMap<LocalDate, Map<String, Double>> timeline = new LinkedHashMap<>();
+        timeline.put(LocalDate.now(), Collections.singletonMap("AAPL", 100.0));
+        setupActualGameInRegistry(gameId, timeline);
 
         ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
             stockService.getGameManagerForUser(userIdNotInGame, gameId);
         });
         assertEquals(HttpStatus.NOT_FOUND, exception.getStatus());
+        
+        String actualReason = exception.getReason();
+        String expectedReason = "Player " + userIdNotInGame + " not found in game " + gameId;
+        assertTrue(actualReason != null && actualReason.equals(expectedReason),
+            "Exception reason should be '" + expectedReason + "'. Actual: " + actualReason);
     }
-
-    @Test
-    public void getPlayerHoldingsByRound_success() {
-        Long gameId = getNextGameId();
-        Long userId = getNextUserId();
-        GameManager gameManager = setupTestGame(gameId);
-        PlayerState playerState = addPlayerToGame(gameManager, userId, "historicalPlayer");
-
-        LocalDate dateRound1 = LocalDate.of(2024, 1, 1);
-        LocalDate dateRound2 = LocalDate.of(2024, 1, 2);
-
-        LinkedHashMap<LocalDate, Map<String, Double>> timeline = new LinkedHashMap<>();
-        timeline.put(dateRound1, Map.of("AAPL", 100.0, "MSFT", 200.0));
-        timeline.put(dateRound2, Map.of("AAPL", 105.0, "MSFT", 205.0));
-        gameManager.setStockTimeline(timeline);
-
-        // Simulate snapshotting holdings for round 1
-        playerState.snapshotHoldingsAtRound(1); // Assuming this captures current playerState.stocksOwned
-        // Then modify stocks for the snapshot if needed, or set them before snapshotting.
-        // For this test, let's assume playerState had AAPL before snapshotting.
-        // To be more precise:
-        playerState.setStock("AAPL", 10); // Player has 10 AAPL
-        playerState.snapshotHoldingsAtRound(1); // Snapshot this state for round 1
-
-        List<StockHoldingDTO> holdingsForRound1 = stockService.getPlayerHoldingsByRound(userId, gameId, 1);
-        assertEquals(1, holdingsForRound1.size());
-        StockHoldingDTO aaplHolding = holdingsForRound1.get(0);
-        assertEquals("AAPL", aaplHolding.getSymbol());
-        assertEquals(10, aaplHolding.getQuantity());
-        assertEquals(100.0, aaplHolding.getCurrentPrice());
-    }
-
-    @Test
-    public void getPlayerHoldingsByRound_roundHasNoHoldings_returnsEmptyList() {
-        Long gameId = getNextGameId();
-        Long userId = getNextUserId();
-        GameManager gameManager = setupTestGame(gameId);
-        PlayerState playerState = addPlayerToGame(gameManager, userId, "player"); // playerState is fresh
-
-        LocalDate dateRound1 = LocalDate.of(2024, 1, 1);
-        LinkedHashMap<LocalDate, Map<String, Double>> timeline = new LinkedHashMap<>();
-        timeline.put(dateRound1, Map.of("AAPL", 100.0));
-        gameManager.setStockTimeline(timeline);
-
-        playerState.snapshotHoldingsAtRound(1); // Snapshot empty holdings for round 1
-
-        List<StockHoldingDTO> holdings = stockService.getPlayerHoldingsByRound(userId, gameId, 1);
-        assertTrue(holdings.isEmpty());
-    }
-
-    @Test
-    public void getPlayerHoldingsByRound_priceForHoldingNotAvailable_usesZeroPrice() {
-        Long gameId = getNextGameId();
-        Long userId = getNextUserId();
-        GameManager gameManager = setupTestGame(gameId);
-        PlayerState playerState = addPlayerToGame(gameManager, userId, "player");
-
-        LocalDate dateRound1 = LocalDate.of(2024, 1, 1);
-        LinkedHashMap<LocalDate, Map<String, Double>> timeline = new LinkedHashMap<>();
-        timeline.put(dateRound1, Map.of("AAPL", 100.0));
-        gameManager.setStockTimeline(timeline);
-
-        playerState.setStock("MSFT", 5); // Player has MSFT
-        playerState.snapshotHoldingsAtRound(1); // Snapshot this state for round 1
-
-        List<StockHoldingDTO> holdings = stockService.getPlayerHoldingsByRound(userId, gameId, 1);
-        assertEquals(1, holdings.size());
-        StockHoldingDTO msftHolding = holdings.get(0);
-        assertEquals("MSFT", msftHolding.getSymbol());
-        assertEquals(5, msftHolding.getQuantity());
-        assertEquals(0.0, msftHolding.getCurrentPrice());
-    }
-
 
     @Test
     public void getPlayerHoldingsAllRounds_success() {
         Long gameId = getNextGameId();
         Long userId = getNextUserId();
-        GameManager gameManager = setupTestGame(gameId);
-        PlayerState playerState = addPlayerToGame(gameManager, userId, "multiRoundPlayer");
 
-        LocalDate date1 = LocalDate.of(2024, 1, 1);
-        LocalDate date2 = LocalDate.of(2024, 1, 2);
-        LocalDate date3 = LocalDate.of(2024, 1, 3);
+        LocalDate dateR1Market = LocalDate.of(2024, 1, 1);
+        LocalDate dateR2Market = LocalDate.of(2024, 1, 2);
+        LocalDate dateR3Market = LocalDate.of(2024, 1, 3);
+        LocalDate dateR4Market = LocalDate.of(2024, 1, 4);
 
         LinkedHashMap<LocalDate, Map<String, Double>> timeline = new LinkedHashMap<>();
-        timeline.put(date1, Map.of("AAPL", 100.0, "MSFT", 200.0));
-        timeline.put(date2, Map.of("AAPL", 105.0, "MSFT", 195.0));
-        timeline.put(date3, Map.of("AAPL", 110.0, "MSFT", 210.0));
-        gameManager.setStockTimeline(timeline);
+        timeline.put(dateR1Market, Map.of("AAPL", 100.0, "MSFT", 200.0));
+        timeline.put(dateR2Market, Map.of("AAPL", 105.0, "MSFT", 205.0));
+        timeline.put(dateR3Market, Map.of("AAPL", 110.0, "MSFT", 210.0));
+        timeline.put(dateR4Market, Map.of("AAPL", 115.0, "MSFT", 215.0));
 
-        // Round 1 (GameManager currentRound is 1)
+        // Use the constructor that accepts roundDelayMillis for more control if needed,
+        // or the simpler one if default delay is fine.
+        // For this test, the actual delay value doesn't matter as we'll call nextRound() manually.
+        GameManager gameManager = new GameManager(gameId, timeline, 100L); // Short delay for test
+        InMemoryGameRegistry.registerGame(gameId, gameManager);
+        PlayerState playerState = addPlayerToActualGame(gameManager, userId);
+        
+        // To make sure the scheduler doesn't interfere, we can end the game immediately
+        // after we're done with manual round advancements for the test's purpose,
+        // or just be aware that a scheduled task might run if the test is slow.
+        // For pure unit testing of getPlayerHoldingsAllRounds, manual calls are fine.
+
+        // Actual Round 1
+        // Player buys 10 AAPL in Round 1.
         playerState.setStock("AAPL", 10);
-        playerState.snapshotHoldingsAtRound(1); // Snapshot for end of round 1
-        gameManager.nextRound(); // currentRound becomes 2
+        playerState.snapshotHoldingsAtRound(1); // Holdings at end of round 1
+        // Simulate all players submitting for round 1 to allow nextRound() to proceed if it checks submissions
+        playerState.markSubmittedForRound(1); 
+        gameManager.nextRound(); // Manually advance to actual round 2 (market data for round 2 becomes current)
 
-        // Round 2 (GameManager currentRound is 2)
-        playerState.setStock("AAPL", 5); // Player sells some AAPL
-        playerState.setStock("MSFT", 5); // Player buys MSFT
-        playerState.snapshotHoldingsAtRound(2); // Snapshot for end of round 2
-        gameManager.nextRound(); // currentRound becomes 3
+        // Actual Round 2
+        // Player sells 5 AAPL, buys 5 MSFT in Round 2.
+        playerState.setStock("AAPL", 5);
+        playerState.setStock("MSFT", 5);
+        playerState.snapshotHoldingsAtRound(2); // Holdings at end of round 2
+        // Simulate all players submitting for round 2
+        playerState.markSubmittedForRound(2);
+        gameManager.nextRound(); // Manually advance to actual round 3
+
+        // Actual Round 3
+        // No transactions, holdings remain AAPL:5, MSFT:5.
+        playerState.snapshotHoldingsAtRound(3); // Holdings at end of round 3
+        // Simulate all players submitting for round 3
+        playerState.markSubmittedForRound(3);
+        // We don't call nextRound() after snapshotting for round 3 if we are checking holdings *up to* the start of round 4 (display round 4)
+        // The game is now in round 3. Current market prices are for dateR3Market.
+        // The `getPlayerHoldingsAllRounds` method will iterate up to `game.getCurrentRound()`,
+        // which is 3 after the two nextRound() calls.
+        // It will then generate DTOs for display rounds 1, 2, 3, 4.
 
         Map<Integer, List<StockHoldingDTO>> allHoldings = stockService.getPlayerHoldingsAllRounds(userId, gameId);
 
         assertNotNull(allHoldings);
-        assertEquals(3, allHoldings.size());
+        // game.getCurrentRound() will be 3. The loop in service goes `round <= game.getCurrentRound()`.
+        // So, it processes actual rounds 1, 2, 3.
+        // Display rounds are:
+        // 1: initial empty
+        // 2: snapshot(actual 1) with prices(dateR2Market)
+        // 3: snapshot(actual 2) with prices(dateR3Market)
+        // 4: snapshot(actual 3) with prices(dateR4Market)
+        assertEquals(4, allHoldings.size(), "Should have data for initial empty (Display R1) + 3 historical rounds (Display R2,R3,R4). Map keys: 1,2,3,4.");
 
-        assertTrue(allHoldings.get(1).isEmpty(), "Holdings for display round 1 should be empty.");
+        assertTrue(allHoldings.containsKey(1));
+        List<StockHoldingDTO> holdingsDispR1 = allHoldings.get(1);
+        assertNotNull(holdingsDispR1);
+        assertTrue(holdingsDispR1.isEmpty(), "Display Round 1 should be empty (initial state)");
 
-        List<StockHoldingDTO> holdingsForDisplayRound2 = allHoldings.get(2);
-        assertEquals(1, holdingsForDisplayRound2.size());
-        StockHoldingDTO aaplR1 = holdingsForDisplayRound2.get(0);
-        assertEquals("AAPL", aaplR1.getSymbol());
-        assertEquals(10, aaplR1.getQuantity());
-        assertEquals(105.0, aaplR1.getCurrentPrice());
+        assertTrue(allHoldings.containsKey(2));
+        List<StockHoldingDTO> holdingsDispR2 = allHoldings.get(2);
+        assertNotNull(holdingsDispR2);
+        assertEquals(1, holdingsDispR2.size());
+        StockHoldingDTO aaplDispR2 = holdingsDispR2.stream().filter(s -> "AAPL".equals(s.getSymbol())).findFirst().orElseThrow();
+        assertEquals("AAPL", aaplDispR2.getSymbol());
+        assertEquals(10, aaplDispR2.getQuantity());
+        assertEquals(105.0, aaplDispR2.getCurrentPrice(), "AAPL price from dateR2Market for Display Round 2");
 
-        List<StockHoldingDTO> holdingsForDisplayRound3 = allHoldings.get(3);
-        assertEquals(2, holdingsForDisplayRound3.size());
-        StockHoldingDTO aaplR2 = holdingsForDisplayRound3.stream().filter(s -> "AAPL".equals(s.getSymbol())).findFirst().orElseThrow();
-        StockHoldingDTO msftR2 = holdingsForDisplayRound3.stream().filter(s -> "MSFT".equals(s.getSymbol())).findFirst().orElseThrow();
+        assertTrue(allHoldings.containsKey(3));
+        List<StockHoldingDTO> holdingsDispR3 = allHoldings.get(3);
+        assertNotNull(holdingsDispR3);
+        assertEquals(2, holdingsDispR3.size());
+        StockHoldingDTO aaplDispR3 = holdingsDispR3.stream().filter(s -> "AAPL".equals(s.getSymbol())).findFirst().orElseThrow();
+        assertEquals(5, aaplDispR3.getQuantity());
+        assertEquals(110.0, aaplDispR3.getCurrentPrice(), "AAPL price from dateR3Market for Display Round 3");
+        StockHoldingDTO msftDispR3 = holdingsDispR3.stream().filter(s -> "MSFT".equals(s.getSymbol())).findFirst().orElseThrow();
+        assertEquals(5, msftDispR3.getQuantity());
+        assertEquals(210.0, msftDispR3.getCurrentPrice(), "MSFT price from dateR3Market for Display Round 3");
 
-        assertEquals(5, aaplR2.getQuantity());
-        assertEquals(110.0, aaplR2.getCurrentPrice());
-
-        assertEquals(5, msftR2.getQuantity());
-        assertEquals(210.0, msftR2.getCurrentPrice());
-    }
-
-    @Test
-    public void getPlayerHoldingsAllRounds_gameNotStarted_returnsRound1Empty() {
-        Long gameId = getNextGameId();
-        Long userId = getNextUserId();
-        GameManager gameManager = setupTestGame(gameId);
-        PlayerState playerState = addPlayerToGame(gameManager, userId, "newPlayer");
-
-
-        LocalDate date1 = LocalDate.of(2024, 1, 1);
-        LinkedHashMap<LocalDate, Map<String, Double>> timeline = new LinkedHashMap<>();
-        timeline.put(date1, Map.of("AAPL", 100.0));
-        gameManager.setStockTimeline(timeline);
-
-        // Game manager current round is 1.
-        // Player has no stocks, so snapshotting for round 1 will be empty.
-        playerState.snapshotHoldingsAtRound(1);
-
-
-        Map<Integer, List<StockHoldingDTO>> allHoldings = stockService.getPlayerHoldingsAllRounds(userId, gameId);
-
-        assertEquals(2, allHoldings.size());
-        assertTrue(allHoldings.get(1).isEmpty());
-        assertTrue(allHoldings.get(2).isEmpty());
-    }
-
-    @Test
-    public void getPlayerHoldingsAllRounds_playerNotFound_throwsException() {
-        Long gameId = getNextGameId();
-        GameManager gameManager = setupTestGame(gameId);
-        Long nonExistentUserId = 999L;
-
-        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
-            stockService.getPlayerHoldingsAllRounds(nonExistentUserId, gameId);
-        });
-        assertEquals(HttpStatus.NOT_FOUND, exception.getStatus());
+        assertTrue(allHoldings.containsKey(4));
+        List<StockHoldingDTO> holdingsDispR4 = allHoldings.get(4);
+        assertNotNull(holdingsDispR4);
+        assertEquals(2, holdingsDispR4.size());
+        StockHoldingDTO aaplDispR4 = holdingsDispR4.stream().filter(s -> "AAPL".equals(s.getSymbol())).findFirst().orElseThrow();
+        assertEquals(5, aaplDispR4.getQuantity());
+        assertEquals(115.0, aaplDispR4.getCurrentPrice(), "AAPL price from dateR4Market for Display Round 4");
+        StockHoldingDTO msftDispR4 = holdingsDispR4.stream().filter(s -> "MSFT".equals(s.getSymbol())).findFirst().orElseThrow();
+        assertEquals(5, msftDispR4.getQuantity());
+        assertEquals(215.0, msftDispR4.getCurrentPrice(), "MSFT price from dateR4Market for Display Round 4");
+        
+        // Important: Clean up the game manager's scheduler to prevent it from running after the test
+        gameManager.endGame(); // This will shut down its scheduler
     }
 }

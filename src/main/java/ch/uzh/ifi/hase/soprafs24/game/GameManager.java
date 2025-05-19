@@ -308,49 +308,6 @@ public class GameManager {
         return startedAt;
     }
 
-    // public void scheduleRounds() {
-    // if (roundScheduler.isShutdown() || roundScheduler.isTerminated()) {
-    // log.warn("Game {}: Round scheduler is already shutdown. Cannot schedule
-    // rounds.", gameId);
-    // return;
-    // }
-    // log.info("Game {}: Scheduling automatic round progression every {} ms. Max
-    // rounds: {}.", gameId, roundDelayMillis, MAX_ROUNDS);
-    // roundScheduler.scheduleAtFixedRate(() -> {
-    // try {
-    // synchronized (GameManager.this) { // Synchronize on GameManager instance
-    // if (!active) {
-    // log.info("Game {}: Game inactive, stopping scheduled round progression.",
-    // gameId);
-    // if (!roundScheduler.isShutdown()) roundScheduler.shutdown(); // Ensure
-    // scheduler stops
-    // return;
-    // }
-    // if (this.roundInProgress) {
-    // log.debug("Game {}: Round {} advancement is already in progress (likely due
-    // to all players submitting). Skipping scheduled advancement by timer.",
-    // gameId, currentRound);
-    // return;
-    // }
-    //
-    // // If not all players submitted and timer triggers
-    // log.info("Game {}: Scheduled task triggered for round {}. Auto-progressing.",
-    // gameId, currentRound);
-    // System.out.printf("DEBUG-timer is up: currentRound=%d%n", currentRound);
-    // this.roundInProgress = true; // Set flag before calling nextRound
-    // nextRound(); // nextRound will advance round or end game, and reset
-    // roundInProgress
-    // }
-    // } catch (Exception e) {
-    // log.error("Game {}: Unhandled exception in scheduled round progression task:
-    // {}", gameId, e.getMessage(), e);
-    // // Consider critical error handling, e.g., ending the game or stopping the
-    // scheduler
-    // // endGame(); // Example: if scheduler fails critically, end game.
-    // }
-    // }, roundDelayMillis, roundDelayMillis, TimeUnit.MILLISECONDS);
-    // }
-
     public LinkedHashMap<LocalDate, Map<String, Double>> getStockTimeline() {
         // Return a copy to prevent external modification of the game's timeline
         // instance

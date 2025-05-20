@@ -2,6 +2,8 @@ package ch.uzh.ifi.hase.soprafs24.controller;
 
 import ch.uzh.ifi.hase.soprafs24.entity.Game;
 import ch.uzh.ifi.hase.soprafs24.game.GameManager;
+import ch.uzh.ifi.hase.soprafs24.game.InMemoryGameRegistry;
+import ch.uzh.ifi.hase.soprafs24.game.PlayerState;
 import ch.uzh.ifi.hase.soprafs24.service.GameService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.hamcrest.Matcher;
@@ -60,7 +62,8 @@ public class GameControllerTest {
     @Test
     public void startGame_serviceThrowsException_returnsExpectedErrorStatus() throws Exception {
         Long gameId = 188L;
-        given(gameService.tryStartGame(gameId)).willThrow(new IllegalStateException("Cannot start game for testing purposes"));
+        given(gameService.tryStartGame(gameId))
+                .willThrow(new IllegalStateException("Cannot start game for testing purposes"));
 
         MockHttpServletRequestBuilder postRequest = post("/game/{gameId}/start", gameId)
                 .contentType(MediaType.APPLICATION_JSON);
@@ -68,7 +71,6 @@ public class GameControllerTest {
         mockMvc.perform(postRequest)
                 .andExpect(status().isConflict());
     }
-
 
     @Test
     public void getGame_validInput_returnsGameManager() throws Exception {
@@ -92,7 +94,8 @@ public class GameControllerTest {
                 .andExpect(jsonPath("$.active", is(realGameManager.isActive())))
                 .andExpect(jsonPath("$.currentRound", is(realGameManager.getCurrentRound())))
                 // Use the custom matcher for robust long comparison
-                .andExpect(jsonPath("$.nextRoundStartTimeMillis", isApproximately(realGameManager.getNextRoundStartTimeMillis())))
+                .andExpect(jsonPath("$.nextRoundStartTimeMillis",
+                        isApproximately(realGameManager.getNextRoundStartTimeMillis())))
                 .andExpect(jsonPath("$.playerStates").isEmpty())
                 .andExpect(jsonPath("$.leaderBoard").isEmpty())
                 .andExpect(jsonPath("$.startedAt").isNotEmpty());
@@ -147,7 +150,7 @@ public class GameControllerTest {
             }
         };
     }
-    
+
     // Custom matcher to handle Long vs Integer from JSONPath for comparisons
     private static Matcher<Object> isGreaterThanLong(long value) {
         return new org.hamcrest.BaseMatcher<Object>() {
@@ -158,6 +161,7 @@ public class GameControllerTest {
                 }
                 return false;
             }
+
             @Override
             public void describeTo(org.hamcrest.Description description) {
                 description.appendText("a Number greater than ").appendValue(value);
@@ -174,13 +178,13 @@ public class GameControllerTest {
                 }
                 return false;
             }
+
             @Override
             public void describeTo(org.hamcrest.Description description) {
                 description.appendText("a Number less than or equal to ").appendValue(value);
             }
         };
     }
-
 
     @Test
     public void getGameRoundStatus_whenGameManagerExists_returnsGameStatusDTO() throws Exception {
@@ -198,8 +202,8 @@ public class GameControllerTest {
                 .andExpect(jsonPath("$.currentRound", is(5)))
                 .andExpect(jsonPath("$.active", is(true)))
                 .andExpect(jsonPath("$.remainingTime").value(instanceOf(Number.class)))
-                .andExpect(jsonPath("$.remainingTime", isLessThanOrEqualToLong(10000L))) 
-                .andExpect(jsonPath("$.remainingTime", isGreaterThanLong(0L)));          
+                .andExpect(jsonPath("$.remainingTime", isLessThanOrEqualToLong(10000L)))
+                .andExpect(jsonPath("$.remainingTime", isGreaterThanLong(0L)));
     }
 
     @Test
@@ -210,4 +214,76 @@ public class GameControllerTest {
         mockMvc.perform(get("/game/{gameId}/round", gameId))
                 .andExpect(status().isNotFound());
     }
+
+    @Test
+    public void getPlayerState_returnsOk() throws Exception {
+        Long gameId = 1L;
+        Long userId = 1L;
+
+        GameManager mockGameManager = mock(GameManager.class);
+
+        PlayerState playerState = new PlayerState(userId);
+
+        given(gameService.getGame(gameId)).willReturn(mockGameManager);
+
+        when(mockGameManager.getPlayerState(userId)).thenReturn(playerState);
+
+        mockMvc.perform(get("/game/{gameId}/players/{userId}/state", gameId, userId))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void getPlayerState_gameNotFound_returns404() throws Exception {
+        Long gameId = 1L;
+        Long userId = 1L;
+
+        given(gameService.getGame(gameId)).willReturn(null);
+
+        mockMvc.perform(get("/game/{gameId}/players/{userId}/state", gameId, userId))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void getPlayerState_playerNotFound_returns404() throws Exception {
+        Long gameId = 1L;
+        Long userId = 1L;
+
+        GameManager mockGameManager = mock(GameManager.class);
+
+        given(gameService.getGame(gameId)).willReturn(mockGameManager);
+
+        when(mockGameManager.getPlayerState(userId)).thenReturn(null);
+
+        mockMvc.perform(get("/game/{gameId}/players/{userId}/state", gameId, userId))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void getRoundStatus_returnsOk() throws Exception {
+        Long gameId = 1L;
+
+        GameManager mockGameManager = mock(GameManager.class);
+
+        given(gameService.getGame(gameId)).willReturn(mockGameManager);
+        when(mockGameManager.getCurrentRound()).thenReturn(5);
+        when(mockGameManager.haveAllPlayersSubmittedForCurrentRound()).thenReturn(true);
+        long futureTime = System.currentTimeMillis() + 10000L;
+        when(mockGameManager.getNextRoundStartTimeMillis()).thenReturn(futureTime);
+
+        mockMvc.perform(get("/game/{gameId}/status", gameId))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.allSubmitted", is(true)))
+                .andExpect(jsonPath("$.roundEnded", is(true)))
+                .andExpect(jsonPath("$.nextRoundStartTime", is(futureTime)));
+    }
+
+    @Test
+    public void getRoundStatus_gameNotFound_returns404() throws Exception {
+        Long gameId = 1L;
+
+        given(gameService.getGame(gameId)).willReturn(null);
+
+        mockMvc.perform(get("/game/{gameId}/status", gameId))
+                .andExpect(status().isNotFound());
+    }
+
 }

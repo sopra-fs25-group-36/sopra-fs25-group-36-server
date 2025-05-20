@@ -77,7 +77,7 @@ public class GameController {
     public ResponseEntity<PlayerStateGetDTO> getPlayerState(
             @PathVariable Long gameId,
             @PathVariable Long userId) {
-        GameManager game = InMemoryGameRegistry.getGame(gameId);
+        GameManager game = gameService.getGame(gameId);
         if (game == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Game not found");
         }
@@ -106,7 +106,7 @@ public class GameController {
             @PathVariable Long gameId,
             @RequestParam(name = "lastRound", defaultValue = "0", required = false) Integer lastRound) {
         // 1) lookup your GameManager
-        GameManager gm = InMemoryGameRegistry.getGame(gameId);
+        GameManager gm = gameService.getGame(gameId);
         if (gm == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Game not found");
         }
@@ -117,10 +117,7 @@ public class GameController {
                 gameId, current, lastRound);
 
         // 2) have all players submitted for this round?
-        boolean allSubmitted = gm.getPlayerStates()
-                .values()
-                .stream()
-                .allMatch(ps -> ps.hasSubmittedForRound(current));
+        boolean allSubmitted = gm.haveAllPlayersSubmittedForCurrentRound();
 
         // 3) has the round ended? Two cases:
         // a) everyone submitted

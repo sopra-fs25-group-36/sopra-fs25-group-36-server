@@ -21,8 +21,7 @@ public class Lobby implements Serializable {
 
     /** player-id ➜ ready? */
     @ElementCollection
-    @CollectionTable(name = "lobby_player_status",
-                     joinColumns = @JoinColumn(name = "lobby_id"))
+    @CollectionTable(name = "lobby_player_status", joinColumns = @JoinColumn(name = "lobby_id"))
     @MapKeyColumn(name = "user_id")
     @Column(name = "ready")
     private Map<Long, Boolean> playerReadyStatuses = new HashMap<>();
@@ -42,29 +41,48 @@ public class Lobby implements Serializable {
 
     @PrePersist
     protected void onCreate() {
-        this.createdAt = Instant.now();   // absolute, unambiguous
-        this.active    = true;
+        this.createdAt = Instant.now(); // absolute, unambiguous
+        this.active = true;
     }
 
     /* ---------- getters / setters ---------- */
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public Map<Long, Boolean> getPlayerReadyStatuses() {
         return playerReadyStatuses;
     }
+
     public void setPlayerReadyStatuses(Map<Long, Boolean> playerReadyStatuses) {
         this.playerReadyStatuses = playerReadyStatuses;
     }
 
-    public Instant getCreatedAt() { return createdAt; }
-    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
 
-    public boolean isActive() { return active; }
-    public void setActive(boolean active) { this.active = active; }
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
+    }
 
-    public Long getTimeLimitSeconds() { return timeLimitSeconds; }
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
+    public Long getTimeLimitSeconds() {
+        return timeLimitSeconds;
+    }
+
     public void setTimeLimitSeconds(Long timeLimitSeconds) {
         this.timeLimitSeconds = timeLimitSeconds;
     }

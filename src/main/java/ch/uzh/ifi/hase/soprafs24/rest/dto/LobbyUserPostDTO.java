@@ -1,7 +1,7 @@
 package ch.uzh.ifi.hase.soprafs24.rest.dto;
 
 public class LobbyUserPostDTO {
-    
+
     private Long userId;
 
     public Long getUserId() {
@@ -12,4 +12,3 @@ public class LobbyUserPostDTO {
         this.userId = userId;
     }
 }
-

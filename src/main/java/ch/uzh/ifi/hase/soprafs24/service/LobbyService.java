@@ -1,15 +1,16 @@
 package ch.uzh.ifi.hase.soprafs24.service;
 
-import ch.uzh.ifi.hase.soprafs24.entity.Lobby;
-import ch.uzh.ifi.hase.soprafs24.repository.LobbyRepository;
+import java.time.Instant;
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.time.Instant;
-import java.util.List;
+import ch.uzh.ifi.hase.soprafs24.entity.Lobby;
+import ch.uzh.ifi.hase.soprafs24.repository.LobbyRepository;
 
 @Service
 @Transactional
@@ -24,7 +25,7 @@ public class LobbyService {
     /* ---------- create ---------- */
 
     public Lobby createLobby(Long userId, Lobby lobbyInput) {
-        lobbyInput.setTimeLimitSeconds(300L);             // 5 min default
+        lobbyInput.setTimeLimitSeconds(300L); // 5 min default
         lobbyInput.getPlayerReadyStatuses().put(userId, false);
         return lobbyRepository.save(lobbyInput);
     }
@@ -33,8 +34,7 @@ public class LobbyService {
 
     public Lobby getLobbyById(Long lobbyId) {
         return lobbyRepository.findById(lobbyId)
-                .orElseThrow(() ->
-                        new ResponseStatusException(HttpStatus.NOT_FOUND, "Lobby not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Lobby not found"));
     }
 
     /* ---------- scheduled: deactivate old lobbies ---------- */
@@ -46,7 +46,7 @@ public class LobbyService {
 
         for (Lobby lobby : activeLobbies) {
             Instant expiresAt = lobby.getCreatedAt()
-                                      .plusSeconds(lobby.getTimeLimitSeconds());
+                    .plusSeconds(lobby.getTimeLimitSeconds());
             if (expiresAt.isBefore(now)) {
                 lobby.setActive(false);
                 lobbyRepository.save(lobby);

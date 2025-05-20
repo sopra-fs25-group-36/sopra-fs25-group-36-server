@@ -1,15 +1,23 @@
 package ch.uzh.ifi.hase.soprafs24.controller;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import ch.uzh.ifi.hase.soprafs24.game.GameManager;
 import ch.uzh.ifi.hase.soprafs24.game.LeaderBoardEntry;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.LeaderBoardEntryGetDTO;
 import ch.uzh.ifi.hase.soprafs24.service.GameService;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import java.time.LocalDate;
-import java.util.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 public class LeaderboardControllerTest {
     private GameService gameService;
@@ -21,6 +29,7 @@ public class LeaderboardControllerTest {
         controller = new LeaderBoardController(gameService);
 
     }
+
     @Test
     public void testGetLeaderBoard_returnsCorrectDTOs() {
         // Given: mocked GameManager with sample leaderboard
@@ -74,7 +83,6 @@ public class LeaderboardControllerTest {
 
         GameManager manager = new GameManager(1L, timeline, 999999);
 
-
         // Register players
         manager.registerPlayer(1L);
         manager.registerPlayer(2L);
@@ -97,6 +105,4 @@ public class LeaderboardControllerTest {
 
     }
 
-
 }
-

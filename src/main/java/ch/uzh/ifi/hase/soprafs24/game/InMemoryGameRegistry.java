@@ -24,6 +24,7 @@ public class InMemoryGameRegistry {
     public static boolean isGameActive(Long gameId) {
         return activeGames.containsKey(gameId);
     }
+
     public static void clear() {
         activeGames.clear();
     }

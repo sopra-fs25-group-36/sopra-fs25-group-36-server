@@ -7,7 +7,6 @@ public class PlayerStateGetDTO {
     private Long userId;
     private double cashBalance;
 
-
     // Getters and Setters
 
     public Long getUserId() {
@@ -25,6 +24,5 @@ public class PlayerStateGetDTO {
     public void setCashBalance(double cashBalance) {
         this.cashBalance = cashBalance;
     }
-
 
 }

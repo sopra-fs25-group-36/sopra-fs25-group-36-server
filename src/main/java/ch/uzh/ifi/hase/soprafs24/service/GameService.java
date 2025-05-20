@@ -1,22 +1,20 @@
 package ch.uzh.ifi.hase.soprafs24.service;
-import ch.uzh.ifi.hase.soprafs24.entity.Game;
-import ch.uzh.ifi.hase.soprafs24.entity.Lobby;
-import ch.uzh.ifi.hase.soprafs24.game.GameManager;
-import ch.uzh.ifi.hase.soprafs24.game.InMemoryGameRegistry;
-import ch.uzh.ifi.hase.soprafs24.game.PlayerState;
-import ch.uzh.ifi.hase.soprafs24.repository.GameRepository;
-import ch.uzh.ifi.hase.soprafs24.repository.LobbyRepository;
-import ch.uzh.ifi.hase.soprafs24.rest.dto.StockHoldingDTO;
+
+import java.time.LocalDate;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-import ch.uzh.ifi.hase.soprafs24.service.StockService;
-import org.springframework.web.server.ResponseStatusException;
 
-
-import java.time.LocalDate;
-import java.util.*;
+import ch.uzh.ifi.hase.soprafs24.entity.Game;
+import ch.uzh.ifi.hase.soprafs24.entity.Lobby;
+import ch.uzh.ifi.hase.soprafs24.game.GameManager;
+import ch.uzh.ifi.hase.soprafs24.game.InMemoryGameRegistry;
+import ch.uzh.ifi.hase.soprafs24.repository.GameRepository;
+import ch.uzh.ifi.hase.soprafs24.repository.LobbyRepository;
 
 @Service
 public class GameService {
@@ -29,7 +27,7 @@ public class GameService {
     public GameService(LobbyRepository lobbyRepository, GameRepository gameRepository, StockService stockService) {
         this.lobbyRepository = lobbyRepository;
         this.gameRepository = gameRepository;
-//        this.stockService = stockService;
+        // this.stockService = stockService;
         this.stockService = stockService;
     }
 
@@ -54,7 +52,7 @@ public class GameService {
 
         // Generate stock timeline
         LinkedHashMap<LocalDate, Map<String, Double>> timeline = stockService.getStockTimelineFromDatabase();
-        //check if it is right by printing to console
+        // check if it is right by printing to console
         System.out.println("===== Stock Timeline for Game =====");
         int day = 1;
         for (Map.Entry<LocalDate, Map<String, Double>> entry : timeline.entrySet()) {
@@ -71,7 +69,7 @@ public class GameService {
         InMemoryGameRegistry.registerGame(game.getId(), gameManager);
 
         // Kick off the first round’s timeout
-                gameManager.startGame();
+        gameManager.startGame();
 
         // Mark lobby as inactive
         lobby.setActive(false);
@@ -80,7 +78,7 @@ public class GameService {
         return game;
     }
 
-    //Retrieve the GameManager for a specific gameId.
+    // Retrieve the GameManager for a specific gameId.
     public GameManager getGame(Long gameId) {
         GameManager game = InMemoryGameRegistry.getGame(gameId);
         if (game == null) {
@@ -89,12 +87,8 @@ public class GameService {
         return game;
     }
 
-    //Check whether a game is currently active in memory.
+    // Check whether a game is currently active in memory.
     public boolean isGameActive(Long gameId) {
         return InMemoryGameRegistry.isGameActive(gameId);
     }
-    }
-
-
-
-
+}

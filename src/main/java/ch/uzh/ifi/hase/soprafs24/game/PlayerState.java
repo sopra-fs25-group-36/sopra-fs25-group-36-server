@@ -28,7 +28,6 @@ public class PlayerState {
     private final Set<Integer> submittedRounds = new HashSet<>();
     private final Map<Integer, Map<String, Integer>> stockHistory = new HashMap<>();
 
-
     public PlayerState(Long userId) {
         this.userId = userId;
         this.stocksOwned = new HashMap<>();
@@ -47,7 +46,6 @@ public class PlayerState {
     public Map<String, Integer> getPlayerStocks() {
         return new HashMap<>(stocksOwned); // return a copy to prevent external modification
     }
-
 
     // Calculates the total assets of the player based on current stock prices.
 
@@ -89,6 +87,7 @@ public class PlayerState {
     public void setStock(String stockId, int quantity) {
         stocksOwned.put(stockId, quantity);
     }
+
     public List<Transaction> getTransactionHistory() {
         return new ArrayList<>(transactionHistory); // or return Collections.unmodifiableList(...)
     }
@@ -101,14 +100,15 @@ public class PlayerState {
         submittedRounds.add(round);
     }
 
-    public double getTotalAssets(Map<String,Double> prices) {
+    public double getTotalAssets(Map<String, Double> prices) {
         return calculateTotalAssets(prices);
     }
+
     public void snapshotHoldingsAtRound(int round) {
-        if (stocksOwned == null) return;
+        if (stocksOwned == null)
+            return;
         stockHistory.put(round, new HashMap<>(stocksOwned)); // shallow copy
     }
-
 
     public Map<String, Integer> getHoldingsForRound(int round) {
         return stockHistory.getOrDefault(round, Collections.emptyMap());

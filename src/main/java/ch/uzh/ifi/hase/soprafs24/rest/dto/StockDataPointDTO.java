@@ -12,9 +12,11 @@ public class StockDataPointDTO {
     private Double close;
     private Long volume;
 
-    public StockDataPointDTO() {}
+    public StockDataPointDTO() {
+    }
 
-    public StockDataPointDTO(String symbol, LocalDate date, Double open, Double high, Double low, Double close, Long volume) {
+    public StockDataPointDTO(String symbol, LocalDate date, Double open, Double high, Double low, Double close,
+            Long volume) {
         this.symbol = symbol;
         this.date = date;
         this.open = open;
@@ -23,7 +25,6 @@ public class StockDataPointDTO {
         this.close = close;
         this.volume = volume;
     }
-
 
     public String getSymbol() {
         return symbol;

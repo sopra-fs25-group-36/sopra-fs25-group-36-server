@@ -1,11 +1,16 @@
 package ch.uzh.ifi.hase.soprafs24.service;
 
-import ch.uzh.ifi.hase.soprafs24.entity.Game;
-import ch.uzh.ifi.hase.soprafs24.entity.Lobby;
-import ch.uzh.ifi.hase.soprafs24.game.GameManager;
-import ch.uzh.ifi.hase.soprafs24.game.InMemoryGameRegistry;
-import ch.uzh.ifi.hase.soprafs24.repository.GameRepository; // Not used directly, but GameService might use it
-import ch.uzh.ifi.hase.soprafs24.repository.LobbyRepository;
+// Import static assertions from JUnit Jupiter
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,10 +19,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional; // For DB rollback
 
-import java.time.LocalDate;
-import java.util.*;
-
-import static org.junit.jupiter.api.Assertions.*; // Import static assertions from JUnit Jupiter
+import ch.uzh.ifi.hase.soprafs24.entity.Game;
+import ch.uzh.ifi.hase.soprafs24.entity.Lobby;
+import ch.uzh.ifi.hase.soprafs24.game.GameManager;
+import ch.uzh.ifi.hase.soprafs24.game.InMemoryGameRegistry;
+import ch.uzh.ifi.hase.soprafs24.repository.LobbyRepository;
 
 @SpringBootTest
 @Transactional // Rolls back database transactions after each test
@@ -30,7 +36,8 @@ public class GameServiceTest {
     private LobbyRepository lobbyRepository;
 
     // @Autowired
-    // private GameRepository gameRepository; // Autowire if direct interaction is needed for assertions
+    // private GameRepository gameRepository; // Autowire if direct interaction is
+    // needed for assertions
 
     @BeforeEach
     void setUp() {
@@ -60,17 +67,19 @@ public class GameServiceTest {
 
         Game game = gameService.tryStartGame(lobby.getId());
 
-        // Assert: Game object is returned, has an ID, and is active in the InMemoryGameRegistry
+        // Assert: Game object is returned, has an ID, and is active in the
+        // InMemoryGameRegistry
         assertNotNull(game, "The returned game object should not be null.");
         assertNotNull(game.getId(), "The game ID should not be null after creation.");
-        
+
         assertTrue(InMemoryGameRegistry.isGameActive(game.getId()),
                 "The game should be active in InMemoryGameRegistry after a successful start.");
 
         // Optionally, verify the GameManager instance from the registry
         GameManager activeGameManager = InMemoryGameRegistry.getGame(game.getId());
         assertNotNull(activeGameManager, "A GameManager instance should be found in the registry.");
-        assertEquals(game.getId(), activeGameManager.getGameId(), "The GameManager's ID should match the Game entity's ID.");
+        assertEquals(game.getId(), activeGameManager.getGameId(),
+                "The GameManager's ID should match the Game entity's ID.");
     }
 
     @Test
@@ -78,12 +87,12 @@ public class GameServiceTest {
         // Arrange: Create a lobby where at least one player is not ready
         Lobby lobby = new Lobby();
         Map<Long, Boolean> players = new HashMap<>();
-        players.put(1L, true);  // Player 1 is ready
+        players.put(1L, true); // Player 1 is ready
         players.put(2L, false); // Player 2 is NOT ready
         lobby.setPlayerReadyStatuses(players);
         lobby.setTimeLimitSeconds(60L);
         lobby.setActive(true); // The lobby itself is active
-        
+
         lobby = lobbyRepository.saveAndFlush(lobby);
 
         // Act & Assert: Calling tryStartGame should throw an IllegalStateException
@@ -91,7 +100,7 @@ public class GameServiceTest {
         IllegalStateException exception = assertThrows(IllegalStateException.class, () -> {
             gameService.tryStartGame(finalLobby.getId());
         }, "tryStartGame should throw IllegalStateException if not all players are ready.");
-        
+
     }
 
     @Test
@@ -109,7 +118,7 @@ public class GameServiceTest {
 
         Long testGameId = 999L; // A distinct ID for this test's GameManager
         int roundDurationSeconds = 1; // Use a short round duration for faster test execution (original was 5s)
-        
+
         // Create and configure the GameManager instance directly for this test
         GameManager gameManager = new GameManager(testGameId, timeline, roundDurationSeconds);
         gameManager.registerPlayer(1L); // A game typically needs at least one player
@@ -123,16 +132,16 @@ public class GameServiceTest {
         gameManager.startGame();
 
         long processingBufferMillis = 3000; // 3-second buffer
-        long totalWaitTimeMillis = ((long)numberOfRounds * roundDurationSeconds * 1000) + processingBufferMillis;
+        long totalWaitTimeMillis = ((long) numberOfRounds * roundDurationSeconds * 1000) + processingBufferMillis;
         Thread.sleep(totalWaitTimeMillis);
 
         assertFalse(InMemoryGameRegistry.isGameActive(testGameId),
                 "Game should be removed from InMemoryGameRegistry after " + numberOfRounds + " rounds are completed. " +
-                "Current round reported by GameManager: " + gameManager.getCurrentRound() +
-                ". Game active in registry: " + InMemoryGameRegistry.isGameActive(testGameId));
-        
+                        "Current round reported by GameManager: " + gameManager.getCurrentRound() +
+                        ". Game active in registry: " + InMemoryGameRegistry.isGameActive(testGameId));
+
         assertEquals(numberOfRounds, gameManager.getCurrentRound(),
                 "GameManager should have processed all " + numberOfRounds + " rounds.");
-        
+
     }
 }

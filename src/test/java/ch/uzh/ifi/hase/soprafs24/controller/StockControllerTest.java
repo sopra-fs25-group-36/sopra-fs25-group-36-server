@@ -1,8 +1,24 @@
 package ch.uzh.ifi.hase.soprafs24.controller;
 
-import ch.uzh.ifi.hase.soprafs24.rest.dto.StockHoldingDTO;
-import ch.uzh.ifi.hase.soprafs24.rest.dto.StockPriceGetDTO;
-import ch.uzh.ifi.hase.soprafs24.service.StockService;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,15 +27,9 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import static org.hamcrest.Matchers.*;
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import ch.uzh.ifi.hase.soprafs24.rest.dto.StockHoldingDTO;
+import ch.uzh.ifi.hase.soprafs24.rest.dto.StockPriceGetDTO;
+import ch.uzh.ifi.hase.soprafs24.service.StockService;
 
 @WebMvcTest(StockController.class)
 public class StockControllerTest {
@@ -40,14 +50,12 @@ public class StockControllerTest {
         mockStockPrices = Arrays.asList(
                 createStockPriceDTO("AAPL", 150.25),
                 createStockPriceDTO("MSFT", 320.75),
-                createStockPriceDTO("TSLA", 450.00)
-        );
+                createStockPriceDTO("TSLA", 450.00));
 
         // Setup mock holdings
         mockHoldings = Arrays.asList(
                 createStockHoldingDTO("AAPL", 10),
-                createStockHoldingDTO("TSLA", 5)
-        );
+                createStockHoldingDTO("TSLA", 5));
 
         // Setup mock categories
         mockCategories = new HashMap<>();
@@ -148,7 +156,7 @@ public class StockControllerTest {
         String symbol = "AAPL";
         Integer round = 2;
         List<StockPriceGetDTO> singleStockPrice = List.of(createStockPriceDTO("AAPL", 145.50));
-        
+
         when(stockService.getStockPrice(gameId, symbol, round)).thenReturn(singleStockPrice);
 
         // When/Then

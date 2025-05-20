@@ -1,10 +1,18 @@
 package ch.uzh.ifi.hase.soprafs24.service;
 
-import ch.uzh.ifi.hase.soprafs24.game.GameManager;
-import ch.uzh.ifi.hase.soprafs24.game.InMemoryGameRegistry;
-import ch.uzh.ifi.hase.soprafs24.game.PlayerState;
-import ch.uzh.ifi.hase.soprafs24.rest.dto.StockHoldingDTO;
-import ch.uzh.ifi.hase.soprafs24.rest.dto.StockPriceGetDTO;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.time.LocalDate;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,10 +22,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.time.LocalDate;
-import java.util.*;
-
-import static org.junit.jupiter.api.Assertions.*;
+import ch.uzh.ifi.hase.soprafs24.game.GameManager;
+import ch.uzh.ifi.hase.soprafs24.game.InMemoryGameRegistry;
+import ch.uzh.ifi.hase.soprafs24.game.PlayerState;
+import ch.uzh.ifi.hase.soprafs24.rest.dto.StockHoldingDTO;
+import ch.uzh.ifi.hase.soprafs24.rest.dto.StockPriceGetDTO;
 
 @ExtendWith(MockitoExtension.class)
 public class StockServiceTest {
@@ -31,8 +40,8 @@ public class StockServiceTest {
     @BeforeEach
     void setUp() {
         InMemoryGameRegistry.clear();
-        gameIdCounter = 1L; 
-        userIdCounter = 1L; 
+        gameIdCounter = 1L;
+        userIdCounter = 1L;
     }
 
     @AfterEach
@@ -59,10 +68,10 @@ public class StockServiceTest {
         return gameManager.getPlayerState(userId);
     }
 
-
     @Test
     public void getStockTimelineFromDatabase_should_be_tested_via_integration_test_or_mock_repo() {
-        System.out.println("Unit test for getStockTimelineFromDatabase: This test is skipped in this unit test setup as it implies database interaction not covered by mocking InMemoryGameRegistry.");
+        System.out.println(
+                "Unit test for getStockTimelineFromDatabase: This test is skipped in this unit test setup as it implies database interaction not covered by mocking InMemoryGameRegistry.");
     }
 
     @Test
@@ -88,7 +97,7 @@ public class StockServiceTest {
         String actualReason = exception.getReason();
         String expectedMessage = "Game with ID " + nonExistentGameId + " not found.";
         assertTrue(actualReason != null && actualReason.equals(expectedMessage),
-            "Exception reason should be '" + expectedMessage + "'. Actual: " + actualReason);
+                "Exception reason should be '" + expectedMessage + "'. Actual: " + actualReason);
     }
 
     @Test
@@ -111,7 +120,6 @@ public class StockServiceTest {
         assertEquals(date1, pricesForRound1.get(0).getDate());
         assertEquals("TECH", pricesForRound1.get(0).getCategory());
 
-
         List<StockPriceGetDTO> pricesForRound2 = stockService.getStockPrice(gameId, "AAPL", 2);
         assertEquals(2, pricesForRound2.size());
         assertEquals(150.0, pricesForRound2.get(0).getPrice());
@@ -120,7 +128,6 @@ public class StockServiceTest {
         List<StockPriceGetDTO> pricesForNonExistentSymbol = stockService.getStockPrice(gameId, "GOOG", 1);
         assertTrue(pricesForNonExistentSymbol.isEmpty());
     }
-
 
     @Test
     public void getCurrentRoundStockPrices_gameNotFound_throwsException() {
@@ -144,14 +151,16 @@ public class StockServiceTest {
         List<StockPriceGetDTO> currentPrices = stockService.getCurrentRoundStockPrices(gameId);
         assertEquals(2, currentPrices.size());
 
-        StockPriceGetDTO tslaDto = currentPrices.stream().filter(p -> "TSLA".equals(p.getSymbol())).findFirst().orElse(null);
+        StockPriceGetDTO tslaDto = currentPrices.stream().filter(p -> "TSLA".equals(p.getSymbol())).findFirst()
+                .orElse(null);
         assertNotNull(tslaDto);
         assertEquals(200.0, tslaDto.getPrice());
         assertEquals(1, tslaDto.getRound());
         assertEquals(date1, tslaDto.getDate());
         assertEquals("TECH", tslaDto.getCategory());
 
-        StockPriceGetDTO nvdaDto = currentPrices.stream().filter(p -> "NVDA".equals(p.getSymbol())).findFirst().orElse(null);
+        StockPriceGetDTO nvdaDto = currentPrices.stream().filter(p -> "NVDA".equals(p.getSymbol())).findFirst()
+                .orElse(null);
         assertNotNull(nvdaDto);
         assertEquals(800.0, nvdaDto.getPrice());
     }
@@ -182,7 +191,7 @@ public class StockServiceTest {
         String actualReason = exception.getReason();
         String expectedReason = "Player state not found for userId: " + nonExistentUserId;
         assertTrue(actualReason != null && actualReason.equals(expectedReason),
-            "Exception reason should be '" + expectedReason + "'. Actual: " + actualReason);
+                "Exception reason should be '" + expectedReason + "'. Actual: " + actualReason);
     }
 
     @Test
@@ -202,18 +211,19 @@ public class StockServiceTest {
         List<StockHoldingDTO> holdings = stockService.getPlayerHoldings(userId, gameId);
         assertEquals(2, holdings.size());
 
-        StockHoldingDTO aaplHolding = holdings.stream().filter(h -> "AAPL".equals(h.getSymbol())).findFirst().orElse(null);
+        StockHoldingDTO aaplHolding = holdings.stream().filter(h -> "AAPL".equals(h.getSymbol())).findFirst()
+                .orElse(null);
         assertNotNull(aaplHolding);
         assertEquals(10, aaplHolding.getQuantity());
         assertEquals(150.0, aaplHolding.getCurrentPrice());
         assertEquals("TECH", aaplHolding.getCategory());
 
-        StockHoldingDTO msftHolding = holdings.stream().filter(h -> "MSFT".equals(h.getSymbol())).findFirst().orElse(null);
+        StockHoldingDTO msftHolding = holdings.stream().filter(h -> "MSFT".equals(h.getSymbol())).findFirst()
+                .orElse(null);
         assertNotNull(msftHolding);
         assertEquals(5, msftHolding.getQuantity());
         assertEquals(300.0, msftHolding.getCurrentPrice());
     }
-
 
     @Test
     public void getGameManagerForUser_success() {
@@ -250,11 +260,11 @@ public class StockServiceTest {
             stockService.getGameManagerForUser(userIdNotInGame, gameId);
         });
         assertEquals(HttpStatus.NOT_FOUND, exception.getStatus());
-        
+
         String actualReason = exception.getReason();
         String expectedReason = "Player " + userIdNotInGame + " not found in game " + gameId;
         assertTrue(actualReason != null && actualReason.equals(expectedReason),
-            "Exception reason should be '" + expectedReason + "'. Actual: " + actualReason);
+                "Exception reason should be '" + expectedReason + "'. Actual: " + actualReason);
     }
 
     @Test
@@ -275,11 +285,12 @@ public class StockServiceTest {
 
         // Use the constructor that accepts roundDelayMillis for more control if needed,
         // or the simpler one if default delay is fine.
-        // For this test, the actual delay value doesn't matter as we'll call nextRound() manually.
+        // For this test, the actual delay value doesn't matter as we'll call
+        // nextRound() manually.
         GameManager gameManager = new GameManager(gameId, timeline, 100L); // Short delay for test
         InMemoryGameRegistry.registerGame(gameId, gameManager);
         PlayerState playerState = addPlayerToActualGame(gameManager, userId);
-        
+
         // To make sure the scheduler doesn't interfere, we can end the game immediately
         // after we're done with manual round advancements for the test's purpose,
         // or just be aware that a scheduled task might run if the test is slow.
@@ -289,8 +300,9 @@ public class StockServiceTest {
         // Player buys 10 AAPL in Round 1.
         playerState.setStock("AAPL", 10);
         playerState.snapshotHoldingsAtRound(1); // Holdings at end of round 1
-        // Simulate all players submitting for round 1 to allow nextRound() to proceed if it checks submissions
-        playerState.markSubmittedForRound(1); 
+        // Simulate all players submitting for round 1 to allow nextRound() to proceed
+        // if it checks submissions
+        playerState.markSubmittedForRound(1);
         gameManager.nextRound(); // Manually advance to actual round 2 (market data for round 2 becomes current)
 
         // Actual Round 2
@@ -307,23 +319,27 @@ public class StockServiceTest {
         playerState.snapshotHoldingsAtRound(3); // Holdings at end of round 3
         // Simulate all players submitting for round 3
         playerState.markSubmittedForRound(3);
-        // We don't call nextRound() after snapshotting for round 3 if we are checking holdings *up to* the start of round 4 (display round 4)
+        // We don't call nextRound() after snapshotting for round 3 if we are checking
+        // holdings *up to* the start of round 4 (display round 4)
         // The game is now in round 3. Current market prices are for dateR3Market.
-        // The `getPlayerHoldingsAllRounds` method will iterate up to `game.getCurrentRound()`,
+        // The `getPlayerHoldingsAllRounds` method will iterate up to
+        // `game.getCurrentRound()`,
         // which is 3 after the two nextRound() calls.
         // It will then generate DTOs for display rounds 1, 2, 3, 4.
 
         Map<Integer, List<StockHoldingDTO>> allHoldings = stockService.getPlayerHoldingsAllRounds(userId, gameId);
 
         assertNotNull(allHoldings);
-        // game.getCurrentRound() will be 3. The loop in service goes `round <= game.getCurrentRound()`.
+        // game.getCurrentRound() will be 3. The loop in service goes `round <=
+        // game.getCurrentRound()`.
         // So, it processes actual rounds 1, 2, 3.
         // Display rounds are:
         // 1: initial empty
         // 2: snapshot(actual 1) with prices(dateR2Market)
         // 3: snapshot(actual 2) with prices(dateR3Market)
         // 4: snapshot(actual 3) with prices(dateR4Market)
-        assertEquals(4, allHoldings.size(), "Should have data for initial empty (Display R1) + 3 historical rounds (Display R2,R3,R4). Map keys: 1,2,3,4.");
+        assertEquals(4, allHoldings.size(),
+                "Should have data for initial empty (Display R1) + 3 historical rounds (Display R2,R3,R4). Map keys: 1,2,3,4.");
 
         assertTrue(allHoldings.containsKey(1));
         List<StockHoldingDTO> holdingsDispR1 = allHoldings.get(1);
@@ -334,7 +350,8 @@ public class StockServiceTest {
         List<StockHoldingDTO> holdingsDispR2 = allHoldings.get(2);
         assertNotNull(holdingsDispR2);
         assertEquals(1, holdingsDispR2.size());
-        StockHoldingDTO aaplDispR2 = holdingsDispR2.stream().filter(s -> "AAPL".equals(s.getSymbol())).findFirst().orElseThrow();
+        StockHoldingDTO aaplDispR2 = holdingsDispR2.stream().filter(s -> "AAPL".equals(s.getSymbol())).findFirst()
+                .orElseThrow();
         assertEquals("AAPL", aaplDispR2.getSymbol());
         assertEquals(10, aaplDispR2.getQuantity());
         assertEquals(105.0, aaplDispR2.getCurrentPrice(), "AAPL price from dateR2Market for Display Round 2");
@@ -343,10 +360,12 @@ public class StockServiceTest {
         List<StockHoldingDTO> holdingsDispR3 = allHoldings.get(3);
         assertNotNull(holdingsDispR3);
         assertEquals(2, holdingsDispR3.size());
-        StockHoldingDTO aaplDispR3 = holdingsDispR3.stream().filter(s -> "AAPL".equals(s.getSymbol())).findFirst().orElseThrow();
+        StockHoldingDTO aaplDispR3 = holdingsDispR3.stream().filter(s -> "AAPL".equals(s.getSymbol())).findFirst()
+                .orElseThrow();
         assertEquals(5, aaplDispR3.getQuantity());
         assertEquals(110.0, aaplDispR3.getCurrentPrice(), "AAPL price from dateR3Market for Display Round 3");
-        StockHoldingDTO msftDispR3 = holdingsDispR3.stream().filter(s -> "MSFT".equals(s.getSymbol())).findFirst().orElseThrow();
+        StockHoldingDTO msftDispR3 = holdingsDispR3.stream().filter(s -> "MSFT".equals(s.getSymbol())).findFirst()
+                .orElseThrow();
         assertEquals(5, msftDispR3.getQuantity());
         assertEquals(210.0, msftDispR3.getCurrentPrice(), "MSFT price from dateR3Market for Display Round 3");
 
@@ -354,14 +373,17 @@ public class StockServiceTest {
         List<StockHoldingDTO> holdingsDispR4 = allHoldings.get(4);
         assertNotNull(holdingsDispR4);
         assertEquals(2, holdingsDispR4.size());
-        StockHoldingDTO aaplDispR4 = holdingsDispR4.stream().filter(s -> "AAPL".equals(s.getSymbol())).findFirst().orElseThrow();
+        StockHoldingDTO aaplDispR4 = holdingsDispR4.stream().filter(s -> "AAPL".equals(s.getSymbol())).findFirst()
+                .orElseThrow();
         assertEquals(5, aaplDispR4.getQuantity());
         assertEquals(115.0, aaplDispR4.getCurrentPrice(), "AAPL price from dateR4Market for Display Round 4");
-        StockHoldingDTO msftDispR4 = holdingsDispR4.stream().filter(s -> "MSFT".equals(s.getSymbol())).findFirst().orElseThrow();
+        StockHoldingDTO msftDispR4 = holdingsDispR4.stream().filter(s -> "MSFT".equals(s.getSymbol())).findFirst()
+                .orElseThrow();
         assertEquals(5, msftDispR4.getQuantity());
         assertEquals(215.0, msftDispR4.getCurrentPrice(), "MSFT price from dateR4Market for Display Round 4");
-        
-        // Important: Clean up the game manager's scheduler to prevent it from running after the test
+
+        // Important: Clean up the game manager's scheduler to prevent it from running
+        // after the test
         gameManager.endGame(); // This will shut down its scheduler
     }
 }

@@ -12,7 +12,7 @@ public class Stock {
     private Long id;
 
     @Column(nullable = false)
-    private String symbol; // e.g. specific stock name 
+    private String symbol; // e.g. specific stock name
 
     @Column(nullable = false)
     private Double price;
@@ -25,7 +25,6 @@ public class Stock {
 
     @Column
     private Long volume;
-
 
     public Long getId() {
         return id;
@@ -55,7 +54,6 @@ public class Stock {
         this.date = date;
     }
 
-
     public String getCurrency() {
         return currency;
     }
@@ -63,6 +61,7 @@ public class Stock {
     public void setCurrency(String currency) {
         this.currency = currency;
     }
+
     public Long getVolume() {
         return volume;
     }
@@ -70,5 +69,5 @@ public class Stock {
     public void setVolume(Long volume) {
         this.volume = volume;
     }
-    
+
 }

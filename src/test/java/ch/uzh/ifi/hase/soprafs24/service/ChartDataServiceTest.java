@@ -1,31 +1,37 @@
 package ch.uzh.ifi.hase.soprafs24.service;
 
-import ch.uzh.ifi.hase.soprafs24.entity.StockDataPoint;
-import ch.uzh.ifi.hase.soprafs24.repository.StockDataPointRepository;
-import ch.uzh.ifi.hase.soprafs24.rest.dto.StockDataPointDTO;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-import com.crazzyghost.alphavantage.AlphaVantage;
-import com.crazzyghost.alphavantage.Config;
-
-import com.crazzyghost.alphavantage.timeseries.response.StockUnit;
-import com.crazzyghost.alphavantage.timeseries.response.TimeSeriesResponse;
+import java.time.LocalDate;
+import java.util.Collections;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import com.crazzyghost.alphavantage.AlphaVantage;
+import com.crazzyghost.alphavantage.Config;
+import com.crazzyghost.alphavantage.timeseries.response.StockUnit;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import ch.uzh.ifi.hase.soprafs24.entity.StockDataPoint;
+import ch.uzh.ifi.hase.soprafs24.repository.StockDataPointRepository;
+import ch.uzh.ifi.hase.soprafs24.rest.dto.StockDataPointDTO;
 
 @ExtendWith(MockitoExtension.class)
 public class ChartDataServiceTest {
@@ -143,7 +149,6 @@ public class ChartDataServiceTest {
         verify(stockDataPointRepository, never()).saveAll(anyList());
     }
 
-
     @Test
     public void getDailyChartData_dataExists_returnsDtoList() {
         String symbol = "TSLA";
@@ -185,5 +190,4 @@ public class ChartDataServiceTest {
         assertTrue(dtos.isEmpty());
     }
 
-    
 }

@@ -1,14 +1,15 @@
 package ch.uzh.ifi.hase.soprafs24.game;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
-import ch.uzh.ifi.hase.soprafs24.game.PlayerState;
-import ch.uzh.ifi.hase.soprafs24.rest.dto.TransactionRequestDTO;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.*;
-
-import static org.junit.jupiter.api.Assertions.*;
+import ch.uzh.ifi.hase.soprafs24.rest.dto.TransactionRequestDTO;
 
 public class PlayerStateTest {
 
@@ -90,7 +91,6 @@ public class PlayerStateTest {
 
         player.applyTransaction(tx, prices);
         System.out.println("Stocks owned" + player.getPlayerStocks());
-
 
         assertEquals(10000.0, player.getCashBalance(), 0.01);
         assertFalse(player.getPlayerStocks().containsKey("FAKE"));

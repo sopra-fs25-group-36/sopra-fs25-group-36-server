@@ -45,55 +45,57 @@ public class StockService {
     private final String API_KEY;
 
     // MODIFIED CONSTRUCTOR TO INJECT NewsService
-    public StockService(StockRepository stockRepository, 
-                        NewsService newsService, // <<<<<<<<<<< ADD NewsService PARAMETER
-                        @Value("${ALPHAVANTAGE_API_KEY}") String API_KEY) {
+    public StockService(StockRepository stockRepository,
+            NewsService newsService, // <<<<<<<<<<< ADD NewsService PARAMETER
+            @Value("${ALPHAVANTAGE_API_KEY}") String API_KEY) {
         this.stockRepository = stockRepository;
         this.newsService = newsService; // <<<<<<<<<<< ASSIGN INJECTED NewsService
         this.API_KEY = API_KEY;
     }
 
-
-    // for updating more data from dbs_May.11  --total 29 stocks
-    // for updating more data from dbs_May.11  --total 29 stocks
+    // for updating more data from dbs_May.11 --total 29 stocks
+    // for updating more data from dbs_May.11 --total 29 stocks
     private static final List<String> POPULAR_SYMBOLS = List.of(
             "TSLA", "GOOG", "MSFT", "NVDA", "AMZN", "META", "NFLX", "INTC", "AMD", "AAPL",
             "JPM", "GS",
             "PFE", "JNJ",
             "XOM", "CVX",
             "PG",
-            "WDAY", "KO", "BTI", "MCD", "SHEL", "WMT", "COST", "BABA", "LLY", "ABBV", "V", "MA"
-    );
+            "WDAY", "KO", "BTI", "MCD", "SHEL", "WMT", "COST", "BABA", "LLY", "ABBV", "V", "MA");
 
     // Consistent category mapping
-    private static final Map<String, String> STOCK_CATEGORIES = Collections.unmodifiableMap(new HashMap<>() {{
-        put("TSLA", "TECH");
-        put("GOOG", "TECH");
-        put("MSFT", "TECH");
-        put("NVDA", "TECH");
-        put("AMZN", "TECH"); /*put("META", "TECH");*/
-        put("NFLX", "TECH");
-        put("INTC", "TECH");
-        put("AMD", "TECH");
-        put("AAPL", "TECH");
-        put("WDAY", "TECH");
-        put("XOM", "ENERGY");
-        put("CVX", "ENERGY");
-        put("SHEL", "ENERGY");
-        put("JPM", "FINANCE");
-        put("GS", "FINANCE");
-        put("V", "FINANCE");
-        put("MA", "FINANCE");
-        put("PFE", "HEALTHCARE");
-        put("JNJ", "HEALTHCARE");
-        put("LLY", "HEALTHCARE");
-        put("ABBV", "HEALTHCARE");
-        put("PG", "CONSUMER");
-        put("KO", "CONSUMER");
-        put("BTI", "CONSUMER");
-        put("MCD", "CONSUMER");
-        put("WMT", "RETAIL"); put("COST", "RETAIL"); put("BABA", "RETAIL");
-    }});
+    private static final Map<String, String> STOCK_CATEGORIES = Collections.unmodifiableMap(new HashMap<>() {
+        {
+            put("TSLA", "TECH");
+            put("GOOG", "TECH");
+            put("MSFT", "TECH");
+            put("NVDA", "TECH");
+            put("AMZN", "TECH"); /* put("META", "TECH"); */
+            put("NFLX", "TECH");
+            put("INTC", "TECH");
+            put("AMD", "TECH");
+            put("AAPL", "TECH");
+            put("WDAY", "TECH");
+            put("XOM", "ENERGY");
+            put("CVX", "ENERGY");
+            put("SHEL", "ENERGY");
+            put("JPM", "FINANCE");
+            put("GS", "FINANCE");
+            put("V", "FINANCE");
+            put("MA", "FINANCE");
+            put("PFE", "HEALTHCARE");
+            put("JNJ", "HEALTHCARE");
+            put("LLY", "HEALTHCARE");
+            put("ABBV", "HEALTHCARE");
+            put("PG", "CONSUMER");
+            put("KO", "CONSUMER");
+            put("BTI", "CONSUMER");
+            put("MCD", "CONSUMER");
+            put("WMT", "RETAIL");
+            put("COST", "RETAIL");
+            put("BABA", "RETAIL");
+        }
+    });
 
     public Map<String, String> getCategoryMap() {
         return STOCK_CATEGORIES;
@@ -108,7 +110,7 @@ public class StockService {
 
     public void fetchKnownPopularStocks() {
         log.info("Attempting to fetch data for {} popular stocks.", POPULAR_SYMBOLS.size());
-        boolean performFetch = true; 
+        boolean performFetch = true;
         if (!performFetch) {
             log.warn("Actual data fetching is currently DISABLED in fetchKnownPopularStocks method.");
             return;
@@ -117,8 +119,7 @@ public class StockService {
         for (String symbol : POPULAR_SYMBOLS) {
             try {
                 fetchAndProcessStockData(symbol);
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 log.error("Failed to fetch data for symbol {}: {}", symbol, e.getMessage(), e);
             }
         }
@@ -168,15 +169,14 @@ public class StockService {
                         stockRepository.save(stock);
                         newRecordsSaved++;
                     }
-                }
-                catch (Exception e) {
-                    log.error("Error processing or saving stock unit for symbol {} on date {}: {}", symbol, unit.getDate(), e.getMessage(), e);
+                } catch (Exception e) {
+                    log.error("Error processing or saving stock unit for symbol {} on date {}: {}", symbol,
+                            unit.getDate(), e.getMessage(), e);
                 }
             }
             if (newRecordsSaved > 0) {
                 log.info("Saved {} new daily records for symbol {}.", newRecordsSaved, symbol);
-            }
-            else {
+            } else {
                 log.info("No new daily records to save for symbol {} (data likely up-to-date).", symbol);
             }
 
@@ -214,11 +214,13 @@ public class StockService {
                     dto.setPrice(pricesOnDate.get(symbol));
                     dto.setCategory(STOCK_CATEGORIES.getOrDefault(symbol, "OTHER"));
                     // To set the correct round for this historical data point,
-                    // you'd need to map entryDate back to its round number within the game's 10-day sequence.
+                    // you'd need to map entryDate back to its round number within the game's 10-day
+                    // sequence.
                     // For now, using the queried 'round' as a placeholder for the DTO.
                     // A more accurate DTO field would be 'dayInTimeline' or similar.
-                    // If the DTO's 'round' means "data relevant to this query for round X", then this is acceptable.
-                    dto.setRound(round); 
+                    // If the DTO's 'round' means "data relevant to this query for round X", then
+                    // this is acceptable.
+                    dto.setRound(round);
                     result.add(dto);
                 }
             }
@@ -230,17 +232,19 @@ public class StockService {
     public LinkedHashMap<LocalDate, Map<String, Double>> getStockTimelineFromDatabase() {
         log.info("STOCKSERVICE: Attempting to generate stock timeline from database...");
         LinkedHashMap<LocalDate, Map<String, Double>> byDate = new LinkedHashMap<>();
-        
+
         LocalDate startDate = stockRepository.findRandomStartDateWith10Days();
         if (startDate == null) {
-            log.error("STOCKSERVICE CRITICAL: Could not find a random start date (from 2023+) with 10 subsequent days of data. Stock timeline will be empty.");
+            log.error(
+                    "STOCKSERVICE CRITICAL: Could not find a random start date (from 2023+) with 10 subsequent days of data. Stock timeline will be empty.");
             return byDate;
         }
         log.info("STOCKSERVICE: Selected random start date for game timeline: {}", startDate);
 
         List<Stock> rawData = stockRepository.findRandom10SymbolsWithFirst10DatesFrom(startDate);
         if (rawData.isEmpty()) {
-            log.warn("STOCKSERVICE: No stock data found from startDate {} for game timeline. Timeline will be empty.", startDate);
+            log.warn("STOCKSERVICE: No stock data found from startDate {} for game timeline. Timeline will be empty.",
+                    startDate);
             return byDate;
         }
         log.info("STOCKSERVICE: Fetched {} raw stock data points for the timeline.", rawData.size());
@@ -250,20 +254,21 @@ public class StockService {
             String symbol = stock.getSymbol();
             Double price = stock.getPrice();
             if (date != null && symbol != null && price != null) {
-                 byDate.computeIfAbsent(date, k -> new HashMap<>()).put(symbol, price);
+                byDate.computeIfAbsent(date, k -> new HashMap<>()).put(symbol, price);
             } else {
-                log.warn("STOCKSERVICE: Skipping raw stock data point with null values: date={}, symbol={}, price={}", date, symbol, price);
+                log.warn("STOCKSERVICE: Skipping raw stock data point with null values: date={}, symbol={}, price={}",
+                        date, symbol, price);
             }
         }
-        
+
         if (byDate.isEmpty() && !rawData.isEmpty()) {
-            log.warn("STOCKSERVICE: Stock timeline (byDate map) is empty even though rawData was not. Check rawData content.");
-        } else if (!byDate.isEmpty()){
-             log.info("STOCKSERVICE: Generated stock timeline with {} unique dates. First date: {}, Last date: {}",
-                byDate.size(), 
-                byDate.keySet().iterator().next(), 
-                new ArrayList<>(byDate.keySet()).get(byDate.size()-1) 
-             );
+            log.warn(
+                    "STOCKSERVICE: Stock timeline (byDate map) is empty even though rawData was not. Check rawData content.");
+        } else if (!byDate.isEmpty()) {
+            log.info("STOCKSERVICE: Generated stock timeline with {} unique dates. First date: {}, Last date: {}",
+                    byDate.size(),
+                    byDate.keySet().iterator().next(),
+                    new ArrayList<>(byDate.keySet()).get(byDate.size() - 1));
         } else {
             log.info("STOCKSERVICE: Generated empty stock timeline (byDate map).");
         }
@@ -272,22 +277,25 @@ public class StockService {
         if (!byDate.isEmpty()) {
             List<LocalDate> gameDates = new ArrayList<>(byDate.keySet());
             LocalDate gameStartDate = gameDates.get(0);
-            LocalDate gameEndDate = gameDates.get(gameDates.size() - 1); 
+            LocalDate gameEndDate = gameDates.get(gameDates.size() - 1);
 
             Set<String> symbolsInGame = byDate.values().stream()
-                                            .filter(java.util.Objects::nonNull)
-                                            .flatMap(dailyPrices -> dailyPrices.keySet().stream())
-                                            .filter(java.util.Objects::nonNull) // Ensure symbols themselves are not null
-                                            .collect(Collectors.toSet());
-            
+                    .filter(java.util.Objects::nonNull)
+                    .flatMap(dailyPrices -> dailyPrices.keySet().stream())
+                    .filter(java.util.Objects::nonNull) // Ensure symbols themselves are not null
+                    .collect(Collectors.toSet());
+
             if (!symbolsInGame.isEmpty()) {
-                log.info("STOCKSERVICE: Triggering NewsService.fetchAndSaveNewsForTickers with {} symbols: {} for date range: {} to {}",
-                         symbolsInGame.size(), symbolsInGame, gameStartDate, gameEndDate);
+                log.info(
+                        "STOCKSERVICE: Triggering NewsService.fetchAndSaveNewsForTickers with {} symbols: {} for date range: {} to {}",
+                        symbolsInGame.size(), symbolsInGame, gameStartDate, gameEndDate);
                 try {
                     newsService.fetchAndSaveNewsForTickers(new ArrayList<>(symbolsInGame), gameStartDate, gameEndDate);
                     log.info("STOCKSERVICE: Call to NewsService.fetchAndSaveNewsForTickers completed.");
                 } catch (Exception e) {
-                    log.error("STOCKSERVICE: Error occurred while calling NewsService.fetchAndSaveNewsForTickers. Game will proceed without pre-fetched news. Error: {}", e.getMessage(), e);
+                    log.error(
+                            "STOCKSERVICE: Error occurred while calling NewsService.fetchAndSaveNewsForTickers. Game will proceed without pre-fetched news. Error: {}",
+                            e.getMessage(), e);
                 }
             } else {
                 log.warn("STOCKSERVICE: No valid symbols found in generated stock timeline. Skipping news fetch.");
@@ -307,28 +315,31 @@ public class StockService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Game not found: " + gameId);
         }
 
-        LocalDate currentMarketDate = manager.getCurrentMarketDate(); 
+        LocalDate currentMarketDate = manager.getCurrentMarketDate();
         if (currentMarketDate == null) {
-            log.error("CRITICAL: GameManager for gameId {} did not provide a currentMarketDate. Stock prices may lack date context.", gameId);
+            log.error(
+                    "CRITICAL: GameManager for gameId {} did not provide a currentMarketDate. Stock prices may lack date context.",
+                    gameId);
         }
 
         Map<String, Double> currentPrices = manager.getCurrentStockPrices();
         if (currentPrices == null || currentPrices.isEmpty()) {
-            log.warn("No current stock prices available in GameManager for gameId {} and round {}.", gameId, manager.getCurrentRound());
+            log.warn("No current stock prices available in GameManager for gameId {} and round {}.", gameId,
+                    manager.getCurrentRound());
             return Collections.emptyList();
         }
 
         List<StockPriceGetDTO> result = new ArrayList<>();
-        int currentRound = manager.getCurrentRound(); 
+        int currentRound = manager.getCurrentRound();
 
         for (Map.Entry<String, Double> entry : currentPrices.entrySet()) {
             StockPriceGetDTO dto = new StockPriceGetDTO();
             String symbol = entry.getKey();
             dto.setSymbol(symbol);
             dto.setPrice(entry.getValue());
-            dto.setCategory(STOCK_CATEGORIES.getOrDefault(symbol, "OTHER")); 
+            dto.setCategory(STOCK_CATEGORIES.getOrDefault(symbol, "OTHER"));
             dto.setRound(currentRound);
-            dto.setDate(currentMarketDate); 
+            dto.setDate(currentMarketDate);
             result.add(dto);
         }
         log.debug("Returning {} stock prices for gameId {} for date {} and round {}.",
@@ -368,7 +379,8 @@ public class StockService {
         for (Map.Entry<String, Integer> entry : playerStocks.entrySet()) {
             String symbol = entry.getKey();
             int quantity = entry.getValue();
-            if (quantity <= 0) continue; 
+            if (quantity <= 0)
+                continue;
 
             double price = prices.getOrDefault(symbol, 0.0);
             String category = STOCK_CATEGORIES.getOrDefault(symbol, "OTHER");
@@ -378,7 +390,7 @@ public class StockService {
         }
         return holdings;
     }
-    
+
     public GameManager getGameManagerForUser(Long userId, Long gameId) {
         GameManager game = InMemoryGameRegistry.getGame(gameId);
         if (game == null) {
@@ -387,7 +399,8 @@ public class StockService {
         }
         if (game.getPlayerState(userId) == null) {
             log.warn("Player {} not found in game {} during GameManager lookup.", userId, gameId);
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Player " + userId + " not found in game " + gameId);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                    "Player " + userId + " not found in game " + gameId);
         }
         return game;
     }
@@ -411,7 +424,8 @@ public class StockService {
         for (Map.Entry<String, Integer> entry : snapshot.entrySet()) {
             String symbol = entry.getKey();
             int quantity = entry.getValue();
-            if (quantity <= 0) continue;
+            if (quantity <= 0)
+                continue;
 
             double price = prices.getOrDefault(symbol, 0.0);
             String category = STOCK_CATEGORIES.getOrDefault(symbol, "OTHER");
@@ -424,8 +438,7 @@ public class StockService {
 
     public Map<Integer, List<StockHoldingDTO>> getPlayerHoldingsAllRounds(
             Long userId,
-            Long gameId
-    ) {
+            Long gameId) {
         // 0) Lookup game & player
         GameManager game = InMemoryGameRegistry.getGame(gameId);
         if (game == null) {
@@ -464,7 +477,8 @@ public class StockService {
             for (Map.Entry<String, Integer> e : snapshot.entrySet()) {
                 String symbol = e.getKey();
                 int quantity = e.getValue();
-                if (quantity <= 0) continue;  // skip zero or negative
+                if (quantity <= 0)
+                    continue; // skip zero or negative
 
                 // 2f) Use the price from the *next* day
                 double price = prices.getOrDefault(symbol, 0.0);

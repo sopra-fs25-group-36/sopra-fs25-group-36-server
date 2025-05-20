@@ -18,8 +18,7 @@ public class UserGetDTO {
     this.userID = id;
   }
 
-
-  //but why do we need a name?
+  // but why do we need a name?
   public String getName() {
     return name;
   }
@@ -36,15 +35,13 @@ public class UserGetDTO {
     this.username = username;
   }
 
-
   public UserStatus getStatus() {
     return status;
   }
+
   public void setStatus(UserStatus status) {
     this.status = status;
   }
-
-
 
   public String getToken() {
     return token;

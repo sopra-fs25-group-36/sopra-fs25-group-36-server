@@ -1,8 +1,11 @@
 package ch.uzh.ifi.hase.soprafs24.service;
 
-import ch.uzh.ifi.hase.soprafs24.constant.UserStatus;
-import ch.uzh.ifi.hase.soprafs24.entity.User;
-import ch.uzh.ifi.hase.soprafs24.repository.UserRepository;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -11,7 +14,9 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.springframework.web.server.ResponseStatusException;
 
-import static org.junit.jupiter.api.Assertions.*;
+import ch.uzh.ifi.hase.soprafs24.constant.UserStatus;
+import ch.uzh.ifi.hase.soprafs24.entity.User;
+import ch.uzh.ifi.hase.soprafs24.repository.UserRepository;
 
 public class UserServiceTest {
 
@@ -90,6 +95,48 @@ public class UserServiceTest {
     User loginUser = userService.loginUser(testUser.getUsername(), testUser.getPassword());
 
     assertEquals(testUser.getId(), loginUser.getId());
+  }
+
+  @Test
+  public void loginUser_invalidUsername_throwsException() {
+    Mockito.when(userRepository.findByUsername(Mockito.any())).thenReturn(null);
+
+    assertThrows(ResponseStatusException.class,
+        () -> userService.loginUser(testUser.getUsername(), testUser.getPassword()));
+  }
+
+  @Test
+  public void loginUser_invalidPassword_throwsException() {
+    Mockito.when(userRepository.findByUsername(Mockito.any())).thenReturn(testUser);
+
+    assertThrows(ResponseStatusException.class,
+        () -> userService.loginUser(testUser.getUsername(), "wrongPassword"));
+  }
+
+  @Test
+  public void logoutUser_validToken_success() {
+    Mockito.when(userRepository.findByToken(Mockito.any())).thenReturn(testUser);
+
+    userService.logoutUser(testUser.getToken());
+
+    Mockito.verify(userRepository, Mockito.times(1)).save(Mockito.any());
+  }
+
+  @Test
+  public void logoutUser_invalidToken_throwsException() {
+    Mockito.when(userRepository.findByToken(Mockito.any())).thenReturn(null);
+
+    assertThrows(ResponseStatusException.class, () -> userService.logoutUser("invalidToken"));
+  }
+
+  @Test
+  public void getUsers_success() {
+    Mockito.when(userRepository.findAll()).thenReturn(List.of(testUser));
+
+    List<User> users = userService.getUsers();
+    assertEquals(1, users.size());
+    assertEquals(testUser.getId(), users.get(0).getId());
+    assertEquals(testUser.getName(), users.get(0).getName());
   }
 
 }

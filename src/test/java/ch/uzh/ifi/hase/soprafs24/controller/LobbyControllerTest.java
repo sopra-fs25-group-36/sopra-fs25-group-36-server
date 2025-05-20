@@ -8,9 +8,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import ch.uzh.ifi.hase.soprafs24.entity.Lobby;
-import ch.uzh.ifi.hase.soprafs24.service.LobbyService;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.Instant;
+import java.util.Map;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -18,8 +18,10 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.time.Instant;
-import java.util.Map;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import ch.uzh.ifi.hase.soprafs24.entity.Lobby;
+import ch.uzh.ifi.hase.soprafs24.service.LobbyService;
 
 /**
  * REST-interface tests for {@link LobbyController}.
@@ -36,9 +38,11 @@ class LobbyControllerRestTest {
     @MockBean
     private LobbyService lobbyService;
 
-    /* ------------------------------------------------------------------
+    /*
+     * ------------------------------------------------------------------
      * POST /{userId}/createLobby
-     * ------------------------------------------------------------------ */
+     * ------------------------------------------------------------------
+     */
     @Test
     void createLobby_setsCreatorAndTimeLimit() throws Exception {
 
@@ -55,15 +59,17 @@ class LobbyControllerRestTest {
                 .thenReturn(lobby);
 
         mockMvc.perform(post("/{userId}/createLobby", creatorId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{}"))
-               .andExpect(status().isCreated())
-               .andExpect(jsonPath("$.id").value(10L));
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(10L));
     }
 
-    /* ------------------------------------------------------------------
+    /*
+     * ------------------------------------------------------------------
      * POST /lobby/{lobbyId}/joinLobby
-     * ------------------------------------------------------------------ */
+     * ------------------------------------------------------------------
+     */
     @Test
     void joinLobby_addsUserWithReadyFalse() throws Exception {
 
@@ -80,16 +86,18 @@ class LobbyControllerRestTest {
         when(lobbyService.addUserToLobby(lobbyId, newUser)).thenReturn(lobby);
 
         mockMvc.perform(post("/lobby/{lobbyId}/joinLobby", lobbyId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"userId\":2}"))
-               .andExpect(status().isOk())
-               .andExpect(jsonPath("$.id").value(lobbyId))
-               .andExpect(jsonPath("$.playerReadyStatuses['2']").value(false));
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"userId\":2}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(lobbyId))
+                .andExpect(jsonPath("$.playerReadyStatuses['2']").value(false));
     }
 
-    /* ------------------------------------------------------------------
+    /*
+     * ------------------------------------------------------------------
      * GET /lobby/{lobbyId}
-     * ------------------------------------------------------------------ */
+     * ------------------------------------------------------------------
+     */
     @Test
     void getLobby_returnsLobby() throws Exception {
 
@@ -105,18 +113,20 @@ class LobbyControllerRestTest {
         when(lobbyService.getLobbyById(lobbyId)).thenReturn(lobby);
 
         mockMvc.perform(get("/lobby/{lobbyId}", lobbyId))
-               .andExpect(status().isOk())
-               .andExpect(jsonPath("$.id").value(lobbyId));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(lobbyId));
     }
 
-    /* ------------------------------------------------------------------
+    /*
+     * ------------------------------------------------------------------
      * POST /lobby/{lobbyId}/ready
-     * ------------------------------------------------------------------ */
+     * ------------------------------------------------------------------
+     */
     @Test
     void setUserReady_marksFlagTrue() throws Exception {
 
         long lobbyId = 20L;
-        long userId  = 5L;
+        long userId = 5L;
 
         Lobby lobby = new Lobby();
         lobby.setId(lobbyId);
@@ -128,9 +138,9 @@ class LobbyControllerRestTest {
         when(lobbyService.setUserReady(lobbyId, userId)).thenReturn(lobby);
 
         mockMvc.perform(post("/lobby/{lobbyId}/ready", lobbyId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"userId\":5}"))
-               .andExpect(status().isOk())
-               .andExpect(jsonPath("$.playerReadyStatuses['5']").value(true));
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"userId\":5}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.playerReadyStatuses['5']").value(true));
     }
 }

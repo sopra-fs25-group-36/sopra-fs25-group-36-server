@@ -32,9 +32,9 @@ public interface StockRepository extends JpaRepository<Stock, Long> {
                 FROM (
                     SELECT DISTINCT date
                     FROM stock_adjusted
-                    WHERE 
+                    WHERE
                         date >= '2023-01-01' AND  -- Only consider dates from 2023-01-01 onwards
-                        date <= (SELECT MAX(date) - INTERVAL '9 days' FROM stock_adjusted) 
+                        date <= (SELECT MAX(date) - INTERVAL '9 days' FROM stock_adjusted)
                 ) AS valid_dates
                 ORDER BY RANDOM()
                 LIMIT 1

@@ -13,7 +13,7 @@ import javax.persistence.UniqueConstraint;
 
 @Entity
 @Table(name = "stock_data_points_adjusted", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"symbol", "date"})
+        @UniqueConstraint(columnNames = { "symbol", "date" })
 })
 public class StockDataPoint {
 
@@ -27,7 +27,7 @@ public class StockDataPoint {
     @Column(nullable = false)
     private LocalDate date;
 
-    @Column(nullable = true) 
+    @Column(nullable = true)
     private Double open;
 
     @Column(nullable = true)
@@ -36,13 +36,12 @@ public class StockDataPoint {
     @Column(nullable = true)
     private Double low;
 
-    @Column(nullable = false) 
+    @Column(nullable = false)
     private Double close;
 
     @Column(nullable = true)
-    private Long volume; 
+    private Long volume;
 
-    
     public Long getId() {
         return id;
     }
@@ -109,10 +108,14 @@ public class StockDataPoint {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         StockDataPoint that = (StockDataPoint) o;
-        return Objects.equals(id, that.id) && Objects.equals(symbol, that.symbol) && Objects.equals(date, that.date) && Objects.equals(open, that.open) && Objects.equals(high, that.high) && Objects.equals(low, that.low) && Objects.equals(close, that.close) && Objects.equals(volume, that.volume);
+        return Objects.equals(id, that.id) && Objects.equals(symbol, that.symbol) && Objects.equals(date, that.date)
+                && Objects.equals(open, that.open) && Objects.equals(high, that.high) && Objects.equals(low, that.low)
+                && Objects.equals(close, that.close) && Objects.equals(volume, that.volume);
     }
 
     @Override

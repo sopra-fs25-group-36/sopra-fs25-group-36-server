@@ -6,9 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-// If you implement the optimization for existsBySymbolAndDate, you might need:
-// import java.util.HashSet;
-// import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,12 +39,11 @@ public class ChartDataService {
             "PFE", "JNJ",
             "XOM", "CVX",
             "PG",
-            "WDAY", "KO", "BTI", "MCD", "SHEL", "WMT", "COST", "BABA", "LLY", "ABBV", "V", "MA"
-    );
+            "WDAY", "KO", "BTI", "MCD", "SHEL", "WMT", "COST", "BABA", "LLY", "ABBV", "V", "MA");
 
     @Autowired
     public ChartDataService(@Qualifier("stockDataPointRepository") StockDataPointRepository stockDataPointRepository,
-                             @Value("${ALPHAVANTAGE_API_KEY}") String apiKey) {
+            @Value("${ALPHAVANTAGE_API_KEY}") String apiKey) {
         this.stockDataPointRepository = stockDataPointRepository;
         this.apiKey = apiKey;
     }
@@ -109,7 +105,7 @@ public class ChartDataService {
      * This method is transactional, ensuring that all operations for one symbol
      * are either committed together or rolled back in case of an error.
      *
-     * @param symbol The stock symbol.
+     * @param symbol     The stock symbol.
      * @param stockUnits The list of StockUnits to process and save.
      */
     @Transactional // Transaction is now scoped to saving data for ONE symbol
@@ -119,12 +115,15 @@ public class ChartDataService {
         int newRecordsCount = 0;
 
         // OPTIONAL OPTIMIZATION:
-        // To make existsBySymbolAndDate more efficient, you could fetch all existing dates
+        // To make existsBySymbolAndDate more efficient, you could fetch all existing
+        // dates
         // for the current symbol into a Set once before this loop.
         // Example:
-        // Set<LocalDate> existingDates = new HashSet<>(stockDataPointRepository.findDatesBySymbol(symbol));
+        // Set<LocalDate> existingDates = new
+        // HashSet<>(stockDataPointRepository.findDatesBySymbol(symbol));
         // Then check: if (!existingDates.contains(date)) { ... }
-        // This would require a new method in StockDataPointRepository: List<LocalDate> findDatesBySymbol(String symbol);
+        // This would require a new method in StockDataPointRepository: List<LocalDate>
+        // findDatesBySymbol(String symbol);
 
         for (StockUnit unit : stockUnits) {
             LocalDate date = LocalDate.parse(unit.getDate(), DateTimeFormatter.ISO_LOCAL_DATE);
@@ -169,8 +168,10 @@ public class ChartDataService {
 
     /**
      * Retrieves stored daily data points for a specific symbol.
-     * This method is read-only by nature, so @Transactional(readOnly = true) could be added
-     * if fine-grained transaction control is desired, though often not strictly necessary
+     * This method is read-only by nature, so @Transactional(readOnly = true) could
+     * be added
+     * if fine-grained transaction control is desired, though often not strictly
+     * necessary
      * for simple read operations with default Spring transaction propagation.
      *
      * @param symbol The stock symbol.
@@ -193,7 +194,6 @@ public class ChartDataService {
                 entity.getHigh(),
                 entity.getLow(),
                 entity.getClose(),
-                entity.getVolume()
-        );
+                entity.getVolume());
     }
 }

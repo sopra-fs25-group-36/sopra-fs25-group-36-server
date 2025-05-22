@@ -4,20 +4,19 @@ import ch.uzh.ifi.hase.soprafs24.rest.dto.NewsDTO;
 import ch.uzh.ifi.hase.soprafs24.service.NewsService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.time.LocalDate; // Added for the POST endpoint
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/news")
 public class NewsController {
-
+    
     private final NewsService newsService;
-
+    
     public NewsController(NewsService newsService) {
         this.newsService = newsService;
     }
-
+    
     /**
      * Endpoint to get news articles relevant to a specific game.
      * The NewsService will determine the game's date range and tickers
@@ -28,10 +27,14 @@ public class NewsController {
      */
     @GetMapping("/{gameId}")
     public ResponseEntity<List<NewsDTO>> getGameNews(@PathVariable Long gameId) {
-        List<NewsDTO> newsDTOs = newsService.getNewsForGame(gameId);
-        return ResponseEntity.ok(newsDTOs);
+        try {
+            List<NewsDTO> newsDTOs = newsService.getNewsForGame(gameId);
+            return ResponseEntity.ok(newsDTOs);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
     }
-
+    
     /**
      * Manual trigger endpoint for fetching news from Alpha Vantage and saving it to the database.
      * Useful for development, testing, or populating the database initially.
@@ -51,7 +54,7 @@ public class NewsController {
             // Parse the date strings to LocalDate objects
             LocalDate start = LocalDate.parse(startDate);
             LocalDate end = LocalDate.parse(endDate);
-
+            
             newsService.fetchAndSaveNewsForTickers(tickers, start, end);
             return ResponseEntity.ok("News fetching process initiated for tickers: " + String.join(",", tickers) +
                                      " between " + startDate + " and " + endDate);

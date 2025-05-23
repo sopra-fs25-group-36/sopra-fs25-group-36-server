@@ -73,7 +73,7 @@ public class UserController {
   @CrossOrigin
   public void logoutUser(@PathVariable("userID") Long userID, @RequestHeader("token") String token) {
     this.userService.checkAuthentication(token);
-    this.userService.logoutUser(userID.toString());
+    this.userService.logoutUser(token);
   }
 
   @PostMapping("/{userId}/lobby")

@@ -4,29 +4,12 @@ on:
   push:
     branches:
       - main
-
-  # run the workflow manually from the Actions tab
   workflow_dispatch:
 
 jobs:
   test:
     name: Test and Sonarqube
     runs-on: ubuntu-latest
-    # services:
-    #   postgres:
-    #     image: postgres
-    #     env:
-    #       POSTGRES_PASSWORD: postgres
-    #       POSTGRES_USER: postgres
-    #       POSTGRES_DB: postgres 
-    #     options: >-
-    #       --health-cmd pg_isready
-    #       --health-interval 10s
-    #       --health-timeout 5s
-    #       --health-retries 5
-    #     ports:
-    #       - 5432:5432
-
     steps:
       - name: Checkout repository code
         uses: actions/checkout@v4
@@ -47,12 +30,10 @@ jobs:
           DATABASE_USERNAME: ${{ secrets.DATABASE_USERNAME }}
           DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
           DATABASE_URL: jdbc:postgresql://fs25-sopra36-dbs-sopra-gr36-db.k.aivencloud.com:19869/defaultdb?sslmode=require
-          # DATABASE_URL: jdbc:postgresql://localhost:5432/postgres
 
   deploy:
     name: Deploying to Google Cloud
     runs-on: ubuntu-latest
-    # needs: test
 
     steps:
       - name: Checkout
@@ -68,7 +49,6 @@ jobs:
           env_vars: |-
             DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }}
             DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
-        
 
       - name: Test
         run: curl "${{ steps.deploy.outputs.url }}"

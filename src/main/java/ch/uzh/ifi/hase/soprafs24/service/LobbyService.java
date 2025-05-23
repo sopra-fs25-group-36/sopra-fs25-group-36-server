@@ -15,29 +15,22 @@ import ch.uzh.ifi.hase.soprafs24.repository.LobbyRepository;
 @Service
 @Transactional
 public class LobbyService {
-
     private final LobbyRepository lobbyRepository;
 
     public LobbyService(LobbyRepository lobbyRepository) {
         this.lobbyRepository = lobbyRepository;
     }
 
-    /* ---------- create ---------- */
-
     public Lobby createLobby(Long userId, Lobby lobbyInput) {
-        lobbyInput.setTimeLimitSeconds(300L); // 5 min default
+        lobbyInput.setTimeLimitSeconds(300L);
         lobbyInput.getPlayerReadyStatuses().put(userId, false);
         return lobbyRepository.save(lobbyInput);
     }
-
-    /* ---------- read ---------- */
 
     public Lobby getLobbyById(Long lobbyId) {
         return lobbyRepository.findById(lobbyId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Lobby not found"));
     }
-
-    /* ---------- scheduled: deactivate old lobbies ---------- */
 
     @Scheduled(fixedRate = 1_000)
     public void deactivateExpiredLobbies() {
@@ -53,8 +46,6 @@ public class LobbyService {
             }
         }
     }
-
-    /* ---------- membership + ready ---------- */
 
     public Lobby addUserToLobby(Long lobbyId, Long userId) {
         Lobby lobby = getLobbyById(lobbyId);

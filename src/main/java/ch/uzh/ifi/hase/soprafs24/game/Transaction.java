@@ -4,17 +4,16 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 
-//
 public class Transaction {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private String stockId;
     private int quantity;
     private double price;
-    private String type; // "BUY" or "SELL"
+    private String type;
 
     public Transaction() {
-    } // JPA requires a no-arg constructor
+    }
 
     public Transaction(String stockId, int quantity, double price, String type) {
         this.stockId = stockId;
@@ -23,7 +22,6 @@ public class Transaction {
         this.type = type;
     }
 
-    // Getters and setters (optional)
     public String getStockId() {
         return stockId;
     }

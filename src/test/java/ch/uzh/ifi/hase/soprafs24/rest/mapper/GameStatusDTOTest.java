@@ -8,15 +8,10 @@ public class GameStatusDTOTest {
 
     @Test
     public void testGameStatusDTO() {
-        // Given
         int currentRound = 5;
         boolean active = true;
         long remainingTime = 120L;
-
-        // When
         GameStatusDTO gameStatusDTO = new GameStatusDTO(currentRound, active, remainingTime);
-
-        // Then
         assertEquals(currentRound, gameStatusDTO.currentRound());
         assertEquals(active, gameStatusDTO.active());
         assertEquals(remainingTime, gameStatusDTO.remainingTime());

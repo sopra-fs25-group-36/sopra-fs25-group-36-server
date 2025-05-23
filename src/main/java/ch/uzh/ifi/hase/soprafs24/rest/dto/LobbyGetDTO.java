@@ -2,15 +2,10 @@ package ch.uzh.ifi.hase.soprafs24.rest.dto;
 
 import java.util.Map;
 
-/**
- * What the front-end receives.
- * `createdAt` is epoch milliseconds (easy for JavaScript Date).
- */
 public class LobbyGetDTO {
-
   private Long id;
   private Map<Long, Boolean> playerReadyStatuses;
-  private long createdAt; // epoch millis (UTC)
+  private long createdAt;
   private boolean active;
   private Long timeLimitSeconds;
 

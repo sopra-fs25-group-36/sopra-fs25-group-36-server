@@ -3,7 +3,6 @@ package ch.uzh.ifi.hase.soprafs24.rest.dto;
 import java.time.LocalDate;
 
 public class StockDataPointDTO {
-
     private String symbol;
     private LocalDate date;
     private Double open;

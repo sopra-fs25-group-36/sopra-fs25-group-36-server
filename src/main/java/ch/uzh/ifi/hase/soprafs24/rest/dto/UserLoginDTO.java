@@ -1,7 +1,6 @@
 package ch.uzh.ifi.hase.soprafs24.rest.dto;
 
 public class UserLoginDTO {
-
   private String password;
   private String username;
 

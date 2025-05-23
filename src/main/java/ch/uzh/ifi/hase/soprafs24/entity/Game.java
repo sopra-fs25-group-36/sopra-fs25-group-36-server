@@ -1,7 +1,6 @@
 package ch.uzh.ifi.hase.soprafs24.entity;
 
 import java.io.Serializable;
-
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
@@ -10,7 +9,6 @@ import java.time.LocalDateTime;
 public class Game implements Serializable {
 
     @Id
-    // @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false)
@@ -25,8 +23,6 @@ public class Game implements Serializable {
     @Column(nullable = false)
     private LocalDateTime startedAt;
 
-    // Add fields as needed (e.g., stock data, player portfolios)
-
     @PrePersist
     protected void onCreate() {
         this.startedAt = LocalDateTime.now();
@@ -34,7 +30,6 @@ public class Game implements Serializable {
         this.active = true;
     }
 
-    // Getters and Setters...
     public Long getId() {
         return id;
     }
@@ -74,17 +69,5 @@ public class Game implements Serializable {
     public void setStartedAt(LocalDateTime startedAt) {
         this.startedAt = startedAt;
     }
-
-    // @OneToMany(mappedBy = "game", cascade = CascadeType.ALL, orphanRemoval =
-    // true)
-    // private List<Transaction> transactions = new ArrayList<>();
-
-    // public List<Transaction> getTransactions() {
-    // return transactions;
-    // }
-    //
-    // public void addTransaction(Transaction txn) {
-    // transactions.add(txn);
-    // }
 
 }

@@ -8,9 +8,8 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set; // <<<< ENSURE THIS IS IMPORTED
-import java.util.stream.Collectors; // <<<< ENSURE THIS IS IMPORTED
-
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,14 +18,12 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-
 import com.crazzyghost.alphavantage.AlphaVantage;
 import com.crazzyghost.alphavantage.Config;
 import com.crazzyghost.alphavantage.parameters.DataType;
 import com.crazzyghost.alphavantage.parameters.OutputSize;
 import com.crazzyghost.alphavantage.timeseries.response.StockUnit;
 import com.crazzyghost.alphavantage.timeseries.response.TimeSeriesResponse;
-
 import ch.uzh.ifi.hase.soprafs24.entity.Stock;
 import ch.uzh.ifi.hase.soprafs24.game.GameManager;
 import ch.uzh.ifi.hase.soprafs24.game.InMemoryGameRegistry;
@@ -34,27 +31,22 @@ import ch.uzh.ifi.hase.soprafs24.game.PlayerState;
 import ch.uzh.ifi.hase.soprafs24.repository.StockRepository;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.StockHoldingDTO;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.StockPriceGetDTO;
-// import ch.uzh.ifi.hase.soprafs24.service.NewsService; // <<<< Already imported if in same package, otherwise ensure correct path
 
 @Service
 public class StockService {
-
     private static final Logger log = LoggerFactory.getLogger(StockService.class);
     private final StockRepository stockRepository;
-    private final NewsService newsService; // <<<<<<<<<<< ADD THIS FIELD
+    private final NewsService newsService;
     private final String API_KEY;
 
-    // MODIFIED CONSTRUCTOR TO INJECT NewsService
     public StockService(StockRepository stockRepository,
-            NewsService newsService, // <<<<<<<<<<< ADD NewsService PARAMETER
+            NewsService newsService,
             @Value("${ALPHAVANTAGE_API_KEY}") String API_KEY) {
         this.stockRepository = stockRepository;
-        this.newsService = newsService; // <<<<<<<<<<< ASSIGN INJECTED NewsService
+        this.newsService = newsService;
         this.API_KEY = API_KEY;
     }
 
-    // for updating more data from dbs_May.11 --total 29 stocks
-    // for updating more data from dbs_May.11 --total 29 stocks
     private static final List<String> POPULAR_SYMBOLS = List.of(
             "TSLA", "GOOG", "MSFT", "NVDA", "AMZN", "META", "NFLX", "INTC", "AMD", "AAPL",
             "JPM", "GS",
@@ -63,14 +55,13 @@ public class StockService {
             "PG",
             "WDAY", "KO", "BTI", "MCD", "SHEL", "WMT", "COST", "BABA", "LLY", "ABBV", "V", "MA");
 
-    // Consistent category mapping
     private static final Map<String, String> STOCK_CATEGORIES = Collections.unmodifiableMap(new HashMap<>() {
         {
             put("TSLA", "TECH");
             put("GOOG", "TECH");
             put("MSFT", "TECH");
             put("NVDA", "TECH");
-            put("AMZN", "TECH"); /* put("META", "TECH"); */
+            put("AMZN", "TECH");
             put("NFLX", "TECH");
             put("INTC", "TECH");
             put("AMD", "TECH");
@@ -201,10 +192,8 @@ public class StockService {
         LinkedHashMap<LocalDate, Map<String, Double>> timeline = game.getStockTimeline();
         List<StockPriceGetDTO> result = new ArrayList<>();
 
-        // Iterate through the timeline and collect data up to the dateForRound
         for (Map.Entry<LocalDate, Map<String, Double>> entry : timeline.entrySet()) {
             LocalDate entryDate = entry.getKey();
-            // Only include data up to and including the target round's date
             if (!entryDate.isAfter(dateForRound)) {
                 Map<String, Double> pricesOnDate = entry.getValue();
                 if (pricesOnDate.containsKey(symbol)) {
@@ -213,13 +202,6 @@ public class StockService {
                     dto.setDate(entryDate);
                     dto.setPrice(pricesOnDate.get(symbol));
                     dto.setCategory(STOCK_CATEGORIES.getOrDefault(symbol, "OTHER"));
-                    // To set the correct round for this historical data point,
-                    // you'd need to map entryDate back to its round number within the game's 10-day
-                    // sequence.
-                    // For now, using the queried 'round' as a placeholder for the DTO.
-                    // A more accurate DTO field would be 'dayInTimeline' or similar.
-                    // If the DTO's 'round' means "data relevant to this query for round X", then
-                    // this is acceptable.
                     dto.setRound(round);
                     result.add(dto);
                 }
@@ -228,7 +210,6 @@ public class StockService {
         return result;
     }
 
-    // MODIFIED getStockTimelineFromDatabase TO CALL NewsService
     public LinkedHashMap<LocalDate, Map<String, Double>> getStockTimelineFromDatabase() {
         log.info("STOCKSERVICE: Attempting to generate stock timeline from database...");
         LinkedHashMap<LocalDate, Map<String, Double>> byDate = new LinkedHashMap<>();
@@ -273,16 +254,14 @@ public class StockService {
             log.info("STOCKSERVICE: Generated empty stock timeline (byDate map).");
         }
 
-        // ---- Integration with NewsService ----
         if (!byDate.isEmpty()) {
             List<LocalDate> gameDates = new ArrayList<>(byDate.keySet());
             LocalDate gameStartDate = gameDates.get(0);
             LocalDate gameEndDate = gameDates.get(gameDates.size() - 1);
-
             Set<String> symbolsInGame = byDate.values().stream()
                     .filter(java.util.Objects::nonNull)
                     .flatMap(dailyPrices -> dailyPrices.keySet().stream())
-                    .filter(java.util.Objects::nonNull) // Ensure symbols themselves are not null
+                    .filter(java.util.Objects::nonNull)
                     .collect(Collectors.toSet());
 
             if (!symbolsInGame.isEmpty()) {
@@ -303,8 +282,6 @@ public class StockService {
         } else {
             log.warn("STOCKSERVICE: Stock timeline (byDate map) is empty. News fetching will be skipped.");
         }
-        // ---- End Integration ----
-
         return byDate;
     }
 
@@ -439,7 +416,6 @@ public class StockService {
     public Map<Integer, List<StockHoldingDTO>> getPlayerHoldingsAllRounds(
             Long userId,
             Long gameId) {
-        // 0) Lookup game & player
         GameManager game = InMemoryGameRegistry.getGame(gameId);
         if (game == null) {
             throw new ResponseStatusException(
@@ -450,48 +426,28 @@ public class StockService {
             throw new ResponseStatusException(
                     HttpStatus.NOT_FOUND, "Player not found: " + userId);
         }
-
-        // We'll preserve insertion order of rounds 1…(currentRound+1)
         Map<Integer, List<StockHoldingDTO>> roundHoldings = new LinkedHashMap<>();
-
-        // 1) Display round 1 should always be empty (no prior round)
         roundHoldings.put(1, Collections.emptyList());
-
-        // 2) For each actual round 1…currentRound:
         for (int round = 1; round <= game.getCurrentRound(); round++) {
-            // 2a) Snapshot of holdings immediately after this round
             Map<String, Integer> snapshot = player.getHoldingsForRound(round);
-
-            // 2b) We want to display these under “round+1”, using the next day’s prices:
             int displayRound = round + 1;
-
-            // 2c) Fetch the date for the *display* round
             LocalDate priceDate = game.getDateForRound(displayRound);
-
-            // 2d) Lookup prices on that date in your timeline
             Map<String, Double> prices = game.getStockTimeline()
                     .getOrDefault(priceDate, Collections.emptyMap());
-
-            // 2e) Build DTOs for any positive holdings
             List<StockHoldingDTO> holdings = new ArrayList<>();
             for (Map.Entry<String, Integer> e : snapshot.entrySet()) {
                 String symbol = e.getKey();
                 int quantity = e.getValue();
                 if (quantity <= 0)
-                    continue; // skip zero or negative
-
-                // 2f) Use the price from the *next* day
+                    continue;
                 double price = prices.getOrDefault(symbol, 0.0);
                 String category = STOCK_CATEGORIES.getOrDefault(symbol, "OTHER");
 
                 holdings.add(new StockHoldingDTO(symbol, quantity, category, price));
             }
 
-            // 2g) Store under the shifted display round
             roundHoldings.put(displayRound, holdings);
         }
-
         return roundHoldings;
     }
-
 }

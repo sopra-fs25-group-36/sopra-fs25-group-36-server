@@ -1,15 +1,9 @@
 package ch.uzh.ifi.hase.soprafs24.rest.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-// Remove: import com.crazzyghost.alphavantage.newssentiment.TickerSentiment; // Not used
-// Remove: import com.fasterxml.jackson.core.type.TypeReference; // Not used here
-// Remove: import com.fasterxml.jackson.databind.ObjectMapper; // Not used here
-// Remove: import java.io.IOException; // Not used here
 import java.time.LocalDateTime;
-// Remove: import java.util.Collections; // Not used here
 import java.util.List;
 import java.util.Map;
-// Remove: import java.util.stream.Collectors; // Not used here
 
 public class NewsDTO {
 
@@ -20,14 +14,12 @@ public class NewsDTO {
     private String bannerImage;
     private String source;
     private String sourceDomain;
-
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime publishedTime;
     private Double overallSentimentScore;
     private String overallSentimentLabel;
-    private List<Map<String, Object>> tickerSentiments; // Simplified for DTO
+    private List<Map<String, Object>> tickerSentiments;
 
-    // Getters and Setters (no changes)
     public Long getId() {
         return id;
     }
@@ -116,6 +108,4 @@ public class NewsDTO {
         this.tickerSentiments = tickerSentiments;
     }
 
-    // Removed static parseTickerSentiments method as NewsService's convertToDTO now
-    // handles this.
 }

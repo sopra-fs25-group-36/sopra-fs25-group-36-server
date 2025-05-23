@@ -15,13 +15,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User Controller
- * This class is responsible for handling all REST request that are related to
- * the user.
- * The controller will receive the request and delegate the execution to the
- * UserService and finally return the result.
- */
 @RestController
 public class UserController {
 
@@ -37,11 +30,9 @@ public class UserController {
   @ResponseStatus(HttpStatus.OK)
   @ResponseBody
   public List<UserGetDTO> getAllUsers() {
-    // fetch all users in the internal representation
     List<User> users = userService.getUsers();
     List<UserGetDTO> userGetDTOs = new ArrayList<>();
 
-    // convert each user to the API representation
     for (User user : users) {
       userGetDTOs.add(DTOMapper.INSTANCE.convertEntityToUserGetDTO(user));
     }
@@ -52,11 +43,8 @@ public class UserController {
   @ResponseStatus(HttpStatus.CREATED)
   @ResponseBody
   public UserGetDTO createUser(@RequestBody UserPostDTO userPostDTO) {
-    // convert API user to internal representation
     User userInput = DTOMapper.INSTANCE.convertUserPostDTOtoEntity(userPostDTO);
-
     User createdUser = userService.createUser(userInput);
-    // convert internal representation of user back to API
     return DTOMapper.INSTANCE.convertEntityToUserGetDTO(createdUser);
   }
 
@@ -66,11 +54,7 @@ public class UserController {
   public UserGetDTO loginUser(@RequestBody UserLoginDTO userLoginDTO) {
     String username = userLoginDTO.getUsername();
     String password = userLoginDTO.getPassword();
-
-    // Login user using username and password
     User loginUser = userService.loginUser(username, password);
-
-    // Convert internal representation back to API
     return DTOMapper.INSTANCE.convertEntityToUserGetDTO(loginUser);
   }
 
@@ -79,9 +63,7 @@ public class UserController {
   @ResponseBody
   @CrossOrigin
   public UserGetDTO getUserById(@PathVariable("userID") Long userID) {
-    // returns a user for a provided userID
     User userById = userService.getUserById(userID);
-
     return DTOMapper.INSTANCE.convertEntityToUserGetDTO(userById);
   }
 
@@ -94,14 +76,11 @@ public class UserController {
     this.userService.logoutUser(userID.toString());
   }
 
-  @PostMapping("/{userId}/lobby") // do we need this? we can put it in game controller or lobbby
-
+  @PostMapping("/{userId}/lobby")
   @ResponseStatus(HttpStatus.CREATED)
   public LobbyGetDTO createLobby(@PathVariable Long userID, @RequestBody LobbyPostDTO lobbyPostDTO) {
     Lobby lobbyInput = DTOMapper.INSTANCE.convertLobbyPostDTOtoEntity(lobbyPostDTO);
-
     Lobby createdLobby = lobbyService.createLobby(userID, lobbyInput);
-
     return DTOMapper.INSTANCE.convertEntityToLobbyGetDTO(createdLobby);
   }
 }

@@ -21,9 +21,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
-import javax.annotation.PreDestroy; // For @PreDestroy
-
+import javax.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,13 +30,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.util.UriComponentsBuilder;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-
 import ch.uzh.ifi.hase.soprafs24.entity.News;
 import ch.uzh.ifi.hase.soprafs24.game.GameManager;
 import ch.uzh.ifi.hase.soprafs24.game.InMemoryGameRegistry;
@@ -56,11 +52,7 @@ public class NewsService {
     private final ObjectMapper objectMapper;
     private final HttpClient httpClient;
     private final ExecutorService newsFetchExecutor;
-
-    // For Premium API Key (75 calls/minute ~ 0.8s/call).
-    // No artificial delay needed if API respects concurrency from premium key.
-    private static final long API_CALL_DELAY_MILLISECONDS = 0; // Set to 0 for premium if no bursting issues
-
+    private static final long API_CALL_DELAY_MILLISECONDS = 0;
     private static final DateTimeFormatter AV_API_TIME_PUBLISHED_FORMAT = DateTimeFormatter
             .ofPattern("yyyyMMdd'T'HHmmss");
     private static final DateTimeFormatter AV_API_TIME_PARAM_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmm");
@@ -72,14 +64,11 @@ public class NewsService {
         this.objectMapper = new ObjectMapper();
         this.objectMapper.registerModule(new JavaTimeModule());
         this.objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-
         this.httpClient = HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_2)
                 .connectTimeout(Duration.ofSeconds(15))
                 .build();
 
-        // Adjust pool size based on typical number of tickers per game and API
-        // tolerance
         this.newsFetchExecutor = Executors
                 .newFixedThreadPool(Math.min(10, Runtime.getRuntime().availableProcessors() * 2));
         log.info("NewsService initialized with a thread pool size of {}",
@@ -112,16 +101,15 @@ public class NewsService {
                     if (API_CALL_DELAY_MILLISECONDS > 0) {
                         Thread.sleep(API_CALL_DELAY_MILLISECONDS);
                     }
-                    // Pass 1 to save only the latest news article per ticker
                     return fetchAndSaveNewsForSingleTicker(ticker, gameStartDate, gameEndDate, 1);
                 } catch (InterruptedException e) {
                     log.warn("News fetching task interrupted for ticker {}.", ticker, e);
-                    Thread.currentThread().interrupt(); // Preserve interrupt status
+                    Thread.currentThread().interrupt();
                     return 0;
                 } catch (IOException e) {
                     log.error("IOException during news fetch for ticker {}: {}", ticker, e.getMessage(), e);
                     return 0;
-                } catch (Exception e) { // Catch any other unexpected runtime exceptions from the async task
+                } catch (Exception e) {
                     log.error("Unexpected exception during news fetch for ticker {}: {}", ticker, e.getMessage(), e);
                     return 0;
                 }
@@ -129,7 +117,6 @@ public class NewsService {
             futures.add(future);
         }
 
-        // Wait for all asynchronous tasks to complete
         try {
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
         } catch (Exception e) {
@@ -139,13 +126,12 @@ public class NewsService {
         int totalNewsSavedThisRun = 0;
         for (CompletableFuture<Integer> future : futures) {
             try {
-                // Check if future completed normally before calling get()
                 if (!future.isCompletedExceptionally() && !future.isCancelled()) {
                     totalNewsSavedThisRun += future.get();
                 } else if (future.isCancelled()) {
                     log.warn("A news fetch task was cancelled.");
                 }
-            } catch (Exception e) { // Catches ExecutionException or InterruptedException from future.get()
+            } catch (Exception e) {
                 log.error("Error retrieving result from an asynchronous news fetch task: {}", e.getMessage(), e);
             }
         }
@@ -154,29 +140,18 @@ public class NewsService {
                 totalNewsSavedThisRun);
     }
 
-    // Modified to accept and use numberOfArticlesToSave
     private int fetchAndSaveNewsForSingleTicker(String ticker, LocalDate gameStartDate, LocalDate gameEndDate,
             int numberOfArticlesToSave) throws IOException, InterruptedException {
         String timeFrom = gameStartDate.atStartOfDay().format(AV_API_TIME_PARAM_FORMAT);
         String timeTo = gameEndDate.atTime(23, 59).format(AV_API_TIME_PARAM_FORMAT);
-
-        // Request a slightly larger limit from API than strictly needed, in case the
-        // very first few are filtered out
-        // or to give some buffer. The API might still send its default (e.g., 50) if it
-        // ignores small limits.
-        // Our code will then pick the top 'numberOfArticlesToSave' from what's
-        // received.
         int requestLimit = Math.max(numberOfArticlesToSave, 5);
-        // If you are absolutely sure API respects limit=1 and you only want 1, you can
-        // set requestLimit = numberOfArticlesToSave
-
         UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(ALPHA_VANTAGE_BASE_URL)
                 .queryParam("function", "NEWS_SENTIMENT")
                 .queryParam("apikey", API_KEY)
                 .queryParam("tickers", ticker)
                 .queryParam("time_from", timeFrom)
                 .queryParam("time_to", timeTo)
-                .queryParam("sort", "EARLIEST") // Crucial for getting the "EARLIEST" news first
+                .queryParam("sort", "EARLIEST")
                 .queryParam("limit", requestLimit);
 
         URI uri = uriBuilder.build().toUri();
@@ -291,8 +266,7 @@ public class NewsService {
 
         if (newNewsSavedForThisTicker > 0) {
             log.info("Successfully saved {} new news articles for ticker {}.", newNewsSavedForThisTicker, ticker);
-        } else if (!newsApiResponse.feed.isEmpty() && numberOfArticlesToSave > 0) { // Check if we wanted to save but
-                                                                                    // didn't
+        } else if (!newsApiResponse.feed.isEmpty() && numberOfArticlesToSave > 0) {
             log.info(
                     "Received news for ticker {} but did not save any (e.g., all duplicates, or issues with the first {} item(s)).",
                     ticker, numberOfArticlesToSave);
@@ -324,9 +298,7 @@ public class NewsService {
 
         Set<String> gameTickers = stockTimeline.values().stream()
                 .filter(java.util.Objects::nonNull)
-                .flatMap(dailyPrices -> dailyPrices.keySet().stream().filter(java.util.Objects::nonNull)) // Also filter
-                                                                                                          // null
-                                                                                                          // symbols
+                .flatMap(dailyPrices -> dailyPrices.keySet().stream().filter(java.util.Objects::nonNull))
                 .collect(Collectors.toSet());
 
         if (gameTickers.isEmpty()) {
@@ -440,7 +412,7 @@ public class NewsService {
         log.info("Shutting down NewsFetchExecutor...");
         newsFetchExecutor.shutdown();
         try {
-            if (!newsFetchExecutor.awaitTermination(30, TimeUnit.SECONDS)) { // Wait 30s
+            if (!newsFetchExecutor.awaitTermination(30, TimeUnit.SECONDS)) {
                 log.warn("NewsFetchExecutor did not terminate in 30s, forcing shutdown.");
                 newsFetchExecutor.shutdownNow();
                 if (!newsFetchExecutor.awaitTermination(30, TimeUnit.SECONDS)) {

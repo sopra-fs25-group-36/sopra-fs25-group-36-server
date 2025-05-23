@@ -12,7 +12,7 @@ public class Stock {
     private Long id;
 
     @Column(nullable = false)
-    private String symbol; // e.g. specific stock name
+    private String symbol;
 
     @Column(nullable = false)
     private Double price;

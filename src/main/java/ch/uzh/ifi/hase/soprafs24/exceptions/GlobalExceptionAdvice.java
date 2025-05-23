@@ -13,7 +13,6 @@ import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
-
 import javax.servlet.http.HttpServletRequest;
 
 @ControllerAdvice(annotations = RestController.class)
@@ -33,8 +32,6 @@ public class GlobalExceptionAdvice extends ResponseEntityExceptionHandler {
     return new ResponseStatusException(HttpStatus.CONFLICT, ex.getMessage(), ex);
   }
 
-  // Keep this one disable for all testing purposes -> it shows more detail with
-  // this one disabled
   @ExceptionHandler(HttpServerErrorException.InternalServerError.class)
   public ResponseStatusException handleException(Exception ex) {
     log.error("Default Exception Handler -> caught:", ex);

@@ -3,7 +3,6 @@ package ch.uzh.ifi.hase.soprafs24.rest.dto;
 import java.time.LocalDate;
 
 public class StockPriceGetDTO {
-
     private String symbol;
     private int round;
     private double price;

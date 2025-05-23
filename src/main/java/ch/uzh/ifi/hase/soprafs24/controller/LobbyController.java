@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 public class LobbyController {
-
     private final LobbyService lobbyService;
     private final DTOMapper mapper = DTOMapper.INSTANCE;
 
@@ -17,30 +16,24 @@ public class LobbyController {
         this.lobbyService = lobbyService;
     }
 
-    /* ---------- create ---------- */
-
     @PostMapping("/{userId}/createLobby")
     @ResponseStatus(HttpStatus.CREATED)
     public LobbyGetDTO createLobby(@PathVariable Long userId,
-                                   @RequestBody LobbyPostDTO lobbyPostDTO) {
+            @RequestBody LobbyPostDTO lobbyPostDTO) {
 
         Lobby lobbyInput = mapper.convertLobbyPostDTOtoEntity(lobbyPostDTO);
         Lobby created = lobbyService.createLobby(userId, lobbyInput);
         return mapper.convertEntityToLobbyGetDTO(created);
     }
 
-    /* ---------- join ---------- */
-
     @PostMapping("lobby/{lobbyId}/joinLobby")
     @ResponseStatus(HttpStatus.OK)
     public LobbyGetDTO joinLobby(@PathVariable Long lobbyId,
-                                 @RequestBody LobbyUserPostDTO dto) {
+            @RequestBody LobbyUserPostDTO dto) {
 
         Lobby updated = lobbyService.addUserToLobby(lobbyId, dto.getUserId());
         return mapper.convertEntityToLobbyGetDTO(updated);
     }
-
-    /* ---------- get ---------- */
 
     @GetMapping("/lobby/{lobbyId}")
     @ResponseStatus(HttpStatus.OK)
@@ -48,12 +41,10 @@ public class LobbyController {
         return mapper.convertEntityToLobbyGetDTO(lobbyService.getLobbyById(lobbyId));
     }
 
-    /* ---------- ready ---------- */
-
     @PostMapping("lobby/{lobbyId}/ready")
     @ResponseStatus(HttpStatus.OK)
     public LobbyGetDTO setUserReady(@PathVariable Long lobbyId,
-                                    @RequestBody LobbyUserPostDTO dto) {
+            @RequestBody LobbyUserPostDTO dto) {
 
         Lobby updated = lobbyService.setUserReady(lobbyId, dto.getUserId());
         return mapper.convertEntityToLobbyGetDTO(updated);

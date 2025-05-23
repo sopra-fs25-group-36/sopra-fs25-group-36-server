@@ -46,18 +46,13 @@ public class StockControllerTest {
 
     @BeforeEach
     public void setup() {
-        // Setup mock stock prices
         mockStockPrices = Arrays.asList(
                 createStockPriceDTO("AAPL", 150.25),
                 createStockPriceDTO("MSFT", 320.75),
                 createStockPriceDTO("TSLA", 450.00));
-
-        // Setup mock holdings
         mockHoldings = Arrays.asList(
                 createStockHoldingDTO("AAPL", 10),
                 createStockHoldingDTO("TSLA", 5));
-
-        // Setup mock categories
         mockCategories = new HashMap<>();
         mockCategories.put("AAPL", "Technology");
         mockCategories.put("MSFT", "Technology");
@@ -80,24 +75,17 @@ public class StockControllerTest {
 
     @Test
     public void testFetchStaticPopularSymbols_Success() throws Exception {
-        // Given
         doNothing().when(stockService).fetchKnownPopularStocks();
-
-        // When/Then
         mockMvc.perform(post("/api/stocks/fetch/popular-static")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().string("Fetched and saved data for known popular stocks."));
-
         verify(stockService, times(1)).fetchKnownPopularStocks();
     }
 
     @Test
     public void testGetCategories_ReturnsAllCategories() throws Exception {
-        // Given
         when(stockService.getCategoryMap()).thenReturn(mockCategories);
-
-        // When/Then
         mockMvc.perform(get("/api/stocks/categories")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -110,12 +98,9 @@ public class StockControllerTest {
 
     @Test
     public void testGetPlayerHoldings_ReturnsCorrectHoldings() throws Exception {
-        // Given
         Long userId = 1L;
         Long gameId = 2L;
         when(stockService.getPlayerHoldings(userId, gameId)).thenReturn(mockHoldings);
-
-        // When/Then
         mockMvc.perform(get("/api/stocks/player-holdings/{userId}", userId)
                 .param("gameId", gameId.toString())
                 .contentType(MediaType.APPLICATION_JSON))
@@ -131,11 +116,8 @@ public class StockControllerTest {
 
     @Test
     public void testGetPrice_WithoutParams_ReturnsCurrentRoundPrices() throws Exception {
-        // Given
         Long gameId = 3L;
         when(stockService.getCurrentRoundStockPrices(gameId)).thenReturn(mockStockPrices);
-
-        // When/Then
         mockMvc.perform(get("/api/stocks/{gameId}/stocks", gameId)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -144,22 +126,17 @@ public class StockControllerTest {
                 .andExpect(jsonPath("$[0].price", is(150.25)))
                 .andExpect(jsonPath("$[1].symbol", is("MSFT")))
                 .andExpect(jsonPath("$[2].symbol", is("TSLA")));
-
         verify(stockService, times(1)).getCurrentRoundStockPrices(gameId);
         verify(stockService, never()).getStockPrice(any(), any(), any());
     }
 
     @Test
     public void testGetPrice_WithParams_ReturnsSpecificStockPrice() throws Exception {
-        // Given
         Long gameId = 3L;
         String symbol = "AAPL";
         Integer round = 2;
         List<StockPriceGetDTO> singleStockPrice = List.of(createStockPriceDTO("AAPL", 145.50));
-
         when(stockService.getStockPrice(gameId, symbol, round)).thenReturn(singleStockPrice);
-
-        // When/Then
         mockMvc.perform(get("/api/stocks/{gameId}/stocks", gameId)
                 .param("symbol", symbol)
                 .param("round", round.toString())
@@ -168,20 +145,16 @@ public class StockControllerTest {
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].symbol", is("AAPL")))
                 .andExpect(jsonPath("$[0].price", is(145.50)));
-
         verify(stockService, times(1)).getStockPrice(gameId, symbol, round);
         verify(stockService, never()).getCurrentRoundStockPrices(any());
     }
 
     @Test
     public void testGetAllStockData_ReturnsCompleteData() throws Exception {
-        // Given
         Long userId = 4L;
         Long gameId = 5L;
         when(stockService.getCategoryMap()).thenReturn(mockCategories);
         when(stockService.getPlayerHoldings(userId, gameId)).thenReturn(mockHoldings);
-
-        // When/Then
         mockMvc.perform(get("/api/stocks/all-data/{userId}", userId)
                 .param("gameId", gameId.toString())
                 .contentType(MediaType.APPLICATION_JSON))
@@ -192,7 +165,6 @@ public class StockControllerTest {
                 .andExpect(jsonPath("$.holdings", hasSize(2)))
                 .andExpect(jsonPath("$.holdings[0].symbol", is("AAPL")))
                 .andExpect(jsonPath("$.holdings[1].symbol", is("TSLA")));
-
         verify(stockService, times(1)).getCategoryMap();
         verify(stockService, times(1)).getPlayerHoldings(userId, gameId);
     }

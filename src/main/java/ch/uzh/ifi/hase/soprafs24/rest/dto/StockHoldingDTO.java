@@ -1,13 +1,11 @@
 package ch.uzh.ifi.hase.soprafs24.rest.dto;
 
 public class StockHoldingDTO {
-
     private String symbol;
     private int quantity;
     private String category;
     private double currentPrice;
 
-    // Constructors (optional)
     public StockHoldingDTO() {
     }
 
@@ -17,8 +15,6 @@ public class StockHoldingDTO {
         this.category = category;
         this.currentPrice = currentPrice;
     }
-
-    // Getters and Setters
 
     public String getSymbol() {
         return symbol;

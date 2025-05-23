@@ -12,11 +12,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,11 +22,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
 import com.crazzyghost.alphavantage.AlphaVantage;
 import com.crazzyghost.alphavantage.Config;
 import com.crazzyghost.alphavantage.timeseries.response.StockUnit;
-
 import ch.uzh.ifi.hase.soprafs24.entity.StockDataPoint;
 import ch.uzh.ifi.hase.soprafs24.repository.StockDataPointRepository;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.StockDataPointDTO;
@@ -56,7 +52,6 @@ public class ChartDataServiceTest {
         String symbol = "AAPL";
         LocalDate date1 = LocalDate.of(2023, 1, 1);
         LocalDate date2 = LocalDate.of(2023, 1, 2);
-
         StockUnit unit1 = mock(StockUnit.class);
         when(unit1.getDate()).thenReturn(date1.toString());
         when(unit1.getOpen()).thenReturn(150.0);
@@ -64,7 +59,6 @@ public class ChartDataServiceTest {
         when(unit1.getLow()).thenReturn(149.0);
         when(unit1.getClose()).thenReturn(151.0);
         when(unit1.getVolume()).thenReturn(1000000L);
-
         StockUnit unit2 = mock(StockUnit.class);
         when(unit2.getDate()).thenReturn(date2.toString());
         when(unit2.getOpen()).thenReturn(151.0);
@@ -72,14 +66,10 @@ public class ChartDataServiceTest {
         when(unit2.getLow()).thenReturn(150.0);
         when(unit2.getClose()).thenReturn(152.0);
         when(unit2.getVolume()).thenReturn(1200000L);
-
         List<StockUnit> stockUnits = List.of(unit1, unit2);
-
         when(stockDataPointRepository.existsBySymbolAndDate(eq(symbol), eq(date1))).thenReturn(false);
         when(stockDataPointRepository.existsBySymbolAndDate(eq(symbol), eq(date2))).thenReturn(false);
-
         chartDataService.saveStockUnitsForSymbol(symbol, stockUnits);
-
         verify(stockDataPointRepository, times(1)).saveAll(anyList());
         ArgumentCaptor<List<StockDataPoint>> captor = ArgumentCaptor.forClass(List.class);
         verify(stockDataPointRepository).saveAll(captor.capture());
@@ -92,8 +82,8 @@ public class ChartDataServiceTest {
     @Test
     public void saveStockUnitsForSymbol_someExistingData_savesOnlyNewData() {
         String symbol = "MSFT";
-        LocalDate date1 = LocalDate.of(2023, 1, 1); // Existing
-        LocalDate date2 = LocalDate.of(2023, 1, 2); // New
+        LocalDate date1 = LocalDate.of(2023, 1, 1);
+        LocalDate date2 = LocalDate.of(2023, 1, 2);
 
         StockUnit unit1 = mock(StockUnit.class);
         when(unit1.getDate()).thenReturn(date1.toString());
@@ -105,14 +95,10 @@ public class ChartDataServiceTest {
         when(unit2.getLow()).thenReturn(299.0);
         when(unit2.getClose()).thenReturn(301.0);
         when(unit2.getVolume()).thenReturn(900000L);
-
         List<StockUnit> stockUnits = List.of(unit1, unit2);
-
         when(stockDataPointRepository.existsBySymbolAndDate(eq(symbol), eq(date1))).thenReturn(true);
         when(stockDataPointRepository.existsBySymbolAndDate(eq(symbol), eq(date2))).thenReturn(false);
-
         chartDataService.saveStockUnitsForSymbol(symbol, stockUnits);
-
         verify(stockDataPointRepository, times(1)).saveAll(anyList());
         ArgumentCaptor<List<StockDataPoint>> captor = ArgumentCaptor.forClass(List.class);
         verify(stockDataPointRepository).saveAll(captor.capture());
@@ -126,15 +112,11 @@ public class ChartDataServiceTest {
     public void saveStockUnitsForSymbol_allExistingData_savesNothing() {
         String symbol = "GOOG";
         LocalDate date1 = LocalDate.of(2023, 1, 1);
-
         StockUnit unit1 = mock(StockUnit.class);
         when(unit1.getDate()).thenReturn(date1.toString());
         List<StockUnit> stockUnits = List.of(unit1);
-
         when(stockDataPointRepository.existsBySymbolAndDate(eq(symbol), eq(date1))).thenReturn(true);
-
         chartDataService.saveStockUnitsForSymbol(symbol, stockUnits);
-
         verify(stockDataPointRepository, never()).saveAll(anyList());
     }
 
@@ -142,9 +124,7 @@ public class ChartDataServiceTest {
     public void saveStockUnitsForSymbol_emptyList_savesNothing() {
         String symbol = "AMZN";
         List<StockUnit> stockUnits = Collections.emptyList();
-
         chartDataService.saveStockUnitsForSymbol(symbol, stockUnits);
-
         verify(stockDataPointRepository, never()).existsBySymbolAndDate(anyString(), any(LocalDate.class));
         verify(stockDataPointRepository, never()).saveAll(anyList());
     }
@@ -154,22 +134,17 @@ public class ChartDataServiceTest {
         String symbol = "TSLA";
         LocalDate date1 = LocalDate.of(2023, 1, 1);
         LocalDate date2 = LocalDate.of(2023, 1, 2);
-
         StockDataPoint dp1 = new StockDataPoint();
         dp1.setSymbol(symbol);
         dp1.setDate(date1);
         dp1.setClose(200.0);
-
         StockDataPoint dp2 = new StockDataPoint();
         dp2.setSymbol(symbol);
         dp2.setDate(date2);
         dp2.setClose(205.0);
-
         List<StockDataPoint> dataPoints = List.of(dp1, dp2);
         when(stockDataPointRepository.findBySymbolOrderByDateAsc(symbol)).thenReturn(dataPoints);
-
         List<StockDataPointDTO> dtos = chartDataService.getDailyChartData(symbol);
-
         assertNotNull(dtos);
         assertEquals(2, dtos.size());
         assertEquals(symbol, dtos.get(0).getSymbol());
@@ -183,9 +158,7 @@ public class ChartDataServiceTest {
     public void getDailyChartData_noDataExists_returnsEmptyList() {
         String symbol = "NFLX";
         when(stockDataPointRepository.findBySymbolOrderByDateAsc(symbol)).thenReturn(Collections.emptyList());
-
         List<StockDataPointDTO> dtos = chartDataService.getDailyChartData(symbol);
-
         assertNotNull(dtos);
         assertTrue(dtos.isEmpty());
     }

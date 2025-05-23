@@ -32,12 +32,6 @@ import ch.uzh.ifi.hase.soprafs24.rest.dto.UserPostDTO;
 import ch.uzh.ifi.hase.soprafs24.service.LobbyService;
 import ch.uzh.ifi.hase.soprafs24.service.UserService;
 
-/**
- * UserControllerTest
- * This is a WebMvcTest which allows to test the UserController i.e. GET/POST
- * request without actually sending them over the network.
- * This tests if the UserController works.
- */
 @WebMvcTest(UserController.class)
 public class UserControllerTest {
 
@@ -52,22 +46,13 @@ public class UserControllerTest {
 
   @Test
   public void givenUsers_whenGetUsers_thenReturnJsonArray() throws Exception {
-    // given
     User user = new User();
     user.setName("Firstname Lastname");
     user.setUsername("firstname@lastname");
     user.setStatus(UserStatus.OFFLINE);
-
     List<User> allUsers = Collections.singletonList(user);
-
-    // this mocks the UserService -> we define above what the userService should
-    // return when getUsers() is called
     given(userService.getUsers()).willReturn(allUsers);
-
-    // when
     MockHttpServletRequestBuilder getRequest = get("/users").contentType(MediaType.APPLICATION_JSON);
-
-    // then
     mockMvc.perform(getRequest).andExpect(status().isOk())
         .andExpect(jsonPath("$", hasSize(1)))
         .andExpect(jsonPath("$[0].name", is(user.getName())))
@@ -77,25 +62,18 @@ public class UserControllerTest {
 
   @Test
   public void createUser_validInput_userCreated() throws Exception {
-    // given
     User user = new User();
     user.setId(1L);
     user.setUsername("testUsername");
     user.setToken("1");
     user.setStatus(UserStatus.ONLINE);
-
     UserPostDTO userPostDTO = new UserPostDTO();
     userPostDTO.setPassword("Test Password");
     userPostDTO.setUsername("testUsername");
-
     given(userService.createUser(Mockito.any())).willReturn(user);
-
-    // when/then -> do the request + validate the result
     MockHttpServletRequestBuilder postRequest = post("/users")
         .contentType(MediaType.APPLICATION_JSON)
         .content(asJsonString(userPostDTO));
-
-    // then
     mockMvc.perform(postRequest)
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.id", is(user.getId().intValue())))
@@ -105,26 +83,19 @@ public class UserControllerTest {
 
   @Test
   public void loginUser_validInput_userLogged() throws Exception {
-    // given
     User user = new User();
     user.setId(1L);
     user.setUsername("testUsername");
     user.setToken("1");
     user.setPassword("password");
     user.setStatus(UserStatus.ONLINE);
-
     UserLoginDTO userLoginDTO = new UserLoginDTO();
     userLoginDTO.setPassword("Test Password");
     userLoginDTO.setUsername("testUsername");
-
     given(userService.loginUser(Mockito.any(), Mockito.any())).willReturn(user);
-
-    // when/then -> do the request + validate the result
     MockHttpServletRequestBuilder postRequest = post("/users/login")
         .contentType(MediaType.APPLICATION_JSON)
         .content(asJsonString(userLoginDTO));
-
-    // then
     mockMvc.perform(postRequest)
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.id", is(user.getId().intValue())))
@@ -132,14 +103,6 @@ public class UserControllerTest {
         .andExpect(jsonPath("$.status", is(user.getStatus().toString())));
   }
 
-  /**
-   * Helper Method to convert userPostDTO into a JSON string such that the input
-   * can be processed
-   * Input will look like this: {"name": "Test User", "username": "testUsername"}
-   * 
-   * @param object
-   * @return string
-   */
   private String asJsonString(final Object object) {
     try {
       return new ObjectMapper().writeValueAsString(object);

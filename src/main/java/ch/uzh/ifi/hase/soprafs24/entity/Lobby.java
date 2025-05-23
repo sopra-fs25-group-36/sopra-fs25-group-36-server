@@ -6,9 +6,6 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Internal Lobby representation.
- */
 @Entity
 @Table(name = "LOBBY")
 public class Lobby implements Serializable {
@@ -19,33 +16,26 @@ public class Lobby implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /** player-id ➜ ready? */
     @ElementCollection
     @CollectionTable(name = "lobby_player_status", joinColumns = @JoinColumn(name = "lobby_id"))
     @MapKeyColumn(name = "user_id")
     @Column(name = "ready")
     private Map<Long, Boolean> playerReadyStatuses = new HashMap<>();
 
-    /** UTC moment when lobby was created */
     @Column(nullable = false, columnDefinition = "TIMESTAMP")
     private Instant createdAt;
 
     @Column(nullable = false)
     private boolean active;
 
-    /** length of lobby in seconds */
     @Column(nullable = false)
     private Long timeLimitSeconds;
 
-    /* ---------- life-cycle ---------- */
-
     @PrePersist
     protected void onCreate() {
-        this.createdAt = Instant.now(); // absolute, unambiguous
+        this.createdAt = Instant.now();
         this.active = true;
     }
-
-    /* ---------- getters / setters ---------- */
 
     public Long getId() {
         return id;

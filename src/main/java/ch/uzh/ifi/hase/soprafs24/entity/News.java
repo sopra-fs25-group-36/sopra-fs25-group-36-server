@@ -17,7 +17,7 @@ public class News {
     @Column(nullable = false, unique = true, length = 1024)
     private String url;
 
-    @Lob // For longer text
+    @Lob
     @Column(nullable = false)
     private String summary;
 
@@ -31,7 +31,7 @@ public class News {
     private String sourceDomain;
 
     @Column(nullable = false)
-    private LocalDateTime publishedTime; // Format from API: YYYYMMDDTHHMMSS
+    private LocalDateTime publishedTime;
 
     @Column
     private Double overallSentimentScore;
@@ -39,15 +39,13 @@ public class News {
     @Column
     private String overallSentimentLabel;
 
-    @Lob // Store as JSON string
+    @Lob
     @Column
-    private String apiTickerSentimentJson; // JSON string of List<TickerSentiment>
+    private String apiTickerSentimentJson;
 
-    @Lob // Store as JSON string
+    @Lob
     @Column
-    private String apiTopicRelevanceJson; // JSON string of List<TopicRelevance>
-
-    // Getters and Setters
+    private String apiTopicRelevanceJson;
 
     public Long getId() {
         return id;

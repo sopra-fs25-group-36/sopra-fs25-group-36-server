@@ -3,7 +3,6 @@ package ch.uzh.ifi.hase.soprafs24.rest.dto;
 public class RoundStatusDTO {
     private boolean allSubmitted;
     private boolean roundEnded;
-
     private Long nextRoundStartTime;
 
     public RoundStatusDTO(boolean allSubmitted, boolean roundEnded, long nextRoundStartTime) {

@@ -1,22 +1,7 @@
 package ch.uzh.ifi.hase.soprafs24.game;
 
 import java.util.*;
-
 import ch.uzh.ifi.hase.soprafs24.rest.dto.TransactionRequestDTO;
-
-// Current output in JSON
-
-//{
-//        "userId": 42,
-//        "cashBalance": 5000,
-//        "stocks": [
-//        { "symbol": "AAPL", "quantity": 10, "category": "Tech", "currentPrice": 150 }
-//        ],
-//        "transactionHistory": [
-//        { "stockId": "AAPL", "quantity": 5, "price": 140, "type": "BUY" },
-//        { "stockId": "AAPL", "quantity": 3, "price": 145, "type": "BUY" }
-//        ]
-//        }
 
 public class PlayerState {
 
@@ -31,7 +16,7 @@ public class PlayerState {
     public PlayerState(Long userId) {
         this.userId = userId;
         this.stocksOwned = new HashMap<>();
-        this.cashBalance = 10000.0; // initial cash
+        this.cashBalance = 10000.0;
         this.transactionHistory = new ArrayList<>();
     }
 
@@ -44,10 +29,8 @@ public class PlayerState {
     }
 
     public Map<String, Integer> getPlayerStocks() {
-        return new HashMap<>(stocksOwned); // return a copy to prevent external modification
+        return new HashMap<>(stocksOwned);
     }
-
-    // Calculates the total assets of the player based on current stock prices.
 
     public double calculateTotalAssets(Map<String, Double> stockPrices) {
         double total = cashBalance;
@@ -60,11 +43,9 @@ public class PlayerState {
         return total;
     }
 
-    // Applies a transaction to the player's portfolio.
-
     public void applyTransaction(TransactionRequestDTO tx, Map<String, Double> currentPrices) {
         if (!currentPrices.containsKey(tx.getStockId())) {
-            return; // silently ignore or throw an exception
+            return;
         }
         double price = currentPrices.getOrDefault(tx.getStockId(), 0.0);
         double total = price * tx.getQuantity();
@@ -89,7 +70,7 @@ public class PlayerState {
     }
 
     public List<Transaction> getTransactionHistory() {
-        return new ArrayList<>(transactionHistory); // or return Collections.unmodifiableList(...)
+        return new ArrayList<>(transactionHistory);
     }
 
     public boolean hasSubmittedForRound(int round) {
@@ -107,7 +88,7 @@ public class PlayerState {
     public void snapshotHoldingsAtRound(int round) {
         if (stocksOwned == null)
             return;
-        stockHistory.put(round, new HashMap<>(stocksOwned)); // shallow copy
+        stockHistory.put(round, new HashMap<>(stocksOwned));
     }
 
     public Map<String, Integer> getHoldingsForRound(int round) {

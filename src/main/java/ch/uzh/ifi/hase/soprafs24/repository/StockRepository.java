@@ -2,31 +2,22 @@ package ch.uzh.ifi.hase.soprafs24.repository;
 
 import java.time.LocalDate;
 import java.util.List;
-
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
 import ch.uzh.ifi.hase.soprafs24.entity.Stock;
 
 @Repository
 public interface StockRepository extends JpaRepository<Stock, Long> {
-
-    // All stock records for a given symbol
     List<Stock> findBySymbol(String symbol);
 
-    // A specific day's record for a stock symbol
     List<Stock> findBySymbolAndDate(String symbol, LocalDate date);
 
-    // Records for all stocks on a given date
     List<Stock> findAllByDate(LocalDate date);
 
-    // Get all prices for a symbol in a time range
     List<Stock> findBySymbolAndDateBetween(String symbol, LocalDate start, LocalDate end);
 
-    // MODIFIED: Method to load random stock, but only dates from 2023 onwards
-    // with 10 days of consecutive day data after it
     @Query(value = """
                 SELECT date
                 FROM (
@@ -39,7 +30,7 @@ public interface StockRepository extends JpaRepository<Stock, Long> {
                 ORDER BY RANDOM()
                 LIMIT 1
             """, nativeQuery = true)
-    LocalDate findRandomStartDateWith10Days(); // Name remains the same, but logic is updated
+    LocalDate findRandomStartDateWith10Days();
 
     @Query(value = """
                 SELECT * FROM stock_adjusted

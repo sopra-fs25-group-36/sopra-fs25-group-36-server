@@ -7,35 +7,25 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import ch.uzh.ifi.hase.soprafs24.rest.dto.TransactionRequestDTO;
 
 public class GameManager {
-
     private static final Logger log = LoggerFactory.getLogger(GameManager.class);
-
     private final Long gameId;
     private final Map<Long, PlayerState> playerStates = new HashMap<>();
-    private LinkedHashMap<LocalDate, Map<String, Double>> stockTimeline; // Date -> (Symbol -> Price)
-
+    private LinkedHashMap<LocalDate, Map<String, Double>> stockTimeline;
     private final long roundDelayMillis;
     private List<LeaderBoardEntry> leaderBoard = new ArrayList<>();
-    private int currentRound = 1; // Game starts at round 1
+    private int currentRound = 1;
     private boolean active = true;
     private final LocalDateTime startedAt = LocalDateTime.now();
-
-    private static final long DEFAULT_ROUND_DELAY_MILLIS = 120_000; // 2 minutes
-    private static final int MAX_ROUNDS = 10; // Define max rounds once
-    private static final long SYNC_BUFFER_MILLIS = 2_000; // Buffer for synchronized round start
+    private static final long DEFAULT_ROUND_DELAY_MILLIS = 120_000;
+    private static final int MAX_ROUNDS = 10;
+    private static final long SYNC_BUFFER_MILLIS = 2_000;
     private final ScheduledExecutorService scheduler;
-
-    // private final ScheduledExecutorService roundScheduler;
-    // private volatile boolean roundInProgress = false; // Flag to manage round
-    // transition logic
-    private long nextRoundStartTimeMillis = 0L; // For DTO, when next round might start due to all submissions
+    private long nextRoundStartTimeMillis = 0L;
     private ScheduledFuture<?> nextRoundFuture;
 
     public GameManager(Long gameId, LinkedHashMap<LocalDate, Map<String, Double>> stockTimeline,
@@ -44,8 +34,6 @@ public class GameManager {
         this.stockTimeline = Objects.requireNonNull(stockTimeline, "Stock timeline cannot be null");
         if (stockTimeline.isEmpty()) {
             log.warn("GameManager for gameId {} initialized with an empty stock timeline.", gameId);
-            // Consider throwing an IllegalArgumentException if an empty timeline is invalid
-            // for game start
         }
         this.roundDelayMillis = roundDelayMillis;
         this.scheduler = Executors
@@ -69,7 +57,7 @@ public class GameManager {
         PlayerState ps = new PlayerState(userId);
         playerStates.put(userId, ps);
         log.info("Player {} registered for game {}. Total players: {}.", userId, gameId, playerStates.size());
-        recalculateLeaderboard(); // Update leaderboard
+        recalculateLeaderboard();
     }
 
     public synchronized void submitTransactions(Long userId, List<TransactionRequestDTO> txs) {
@@ -95,12 +83,6 @@ public class GameManager {
             log.error(
                     "CRITICAL: Cannot process buy/sell transactions for player {} in game {}: Current stock prices are unavailable for round {}.",
                     userId, gameId, currentRound);
-            // Depending on game rules, you might throw an exception or prevent submission
-            // entirely here.
-            // For now, logging and allowing applyTransaction to potentially fail
-            // internally.
-            // throw new IllegalStateException("Stock prices unavailable for current round,
-            // cannot process transactions.");
         }
 
         for (TransactionRequestDTO tx : txs) {
@@ -110,15 +92,12 @@ public class GameManager {
         log.info("Player {} submitted {} transactions for round {} in game {}.", userId, txs.size(), currentRound,
                 gameId);
 
-        // Check if all active players have submitted
         boolean allSubmitted = haveAllPlayersSubmittedForCurrentRound();
 
         log.debug("Game {}: All submitted for round {}: {}. Round in progress flag: {}.", gameId, currentRound,
                 allSubmitted);
 
         if (haveAllPlayersSubmittedForCurrentRound()) {
-            // as soon as the last player in, throw out the old timer
-            // and schedule a 2 s “all‐in” dispatch:
             scheduleNextRoundAfter(SYNC_BUFFER_MILLIS);
         }
     }
@@ -141,7 +120,6 @@ public class GameManager {
         return pricesForCurrentRound != null ? new HashMap<>(pricesForCurrentRound) : Collections.emptyMap();
     }
 
-    // Added from your version - crucial for chart data
     public LocalDate getCurrentMarketDate() {
         if (stockTimeline == null || stockTimeline.isEmpty()) {
             log.warn("Game {}: Stock timeline is null or empty. Cannot get current market date for round {}.", gameId,
@@ -161,7 +139,6 @@ public class GameManager {
         return marketDateForCurrentRound;
     }
 
-    // Added from your version - useful for fetching historical data for charts
     public LocalDate getDateForRound(int round) {
         if (round <= 0) {
             log.warn("Game {}: Requested date for invalid round {}.", gameId, round);
@@ -177,7 +154,6 @@ public class GameManager {
     }
 
     public List<LeaderBoardEntry> getLeaderBoard() {
-        // Return a copy to prevent external modification
         return Collections.unmodifiableList(new ArrayList<>(leaderBoard));
     }
 
@@ -193,26 +169,18 @@ public class GameManager {
             currentRound++;
             log.info("Game {}: Advanced to round {}.", gameId, currentRound);
             recalculateLeaderboard();
-            // schedule the normal timeout for the new round
             scheduleNextRoundAfter(roundDelayMillis);
-
-            // Player submission status implicitly reset by PlayerState checking against new
-            // currentRound
         } else {
             log.info("Game {}: Max rounds ({}) reached. Ending game.", gameId, MAX_ROUNDS);
-            endGame(); // endGame will also set active = false
+            endGame();
         }
     }
 
     private void scheduleNextRoundAfter(long delay) {
-        // cancel whatever was already pending
         if (nextRoundFuture != null && !nextRoundFuture.isDone()) {
             nextRoundFuture.cancel(false);
         }
-
-        // record for DTO / front‐end
         nextRoundStartTimeMillis = System.currentTimeMillis() + delay;
-
         nextRoundFuture = scheduler.schedule(() -> {
             synchronized (GameManager.this) {
                 if (!active)
@@ -223,25 +191,21 @@ public class GameManager {
     }
 
     public synchronized void startGame() {
-        // Kick off the very first round’s timeout
         scheduleNextRoundAfter(roundDelayMillis);
     }
 
     private void recalculateLeaderboard() {
         List<LeaderBoardEntry> updatedBoard = new ArrayList<>();
-        Map<String, Double> currentPricesForLeaderboard = getCurrentStockPrices(); // Get prices once
+        Map<String, Double> currentPricesForLeaderboard = getCurrentStockPrices();
 
         for (PlayerState player : playerStates.values()) {
             double totalAssets = player.calculateTotalAssets(currentPricesForLeaderboard);
             log.debug("Game {}: Player {} ({}) total assets for leaderboard: {}", gameId, player.getUserId(),
-                    totalAssets); // Assuming PlayerState might have a name/username field eventually for better
-                                  // logs
+                    totalAssets);
             updatedBoard.add(new LeaderBoardEntry(player.getUserId(), totalAssets));
         }
-
         updatedBoard.sort((a, b) -> Double.compare(b.getTotalAssets(), a.getTotalAssets()));
-        this.leaderBoard = updatedBoard; // Atomically update leaderboard
-
+        this.leaderBoard = updatedBoard;
         if (!updatedBoard.isEmpty()) {
             log.info("Game {}: Leaderboard recalculated. Top player: {} with assets {}", gameId,
                     updatedBoard.get(0).getUserId(), updatedBoard.get(0).getTotalAssets());
@@ -257,19 +221,16 @@ public class GameManager {
         }
         log.info("Game {} is ending. Final round was {}.", gameId, currentRound);
         this.active = false;
-        recalculateLeaderboard(); // Final leaderboard calculation
+        recalculateLeaderboard();
 
-        // 1) cancel the one outstanding “next round” job, if any
         if (nextRoundFuture != null && !nextRoundFuture.isDone()) {
             log.info("Game {}: Cancelling pending nextRound task.", gameId);
             nextRoundFuture.cancel(false);
         }
 
-        // 2) shut down the ScheduledExecutorService
         log.info("Game {}: Shutting down round scheduler.", gameId);
         scheduler.shutdown();
         try {
-            // wait up to 5 seconds for any running task to finish
             if (!scheduler.awaitTermination(5, TimeUnit.SECONDS)) {
                 log.warn("Game {}: Scheduler did not terminate in 5s; forcing shutdown.", gameId);
                 scheduler.shutdownNow();
@@ -299,7 +260,6 @@ public class GameManager {
     }
 
     public Map<Long, PlayerState> getPlayerStates() {
-        // Return an unmodifiable copy
         return Collections.unmodifiableMap(new HashMap<>(playerStates));
     }
 
@@ -308,8 +268,6 @@ public class GameManager {
     }
 
     public LinkedHashMap<LocalDate, Map<String, Double>> getStockTimeline() {
-        // Return a copy to prevent external modification of the game's timeline
-        // instance
         return new LinkedHashMap<>(stockTimeline);
     }
 
@@ -323,15 +281,11 @@ public class GameManager {
     }
 
     public boolean haveAllPlayersSubmittedForCurrentRound() {
-        if (playerStates.isEmpty() && active) { // If game is active but no players
-            return false; // No one to submit, so not "all submitted" in a meaningful way for progression
+        if (playerStates.isEmpty() && active) {
+            return false;
         }
         if (playerStates.isEmpty()) {
-            return true; // Or false, depending on desired behavior for empty games. Let's say true for
-                         // no one to wait for.
-                         // However, typically a game wouldn't run without players or would auto-end.
-                         // For safety, if empty & active, means we wait for players.
-                         // Changed to false if active and empty, as per old code logic.
+            return true;
         }
         return playerStates.values().stream()
                 .allMatch(player -> player.hasSubmittedForRound(currentRound));

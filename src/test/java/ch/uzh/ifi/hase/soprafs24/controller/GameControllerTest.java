@@ -11,11 +11,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.Map;
-
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,9 +22,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import ch.uzh.ifi.hase.soprafs24.entity.Game;
 import ch.uzh.ifi.hase.soprafs24.game.GameManager;
 import ch.uzh.ifi.hase.soprafs24.game.PlayerState;
@@ -49,12 +45,9 @@ public class GameControllerTest {
         Game game = new Game();
         game.setId(188L);
         game.setLobbyId(1L);
-
         given(gameService.tryStartGame(188L)).willReturn(game);
-
         MockHttpServletRequestBuilder postRequest = post("/game/{gameId}/start", 188L)
                 .contentType(MediaType.APPLICATION_JSON);
-
         mockMvc.perform(postRequest)
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id", is(game.getId().intValue())))
@@ -82,20 +75,15 @@ public class GameControllerTest {
         day1Data.put("AAPL", 150.0);
         timelineData.put(LocalDate.now(), day1Data);
         long roundDelayMillis = 60000L;
-
         GameManager realGameManager = new GameManager(gameId, timelineData, roundDelayMillis);
-
         given(gameService.getGame(gameId)).willReturn(realGameManager);
-
         MockHttpServletRequestBuilder getRequest = get("/game/{gameId}", gameId);
-
         mockMvc.perform(getRequest)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.gameId", is(realGameManager.getGameId().intValue())))
                 .andExpect(jsonPath("$.stockTimeline", notNullValue()))
                 .andExpect(jsonPath("$.active", is(realGameManager.isActive())))
                 .andExpect(jsonPath("$.currentRound", is(realGameManager.getCurrentRound())))
-                // Use the custom matcher for robust long comparison
                 .andExpect(jsonPath("$.nextRoundStartTimeMillis",
                         isApproximately(realGameManager.getNextRoundStartTimeMillis())))
                 .andExpect(jsonPath("$.playerStates").isEmpty())
@@ -135,7 +123,6 @@ public class GameControllerTest {
                 .andExpect(content().string("false"));
     }
 
-    // Custom matcher to handle Long vs Integer from JSONPath
     private static Matcher<Object> isApproximately(long expectedValue) {
         return new org.hamcrest.BaseMatcher<Object>() {
             @Override
@@ -153,7 +140,6 @@ public class GameControllerTest {
         };
     }
 
-    // Custom matcher to handle Long vs Integer from JSONPath for comparisons
     private static Matcher<Object> isGreaterThanLong(long value) {
         return new org.hamcrest.BaseMatcher<Object>() {
             @Override

@@ -3,13 +3,11 @@ package ch.uzh.ifi.hase.soprafs24.controller;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,9 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import ch.uzh.ifi.hase.soprafs24.game.GameManager;
 import ch.uzh.ifi.hase.soprafs24.game.InMemoryGameRegistry;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.TransactionRequestDTO;
@@ -42,10 +38,8 @@ class TransactionControllerTest {
         Map<String, Double> daySnapshot = new HashMap<>();
         daySnapshot.put("AAPL", 150.0);
         timeline.put(LocalDate.now(), daySnapshot);
-
         GameManager gameManager = new GameManager(gameId, timeline);
         gameManager.registerPlayer(userId);
-
         InMemoryGameRegistry.registerGame(gameId, gameManager);
     }
 
@@ -60,9 +54,7 @@ class TransactionControllerTest {
         requestDTO.setStockId("AAPL");
         requestDTO.setQuantity(10);
         requestDTO.setType("BUY");
-
         List<TransactionRequestDTO> requestDTOs = List.of(requestDTO);
-
         mockMvc.perform(post("/api/transaction/{gameId}/submit", gameId)
                 .param("userId", String.valueOf(userId))
                 .contentType(MediaType.APPLICATION_JSON)
@@ -73,16 +65,12 @@ class TransactionControllerTest {
 
     @Test
     void submitTransaction_gameNotFound() throws Exception {
-        // Clear the registry to simulate missing game
         InMemoryGameRegistry.clear();
-
         TransactionRequestDTO requestDTO = new TransactionRequestDTO();
         requestDTO.setStockId("AAPL");
         requestDTO.setQuantity(10);
         requestDTO.setType("BUY");
-
         List<TransactionRequestDTO> requestDTOs = List.of(requestDTO);
-
         mockMvc.perform(post("/api/transaction/{gameId}/submit", gameId)
                 .param("userId", String.valueOf(userId))
                 .contentType(MediaType.APPLICATION_JSON)

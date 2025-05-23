@@ -3,7 +3,6 @@ package ch.uzh.ifi.hase.soprafs24.rest.dto;
 import ch.uzh.ifi.hase.soprafs24.constant.UserStatus;
 
 public class UserGetDTO {
-
   private Long userID;
   private String name;
   private String token;
@@ -18,7 +17,6 @@ public class UserGetDTO {
     this.userID = id;
   }
 
-  // but why do we need a name?
   public String getName() {
     return name;
   }

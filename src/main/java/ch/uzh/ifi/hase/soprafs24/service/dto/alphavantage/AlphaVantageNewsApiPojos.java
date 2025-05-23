@@ -1,9 +1,8 @@
-package ch.uzh.ifi.hase.soprafs24.service.dto.alphavantage; // Suggested package
+package ch.uzh.ifi.hase.soprafs24.service.dto.alphavantage;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
-// Container for the POJOs if kept in one file, or make them top-level classes.
 public class AlphaVantageNewsApiPojos {
 
     public static class AlphaVantageNewsResponse {
@@ -11,7 +10,7 @@ public class AlphaVantageNewsApiPojos {
         public List<FeedItem> feed;
 
         @JsonProperty("items")
-        public String items; // API returns this as a string e.g., "50"
+        public String items;
 
         @JsonProperty("sentiment_score_definition")
         public String sentimentScoreDefinition;
@@ -19,7 +18,6 @@ public class AlphaVantageNewsApiPojos {
         @JsonProperty("relevance_score_definition")
         public String relevanceScoreDefinition;
 
-        // For handling API call issues (e.g., rate limits, errors)
         @JsonProperty("Information")
         public String information;
 
@@ -35,7 +33,7 @@ public class AlphaVantageNewsApiPojos {
         public String url;
 
         @JsonProperty("time_published")
-        public String timePublished; // Format: YYYYMMDDTHHMMSS
+        public String timePublished;
 
         @JsonProperty("authors")
         public List<String> authors;
@@ -50,7 +48,7 @@ public class AlphaVantageNewsApiPojos {
         public String source;
 
         @JsonProperty("category_within_source")
-        public String categoryWithinSource; // Might be useful later
+        public String categoryWithinSource;
 
         @JsonProperty("source_domain")
         public String sourceDomain;
@@ -73,7 +71,7 @@ public class AlphaVantageNewsApiPojos {
         public String topic;
 
         @JsonProperty("relevance_score")
-        public String relevanceScore; // API returns as string e.g., "0.158 topics"
+        public String relevanceScore;
     }
 
     public static class TickerSentimentPojo {
@@ -81,10 +79,10 @@ public class AlphaVantageNewsApiPojos {
         public String ticker;
 
         @JsonProperty("relevance_score")
-        public String relevanceScore; // API returns as string
+        public String relevanceScore;
 
         @JsonProperty("ticker_sentiment_score")
-        public String tickerSentimentScore; // API returns as string
+        public String tickerSentimentScore;
 
         @JsonProperty("ticker_sentiment_label")
         public String tickerSentimentLabel;
